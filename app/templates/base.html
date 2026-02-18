@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Gestão de Protocolos{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --primary: #0f172a;
+      --primary-hover: #1e293b;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --bg-body: #f8fafc;
+      --surface: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; }
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .topbar .user { font-size: 0.9rem; color: var(--text-muted); }
+    .topbar a { color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .topbar a:hover { text-decoration: underline; }
+    .flash { padding: 12px 24px; margin: 0; list-style: none; }
+    .flash li { padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; }
+    .flash .success { background: #dcfce7; color: #166534; }
+    .flash .error { background: #fee2e2; color: #991b1b; }
+    .flash .info { background: #e0f2fe; color: #0369a1; }
+    main { padding: 20px; max-width: 960px; margin: 0 auto; }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% if current_user.is_authenticated %}
+  <nav class="topbar">
+    <span class="user"><i class="ph ph-user"></i> {{ current_user.nome }}</span>
+    <a href="{{ url_for('auth.logout') }}"><i class="ph ph-sign-out"></i> Sair</a>
+  </nav>
+  {% endif %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul class="flash">
+      {% for category, msg in messages %}
+      <li class="{{ category }}">{{ msg }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  {% endwith %}
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

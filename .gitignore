@@ -1,0 +1,23 @@
+# Ambiente virtual
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Banco de dados local
+data/
+
+# Variáveis de ambiente
+.env
+.env.example
+
+# Arquivos pessoais / não versionáveis
+Controle_Tiago.txt
+README.md
+CLAUDE.md
+
+# Editores / IDEs
+.cursor/
+.claude/

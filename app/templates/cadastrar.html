@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Cadastrar Protocolo - Sistema Interno{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cadastrar.css') }}">
+{% endblock %}
+{% block content %}
+<script>window.URL_CONSULTAR = "{{ url_for('main.consultar') }}";</script>
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+<div class="container">
+  <div id="formView">
+    <a href="{{ url_for('main.index') }}" class="back-link"><i class="ph ph-arrow-left"></i> Voltar ao menu</a>
+    <div class="page-header">
+      <h1><i class="ph ph-file-plus" style="color: var(--accent);"></i> Cadastro de Protocolo</h1>
+      <p>Preencha os dados abaixo. A inserção do advogado é obrigatória para inventários, divórcios, usucapião e adjudicação.</p>
+    </div>
+    <div class="card">
+      <div id="formMsg" class="msg-box"></div>
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-user"></i> Interessado</div>
+        <div class="form-row">
+          <div class="form-group small">
+            <label for="tipoPessoa">Tipo</label>
+            <select id="tipoPessoa">
+              <option value="cpf">Pessoa Física (CPF)</option>
+              <option value="cnpj">Pessoa Jurídica (CNPJ)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="documento"><span id="docLabel">CPF</span> <span class="hint" id="docHint">— digite e saia do campo para buscar</span></label>
+            <div class="search-field-wrapper">
+              <input type="text" id="documento" placeholder="000.000.000-00" maxlength="18" autocomplete="off">
+              <span class="search-status" id="searchStatus"></span>
+            </div>
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label for="nomeInteressado">Nome Completo</label>
+            <input type="text" id="nomeInteressado" placeholder="Ex: João da Silva" autocomplete="name">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="telefone">Telefone <span class="hint">(Opcional)</span></label>
+            <input type="text" id="telefone" placeholder="(00) 00000-0000" maxlength="15" autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label for="email">E-mail <span class="hint">(Opcional)</span></label>
+            <input type="text" id="email" placeholder="exemplo@email.com" autocomplete="email">
+          </div>
+        </div>
+        <div id="clienteInfo" class="msg-box"></div>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-gavel"></i> Advogado</div>
+        <div class="toggle-row">
+          <input type="checkbox" id="toggleAdvogado" autocomplete="off">
+          <label for="toggleAdvogado">Este protocolo possui advogado?</label>
+        </div>
+        <div class="collapsible" id="advogadoSection">
+          <div class="form-row single">
+            <div class="form-group">
+              <label for="nomeAdvogado">Nome do Advogado <span class="hint">— Busque na base de dados</span></label>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="nomeAdvogado" placeholder="Comece a digitar o nome..." autocomplete="off">
+                <div class="autocomplete-list" id="advAutoList"></div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cpfAdvogado">CPF</label>
+              <input type="text" id="cpfAdvogado" placeholder="000.000.000-00" maxlength="14" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="oabAdvogado">OAB</label>
+              <input type="text" id="oabAdvogado" placeholder="Ex: 123456/SP" autocomplete="off">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="telefoneAdvogado">Telefone</label>
+              <input type="text" id="telefoneAdvogado" placeholder="(00) 00000-0000" maxlength="15" autocomplete="tel">
+            </div>
+            <div class="form-group">
+              <label for="emailAdvogado">E-mail</label>
+              <input type="text" id="emailAdvogado" placeholder="exemplo@email.com" autocomplete="email">
+            </div>
+          </div>
+          <div id="advogadoInfo" class="msg-box"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-file-text"></i> Dados do Protocolo</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="numProtocolo">Número do Protocolo <span class="hint">(Gerado pelo Siplan)</span></label>
+            <input type="text" id="numProtocolo" placeholder="Ex: 2026-001234" autocomplete="off">
+          </div>
+          <div class="form-group small">
+            <label for="dataEntrada">Data de Entrada</label>
+            <input type="date" id="dataEntrada" readonly>
+          </div>
+          <div class="form-group small">
+            <label for="agendadoPara">Agendamento <span class="hint">(Opcional)</span></label>
+            <input type="date" id="agendadoPara" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="servico">Serviço</label>
+            <select id="servico"><option value="">Carregando...</option></select>
+          </div>
+          <div class="form-group">
+            <label for="responsavel">Responsável</label>
+            <select id="responsavel"><option value="">Carregando...</option></select>
+          </div>
+          <div class="form-group small">
+            <label for="depositoPrevio">Depósito Prévio</label>
+            <input type="text" id="depositoPrevio" placeholder="R$ 0,00" maxlength="18" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label for="detalhamentos">Detalhamentos / Observações</label>
+            <div class="md-grid">
+              <div class="md-editor-container">
+                <div class="md-toolbar">
+                  <button type="button" class="md-btn" onclick="addMarkdown('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdown('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdown('list')" title="Lista"><i class="ph ph-list-bullets"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdown('heading')" title="Título"><i class="ph ph-text-h-two"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdown('code')" title="Código"><i class="ph ph-code"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdown('checklist')" title="Checklist"><i class="ph ph-check-square"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdown('hr')" title="Separador"><i class="ph ph-minus"></i></button>
+                </div>
+                <textarea id="detalhamentos" placeholder="Escreva observações aqui..." autocomplete="off"></textarea>
+              </div>
+              <div id="detalhamentosPreview" class="md-preview" aria-live="polite"><div class="md-placeholder">Pré-visualização...</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="limparFormulario()"><i class="ph ph-eraser"></i> Limpar</button>
+        <button type="button" class="btn btn-primary" id="btnCadastrar" onclick="cadastrarProtocolo()"><i class="ph ph-check-circle"></i> Cadastrar Protocolo</button>
+      </div>
+    </div>
+  </div>
+  <div id="receiptView">
+    <div class="receipt-paper">
+      <div class="print-header">
+        <h2>Tabelião de Notas e de Protesto de Letras e Títulos de Itápolis-SP</h2>
+        <p>Rua Barão do Rio Branco, n. 378 – Centro, Itápolis-SP (CEP 14900-057)</p>
+        <p>contato@cartorioitapolis.com.br | (16) 3273 9448</p>
+        <p>www.cartorioitapolis.com.br</p>
+      </div>
+      <div class="protocol-title">PROTOCOLO – <span id="recProtocoloTitulo"></span></div>
+      <table class="simple-table handwrite-table">
+        <tr><td class="label-col">Livro</td><td class="input-col"></td><td class="label-col">Folha</td><td class="input-col"></td></tr>
+      </table>
+      <div class="info-grid">
+        <div class="info-item full-width"><span class="info-label">Interessado</span><span class="info-value" id="recInteressado"></span></div>
+        <div class="info-item"><span class="info-label">CPF / CNPJ</span><span class="info-value" id="recDocumento"></span></div>
+        <div class="info-item"><span class="info-label">Data de Entrada</span><span class="info-value" id="recData"></span></div>
+        <div class="info-item full-width" id="recAdvogadoBox" style="display:none"><span class="info-label">Advogado Assessor</span><span class="info-value" id="recAdvogado"></span></div>
+        <div class="info-item full-width"><span class="info-label">Serviço Solicitado</span><span class="info-value" id="recServico"></span></div>
+        <div class="info-item"><span class="info-label">Responsável</span><span class="info-value" id="recResponsavel"></span></div>
+        <div class="info-item"><span class="info-label">Status Atual</span><span class="info-value" id="recStatus"></span></div>
+        <div class="info-item" id="recTelefoneBox" style="display:none"><span class="info-label">Telefone</span><span class="info-value" id="recTelefone"></span></div>
+        <div class="info-item" id="recEmailBox" style="display:none"><span class="info-label">E-mail</span><span class="info-value" id="recEmail"></span></div>
+      </div>
+      <div class="info-item full-width" id="recDepositoBox" style="display:none; margin-bottom: 20px;"><span class="info-label">Depósito Prévio</span><span class="info-value" id="recDeposito"></span></div>
+      <div class="details-box" id="recDetalhamentosBox" style="display:none"><span class="info-label">Detalhamentos / Observações</span><div class="details-content" id="recDetalhamentos"></div></div>
+      <table class="simple-table notes-table" style="margin-top: 30px;"><thead><tr><th>ANOTAÇÕES</th></tr></thead><tbody><tr><td></td></tr></tbody></table>
+    </div>
+    <div class="receipt-actions">
+      <button class="btn btn-primary" onclick="window.print()"><i class="ph ph-printer"></i> Imprimir</button>
+      <button class="btn btn-secondary" onclick="novoProtocolo()"><i class="ph ph-plus"></i> Novo Protocolo</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script>
+window.TEMPLATES_SERVICO = {
+  "Certidão notarial": {{ template_certidao | tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/cadastrar.js') }}"></script>
+{% endblock %}

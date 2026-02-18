@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultar Protocolo - Sistema Interno</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <style>
+    :root {
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      
+      --bg-body: #f8fafc;
+      --surface: #ffffff;
+      
+      --text-main: #334155;
+      --text-muted: #64748b;
+      
+      --border: #e2e8f0;
+      --border-focus: #2563eb;
+      
+      --radius: 12px;
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-body);
+      /* Mesmo gradiente para consistência */
+      background-image: radial-gradient(at top right, #e0f2fe 0%, transparent 40%), 
+                        radial-gradient(at top left, #f1f5f9 0%, transparent 40%);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      width: 100%;
+      flex: 1;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-bottom: 30px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    /* CARD DE BUSCA (Estilo Centralizado) */
+    .search-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 32px;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .search-header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    
+    .search-header p {
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      font-size: 1rem;
+    }
+
+    .search-box-wrapper {
+      display: flex;
+      gap: 12px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      transition: all 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 4px #eff6ff; }
+
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--accent); color: white; flex-shrink: 0; }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    
+    .btn-secondary { background: white; color: var(--text-main); border: 1px solid var(--border); padding: 10px 20px; font-size: 0.9rem; }
+    .btn-secondary:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+    /* MENSAGENS E RESULTADOS */
+    .msg-box { 
+      padding: 12px; border-radius: var(--radius); 
+      margin-top: 20px; display: none; font-size: 0.95rem; 
+      max-width: 600px; margin-left: auto; margin-right: auto;
+    }
+    .msg-box.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .msg-box.warning { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
+
+    .results { margin-top: 40px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; display: none; }
+    .results.active { display: block; animation: fadeInUp 0.4s ease-out; }
+    
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .results h3 { font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 0.05em; }
+
+    .result-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px; border: 1px solid var(--border); border-radius: var(--radius);
+      margin-bottom: 12px; background: #fff;
+      transition: all 0.2s;
+    }
+    .result-item:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow-md);
+      transform: translateX(4px);
+    }
+
+    .result-info strong {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--primary);
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+    .result-meta { font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+
+    /* Badges de Status */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .status-badge.andamento {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+    }
+
+    .status-badge.finalizado {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+
+    .status-badge.cancelado {
+      background: #f3f4f6;
+      color: #4b5563;
+      border: 1px solid #d1d5db;
+    }
+
+    /* --- COMPROVANTE (Visualização igual ao Cadastrar) --- */
+    #receiptView { display: none; }
+
+    .receipt-paper {
+      background: white; padding: 48px; 
+      border: 1px solid #e2e8f0;
+      box-shadow: var(--shadow-lg); 
+      margin: 0 auto 30px auto;
+      font-family: "Times New Roman", Times, serif; color: #000;
+      max-width: 21cm;
+    }
+    
+    /* Reaproveitando estilos de impressão exatos do cadastrar.html */
+    .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px; }
+    .print-header h2 { font-size: 14pt; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+    .print-header p { font-size: 10pt; margin: 2px 0; }
+    .protocol-title {
+      text-align: center; font-size: 18pt; font-weight: bold;
+      margin: 20px 0; text-transform: uppercase;
+      background-color: #f3f3f3; padding: 8px; border: 1px solid #000;
+    }
+    .simple-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+    .simple-table td, .simple-table th { border: 1px solid #000; padding: 6px 10px; font-size: 11pt; }
+    .handwrite-table .label-col { width: 15%; font-weight: bold; background: #f9f9f9; vertical-align: middle; }
+    .handwrite-table .input-col { height: 45px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+    .info-item { border-bottom: 1px dotted #999; padding-bottom: 4px; }
+    .info-item.full-width { grid-column: span 2; }
+    .info-label { font-weight: bold; font-size: 10pt; display: block; color: #444; text-transform: uppercase; }
+    .info-value { font-size: 12pt; display: block; margin-top: 4px; }
+    #recInteressado { font-weight: bold; }
+    .details-box { margin-top: 20px; border: 1px solid #000; padding: 15px; min-height: 80px; }
+    .notes-table th { background: #f0f0f0; text-align: center; font-weight: bold; text-transform: uppercase; }
+    .notes-table td { height: 200px; vertical-align: top; }
+    
+    .receipt-actions { text-align: center; display: flex; gap: 12px; justify-content: center; }
+
+    /* LOADING E IMPRESSÃO */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(255,255,255,0.8); backdrop-filter: blur(2px); z-index: 999;
+      align-items: center; justify-content: center;
+    }
+    .overlay.active { display: flex; }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid #cbd5e1; border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media print {
+      @page { margin: 1cm; size: A4; }
+      body { background: white; -webkit-print-color-adjust: exact; padding: 0; }
+      .container { padding: 0; max-width: 100%; width: 100%; margin: 0; }
+      #searchView, .receipt-actions, .back-link, .overlay { display: none !important; }
+      #receiptView { display: block !important; }
+      .receipt-paper { border: none; box-shadow: none; padding: 0; margin: 0; width: 100%; max-width: 100%; }
+      .protocol-title, .handwrite-table .label-col, .notes-table th { background-color: #eee !important; -webkit-print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+</div>
+
+<div class="container">
+
+  <div id="searchView">
+    <a href="index.html" class="back-link"><i class="ph ph-arrow-left"></i> Voltar ao menu</a>
+    
+    <div class="search-card">
+      <div class="search-header">
+        <h1><i class="ph ph-magnifying-glass" style="color: var(--accent);"></i> Consultar Protocolo</h1>
+        <p>Busque por número do protocolo, nome do interessado ou documento.</p>
+      </div>
+
+      <div class="search-box-wrapper">
+        <input type="text" id="termoBusca" placeholder="Ex: 2026-001234 ou CPF/Nome" autofocus>
+        <button class="btn btn-primary" onclick="buscarProtocolo()">Buscar</button>
+      </div>
+
+      <div id="searchMsg" class="msg-box"></div>
+      
+      <div class="results" id="resultados">
+        </div>
+    </div>
+  </div>
+
+  <div id="receiptView">
+    <a href="#" class="back-link" onclick="voltarBusca(); return false;"><i class="ph ph-arrow-left"></i> Voltar à consulta</a>
+
+    <div class="receipt-paper">
+      
+      <div class="print-header">
+        <h2>Tabelião de Notas e de Protesto de Letras e Títulos de Itápolis-SP</h2>
+        <p>Rua Barão do Rio Branco, n. 378 – Centro, Itápolis-SP (CEP 14900-057)</p>
+        <p>contato@cartorioitapolis.com.br | (16) 3273 9448</p>
+        <p>www.cartorioitapolis.com.br</p>
+      </div>
+
+      <div class="protocol-title">
+        PROTOCOLO – <span id="recProtocoloTitulo"></span>
+      </div>
+
+      <table class="simple-table handwrite-table">
+        <tr>
+          <td class="label-col">LIVRO</td> <td class="input-col"></td>
+          <td class="label-col">PÁGINA</td> <td class="input-col"></td>
+        </tr>
+      </table>
+
+      <div class="info-grid">
+        <div class="info-item full-width">
+          <span class="info-label">Interessado</span>
+          <span class="info-value" id="recInteressado"></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">CPF / CNPJ</span>
+          <span class="info-value" id="recDocumento"></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Data de Entrada</span>
+          <span class="info-value" id="recData"></span>
+        </div>
+        <div class="info-item full-width" id="recAdvogadoBox" style="display:none">
+          <span class="info-label">Advogado Assessor</span>
+          <span class="info-value" id="recAdvogado"></span>
+        </div>
+        <div class="info-item full-width">
+          <span class="info-label">Serviço Solicitado</span>
+          <span class="info-value" id="recServico"></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Responsável</span>
+          <span class="info-value" id="recResponsavel"></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Status Atual</span>
+          <span class="info-value" id="recStatus"></span>
+        </div>
+        <div class="info-item" id="recTelefoneBox" style="display:none">
+          <span class="info-label">Telefone</span> <span class="info-value" id="recTelefone"></span>
+        </div>
+        <div class="info-item" id="recEmailBox" style="display:none">
+          <span class="info-label">E-mail</span> <span class="info-value" id="recEmail"></span>
+        </div>
+      </div>
+
+      <div class="info-item full-width" id="recDepositoBox" style="display:none; margin-bottom:20px;">
+        <span class="info-label">Depósito Prévio</span>
+        <span class="info-value" id="recDeposito"></span>
+      </div>
+
+      <div class="details-box" id="recDetalhamentosBox" style="display:none">
+        <span class="info-label">Detalhamentos / Observações</span>
+        <div class="details-content" id="recDetalhamentos"></div>
+      </div>
+
+      <table class="simple-table notes-table" style="margin-top: 30px;">
+        <thead><tr><th>ANOTAÇÕES</th></tr></thead>
+        <tbody><tr><td></td></tr></tbody>
+      </table>
+
+    </div>
+
+    <div class="receipt-actions">
+      <button class="btn btn-primary" onclick="window.print()"><i class="ph ph-printer"></i> Imprimir</button>
+      <button class="btn btn-secondary" onclick="voltarBusca()"><i class="ph ph-magnifying-glass"></i> Nova Consulta</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="vendor/marked/marked.umd.js"></script>
+<script>
+  // ... (Cole aqui o script original do seu consultar.html) ...
+  // Para atualizar o estilo do resultado da busca, apenas verifique o trecho onde cria
+  // o HTML dos resultados (linha que contém `div.className = 'result-item';`).
+  // O HTML gerado lá já é compatível com o CSS novo, então deve funcionar direto.
+  // Vou apenas colocar a função de renderização para garantir o visual do botão novo.
+
+  // --- REPLICAÇÃO PARCIAL PARA GARANTIA DE VISUAL ---
+  // (Substitua a parte que gera o HTML do resultado no seu script por esta se quiser ícones nos botões)
+  /*
+  div.innerHTML = `
+    <div class="result-info">
+      <strong>${numProto}</strong>
+      <div class="result-meta">
+         <i class="ph ph-user"></i> ${interessado} &bull; 
+         <i class="ph ph-calendar"></i> ${dataEnt}
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="verComprovante(${proto.id})">
+       <i class="ph ph-eye"></i> Visualizar
+    </button>
+  `;
+  */
+</script>
+
+<script>
+  // ── CONFIGURAÇÃO ──
+  const CONFIG = {
+    baseUrl: 'http://192.168.0.31:8084',
+    token: 'uSLVod80ePappwybTjLQSPyJRxdUO02j',
+    tables: {
+      clientes: 754,
+      protocolo: 755
+    },
+    fields: {
+      protocolo: 'field_7240',
+      interessado: 'field_7241',
+      servico: 'field_7242',
+      responsavel: 'field_7249',
+      dataEntrada: 'field_7250',
+      status: 'field_7252',
+      detalhamentos: 'field_7251',
+      advogado: 'field_7254',
+      depositoPrevio: 'field_7340',
+      clienteNome: 'field_7237',
+      clienteCpf: 'field_7238',
+      clienteCnpj: 'field_7239',
+      clienteTelefone: 'field_7243',
+      clienteEmail: 'field_7244'
+    }
+  };
+
+  function apiHeaders() {
+    return {
+      'Authorization': 'Token ' + CONFIG.token,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  if (window.marked) {
+    marked.use({ gfm: true, breaks: true });
+  }
+  function renderMarkdownInto(el, md) {
+    if (!el) return;
+    md = md || '';
+    if (window.marked) el.innerHTML = marked.parse(md);
+    else el.textContent = md;
+  }
+
+  function formatarDepositoExibicao(v) {
+    if (v === null || v === undefined || v === '') return '';
+    var num = parseFloat(String(v).replace(',', '.'));
+    if (isNaN(num)) return '';
+    var partes = num.toFixed(2).split('.');
+    var intPart = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return 'R$ ' + intPart + ',' + partes[1];
+  }
+
+  document.getElementById('termoBusca').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') buscarProtocolo();
+  });
+
+  window.addEventListener('DOMContentLoaded', function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var protocoloParam = urlParams.get('protocolo');
+
+    if (protocoloParam) {
+      document.getElementById('termoBusca').value = protocoloParam;
+      buscarEExibirProtocolo(protocoloParam);
+    }
+  });
+
+  async function buscarEExibirProtocolo(termo) {
+    var overlay = document.getElementById('overlay');
+    overlay.classList.add('active');
+
+    try {
+      var url = CONFIG.baseUrl + '/api/database/rows/table/' + CONFIG.tables.protocolo + '/?user_field_names=true&filter__field_7240__equal=' + encodeURIComponent(termo) + '&size=1';
+      var resp = await fetch(url, { headers: apiHeaders() });
+      var data = await resp.json();
+
+      if (data.results && data.results.length > 0) {
+        await verComprovante(data.results[0].id);
+      } else {
+        document.getElementById('termoBusca').value = termo;
+        buscarProtocolo();
+      }
+    } catch (e) {
+      console.error(e);
+      mostrarMsg('searchMsg', 'error', 'Erro ao buscar protocolo.');
+    } finally {
+      overlay.classList.remove('active');
+    }
+  }
+
+  async function buscarProtocolo() {
+    const termo = document.getElementById('termoBusca').value.trim();
+    if (!termo) return mostrarMsg('searchMsg', 'error', 'Digite um termo para buscar.');
+
+    const overlay = document.getElementById('overlay');
+    overlay.classList.add('active');
+    esconderMsg('searchMsg');
+
+    const resultadosDiv = document.getElementById('resultados');
+    resultadosDiv.className = 'results';
+    resultadosDiv.innerHTML = '';
+
+    try {
+      let url = `${CONFIG.baseUrl}/api/database/rows/table/${CONFIG.tables.protocolo}/?user_field_names=true&filter__field_7240__contains=${encodeURIComponent(termo)}&size=20`;
+      let resp = await fetch(url, { headers: apiHeaders() });
+      let data = await resp.json();
+      let resultados = data.results || [];
+
+      if (resultados.length === 0) {
+        let clienteIds = [];
+        const termoLimpo = termo.replace(/\D/g, '');
+
+        let urlCli = `${CONFIG.baseUrl}/api/database/rows/table/${CONFIG.tables.clientes}/?user_field_names=true&filter__field_7237__contains=${encodeURIComponent(termo)}&size=20`;
+        let respCli = await fetch(urlCli, { headers: apiHeaders() });
+        let dataCli = await respCli.json();
+        if (dataCli.results) clienteIds.push(...dataCli.results.map(c => c.id));
+
+        if (termoLimpo.length >= 3) {
+          urlCli = `${CONFIG.baseUrl}/api/database/rows/table/${CONFIG.tables.clientes}/?user_field_names=true&filter__field_7238__contains=${encodeURIComponent(termo)}&size=10`;
+          respCli = await fetch(urlCli, { headers: apiHeaders() });
+          dataCli = await respCli.json();
+          if (dataCli.results) clienteIds.push(...dataCli.results.map(c => c.id));
+
+          urlCli = `${CONFIG.baseUrl}/api/database/rows/table/${CONFIG.tables.clientes}/?user_field_names=true&filter__field_7239__contains=${encodeURIComponent(termo)}&size=10`;
+          respCli = await fetch(urlCli, { headers: apiHeaders() });
+          dataCli = await respCli.json();
+          if (dataCli.results) clienteIds.push(...dataCli.results.map(c => c.id));
+        }
+
+        const idsUnicos = [...new Set(clienteIds)];
+        for (const cid of idsUnicos) {
+          url = `${CONFIG.baseUrl}/api/database/rows/table/${CONFIG.tables.protocolo}/?user_field_names=true&filter__field_7241__link_row_has=${cid}&size=20`;
+          resp = await fetch(url, { headers: apiHeaders() });
+          data = await resp.json();
+          if (data.results) resultados.push(...data.results);
+        }
+
+        const vistos = new Set();
+        resultados = resultados.filter(r => {
+          if (vistos.has(r.id)) return false;
+          vistos.add(r.id);
+          return true;
+        });
+      }
+
+      if (resultados.length === 0) {
+        mostrarMsg('searchMsg', 'warning', 'Nenhum protocolo encontrado.');
+        return;
+      }
+
+      resultadosDiv.innerHTML = `<h3 style="font-size:0.8rem; margin-bottom:12px; color:#64748b; font-weight:600">${resultados.length} resultado(s) encontrado(s)</h3>`;
+      
+      resultados.forEach(proto => {
+        const numProto = proto['Protocolo'] || '—';
+        const interessado = (proto['Interessado'] || []).map(i => i.value).join(', ') || '—';
+        const dataEnt = proto['Data entrada'] ? proto['Data entrada'].split('-').reverse().join('/') : '—';
+
+        // Status com badge colorido
+        const statusObj = proto['Status Atual'] || proto['Status'];
+        const statusTexto = statusObj ? (statusObj.value || statusObj) : 'Em andamento';
+        let statusClass = 'andamento';
+        let statusIcon = 'ph-clock';
+
+        if (statusTexto.toLowerCase().includes('finalizado')) {
+          statusClass = 'finalizado';
+          statusIcon = 'ph-check-circle';
+        } else if (statusTexto.toLowerCase().includes('cancelado')) {
+          statusClass = 'cancelado';
+          statusIcon = 'ph-x-circle';
+        }
+
+        const div = document.createElement('div');
+        div.className = 'result-item';
+        div.innerHTML = `
+          <div class="result-info">
+            <strong>
+              ${numProto}
+              <span class="status-badge ${statusClass}">
+                <i class="${statusIcon}"></i> ${statusTexto}
+              </span>
+            </strong>
+            <div class="result-meta">
+               <i class="ph ph-user"></i> ${interessado} &bull;
+               <i class="ph ph-calendar-blank"></i> ${dataEnt}
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="verComprovante(${proto.id})">
+             <i class="ph ph-eye"></i> Visualizar
+          </button>
+        `;
+        resultadosDiv.appendChild(div);
+      });
+      resultadosDiv.className = 'results active';
+
+    } catch (e) {
+      console.error(e);
+      mostrarMsg('searchMsg', 'error', 'Erro de conexão com o servidor.');
+    } finally {
+      overlay.classList.remove('active');
+    }
+  }
+
+  async function verComprovante(idProtocolo) {
+    const overlay = document.getElementById('overlay');
+    overlay.classList.add('active');
+
+    try {
+      let url = `${CONFIG.baseUrl}/api/database/rows/table/${CONFIG.tables.protocolo}/${idProtocolo}/?user_field_names=false`;
+      let resp = await fetch(url, { headers: apiHeaders() });
+      if(!resp.ok) throw new Error("Erro ao buscar protocolo");
+      let proto = await resp.json();
+
+      let nomeCliente = '—';
+      let docCliente = '—';
+      let telCliente = '';
+      let emailCliente = '';
+
+      const interessados = proto[CONFIG.fields.interessado];
+      if (interessados && interessados.length > 0) {
+        const idCliente = interessados[0].id;
+        const urlCli = `${CONFIG.baseUrl}/api/database/rows/table/${CONFIG.tables.clientes}/${idCliente}/?user_field_names=false`;
+        const respCli = await fetch(urlCli, { headers: apiHeaders() });
+        const cli = await respCli.json();
+        
+        nomeCliente = cli[CONFIG.fields.clienteNome] || '—';
+        docCliente = cli[CONFIG.fields.clienteCpf] || cli[CONFIG.fields.clienteCnpj] || '—';
+        telCliente = cli[CONFIG.fields.clienteTelefone] || '';
+        emailCliente = cli[CONFIG.fields.clienteEmail] || '';
+      }
+
+      let nomeAdvogado = '';
+      const advogados = proto[CONFIG.fields.advogado];
+      if (advogados && advogados.length > 0) {
+        const idAdv = (typeof advogados[0] === 'object' && advogados[0].id) ? advogados[0].id : advogados[0];
+        const urlAdv = `${CONFIG.baseUrl}/api/database/rows/table/${CONFIG.tables.clientes}/${idAdv}/?user_field_names=false`;
+        const respAdv = await fetch(urlAdv, { headers: apiHeaders() });
+        const adv = await respAdv.json();
+        nomeAdvogado = adv[CONFIG.fields.clienteNome] || '';
+      }
+
+      const numProto = proto[CONFIG.fields.protocolo] || '—';
+      document.getElementById('recProtocoloTitulo').textContent = numProto;
+      
+      document.getElementById('recInteressado').textContent = nomeCliente;
+      const boxAdv = document.getElementById('recAdvogadoBox');
+      if (nomeAdvogado) {
+        document.getElementById('recAdvogado').textContent = nomeAdvogado;
+        boxAdv.style.display = 'block';
+      } else {
+        boxAdv.style.display = 'none';
+      }
+      document.getElementById('recDocumento').textContent = docCliente;
+      
+      const dataRaw = proto[CONFIG.fields.dataEntrada];
+      const dataFormatada = dataRaw ? dataRaw.split('-').reverse().join('/') : '—';
+      document.getElementById('recData').textContent = dataFormatada;
+      
+      const servicoList = proto[CONFIG.fields.servico] || [];
+      const servico = servicoList.map(s => s.value).join(', ') || '—';
+      document.getElementById('recServico').textContent = servico;
+      
+      const respList = proto[CONFIG.fields.responsavel] || [];
+      const respNome = respList.map(r => r.name).join(', ') || '—';
+      document.getElementById('recResponsavel').textContent = respNome;
+      
+      const statusObj = proto[CONFIG.fields.status];
+      document.getElementById('recStatus').textContent = statusObj ? statusObj.value : '—';
+
+      const depositoRaw = proto[CONFIG.fields.depositoPrevio];
+      const boxDeposito = document.getElementById('recDepositoBox');
+      if (depositoRaw !== null && depositoRaw !== undefined && depositoRaw !== '') {
+        document.getElementById('recDeposito').textContent = formatarDepositoExibicao(depositoRaw);
+        boxDeposito.style.display = 'block';
+      } else {
+        boxDeposito.style.display = 'none';
+      }
+
+      const detalhes = proto[CONFIG.fields.detalhamentos];
+      const boxDetalhes = document.getElementById('recDetalhamentosBox');
+      const detEl = document.getElementById('recDetalhamentos');
+      if (detalhes && detalhes.trim()) {
+        renderMarkdownInto(detEl, detalhes);
+        boxDetalhes.style.display = 'block';
+      } else {
+        detEl.innerHTML = '';
+        boxDetalhes.style.display = 'none';
+      }
+
+      const boxTel = document.getElementById('recTelefoneBox');
+      if(telCliente) {
+        document.getElementById('recTelefone').textContent = telCliente;
+        boxTel.style.display = 'block';
+      } else {
+        boxTel.style.display = 'none';
+      }
+
+      const boxEmail = document.getElementById('recEmailBox');
+      if(emailCliente) {
+        document.getElementById('recEmail').textContent = emailCliente;
+        boxEmail.style.display = 'block';
+      } else {
+        boxEmail.style.display = 'none';
+      }
+
+      document.getElementById('searchView').style.display = 'none';
+      document.getElementById('receiptView').style.display = 'block';
+
+    } catch(e) {
+      console.error(e);
+      alert('Não foi possível carregar os dados do protocolo.');
+    } finally {
+      overlay.classList.remove('active');
+    }
+  }
+
+  function voltarBusca() {
+    document.getElementById('receiptView').style.display = 'none';
+    document.getElementById('searchView').style.display = 'block';
+  }
+
+  function mostrarMsg(id, tipo, txt) {
+    const el = document.getElementById(id);
+    el.className = `msg-box ${tipo}`;
+    el.textContent = txt;
+    el.style.display = 'block';
+  }
+
+  function esconderMsg(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+</script>
+
+</body>
+</html>

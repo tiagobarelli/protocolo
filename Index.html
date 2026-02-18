@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Protocolos</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <style>
+    :root {
+      /* Paleta de Cores Corporativa Moderna */
+      --primary: #0f172a;       /* Azul noturno quase preto */
+      --primary-hover: #1e293b; 
+      --accent: #2563eb;        /* Azul royal para destaques */
+      --accent-soft: #eff6ff;   /* Fundo azul muito claro */
+      
+      --bg-body: #f8fafc;       /* Cinza muito claro (Slate 50) */
+      --surface: #ffffff;
+      
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      
+      --border: #e2e8f0;
+      --radius: 12px;
+      
+      /* Sombras Suaves (Elevation) */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-body);
+      /* Sutil gradiente no fundo para evitar o visual "chapado" */
+      background-image: radial-gradient(at top right, #e0f2fe 0%, transparent 40%), 
+                        radial-gradient(at top left, #f1f5f9 0%, transparent 40%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 480px;
+      width: 100%;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    /* Animação suave de entrada */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+      margin-bottom: 32px;
+      text-align: center; /* Centralizado fica mais elegante neste layout */
+    }
+
+    .header-logo {
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin: 0 auto 16px auto;
+      box-shadow: var(--shadow-md);
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.025em;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 8px;
+    }
+
+    .card-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .action-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 24px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Efeito de Hover sofisticado */
+    .action-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent);
+    }
+
+    /* Detalhe visual na borda esquerda ao passar o mouse */
+    .action-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .action-card:hover::before {
+      opacity: 1;
+    }
+
+    .icon-box {
+      width: 50px;
+      height: 50px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .action-card:hover .icon-box {
+      background: var(--accent);
+      color: white;
+    }
+
+    .card-content h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--text-main);
+    }
+
+    .card-content p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .arrow-icon {
+      margin-left: auto;
+      color: var(--border);
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .action-card:hover .arrow-icon {
+      color: var(--accent);
+      transform: translateX(4px);
+    }
+    
+    /* Rodapé discreto */
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div class="header">
+    <div class="header-logo">
+      <i class="ph ph-stack"></i>
+    </div>
+    <h1>Portal de Protocolos</h1>
+    <p>Selecione uma operação para continuar</p>
+  </div>
+
+  <div class="card-grid">
+    <a href="cadastrar.html" class="action-card">
+      <div class="icon-box">
+        <i class="ph ph-plus-circle"></i>
+      </div>
+      <div class="card-content">
+        <h2>Novo Protocolo</h2>
+        <p>Registrar entrada de escritura ou certidão no sistema.</p>
+      </div>
+      <div class="arrow-icon">
+        <i class="ph ph-caret-right"></i>
+      </div>
+    </a>
+
+    <a href="consultar.html" class="action-card">
+      <div class="icon-box">
+        <i class="ph ph-magnifying-glass"></i>
+      </div>
+      <div class="card-content">
+        <h2>Consultar Situação</h2>
+        <p>Buscar status, visualizar histórico e reimprimir comprovantes.</p>
+      </div>
+      <div class="arrow-icon">
+        <i class="ph ph-caret-right"></i>
+      </div>
+    </a>
+    
+    <a href="relatorios.html" class="action-card" style="opacity: 0.7;">
+      <div class="icon-box" style="background: #f1f5f9; color: #64748b;">
+        <i class="ph ph-chart-bar"></i>
+      </div>
+      <div class="card-content">
+        <h2>Relatórios</h2>
+        <p>Acesso restrito à gestão.</p>
+      </div>
+    </a>
+  </div>
+
+  <div class="footer">
+    Sistema Protocolo v. 1.0 &bull; Servidor Ub-24
+  </div>
+
+</div>
+
+</body>
+</html>

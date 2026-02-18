@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Usuários — Administração{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <a href="{{ url_for('main.index') }}" class="back-link">
+    <i class="ph ph-arrow-left"></i> Voltar ao menu
+  </a>
+
+  <div class="page-header">
+    <h1><i class="ph ph-users-three" style="color: var(--accent);"></i> Gerenciamento de Usuários</h1>
+    <p>Cadastre, edite e gerencie os usuários do sistema.</p>
+  </div>
+
+  <button type="button" class="btn btn-primary" onclick="toggleNovoForm()">
+    <i class="ph ph-plus"></i> Novo Usuário
+  </button>
+
+  <!-- Formulário de criação (oculto por padrão) -->
+  <div class="card form-card" id="formNovo" style="display: none;">
+    <div class="section-title"><i class="ph ph-user-plus"></i> Novo Usuário</div>
+    <form method="post" action="{{ url_for('admin.usuarios_criar') }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="novo_nome">Nome</label>
+          <input type="text" id="novo_nome" name="nome" required placeholder="Nome completo">
+        </div>
+        <div class="form-group">
+          <label for="novo_email">E-mail</label>
+          <input type="email" id="novo_email" name="email" required placeholder="usuario@exemplo.com">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group small">
+          <label for="novo_perfil">Perfil</label>
+          <select id="novo_perfil" name="perfil" required>
+            <option value="escrevente">Escrevente</option>
+            <option value="administrador">Administrador</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="novo_senha">Senha</label>
+          <input type="password" id="novo_senha" name="senha" required minlength="6" placeholder="Mínimo 6 caracteres">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="toggleNovoForm()">Cancelar</button>
+        <button type="submit" class="btn btn-primary"><i class="ph ph-check"></i> Criar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabela de usuários -->
+  <div class="card" style="margin-top: 20px; padding: 0; overflow: hidden;">
+    <div class="table-wrapper">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Perfil</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ u.nome }}</td>
+            <td>{{ u.email }}</td>
+            <td><span class="badge badge-{{ u.perfil }}">{{ u.perfil | capitalize }}</span></td>
+            <td>
+              {% if u.ativo %}
+                <span class="badge badge-ativo">Ativo</span>
+              {% else %}
+                <span class="badge badge-inativo">Inativo</span>
+              {% endif %}
+            </td>
+            <td class="actions">
+              <button type="button" class="btn-icon" title="Editar" onclick="toggleEditForm({{ u.id }})">
+                <i class="ph ph-pencil-simple"></i>
+              </button>
+              <button type="button" class="btn-icon" title="Alterar senha" onclick="toggleSenhaForm({{ u.id }})">
+                <i class="ph ph-key"></i>
+              </button>
+            </td>
+          </tr>
+          <!-- Linha de edição inline -->
+          <tr class="edit-row" id="edit-{{ u.id }}" style="display: none;">
+            <td colspan="5">
+              <form method="post" action="{{ url_for('admin.usuarios_editar', user_id=u.id) }}">
+                <div class="inline-form">
+                  <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" name="nome" value="{{ u.nome }}" required>
+                  </div>
+                  <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" name="email" value="{{ u.email }}" required>
+                  </div>
+                  <div class="form-group small">
+                    <label>Perfil</label>
+                    <select name="perfil">
+                      <option value="escrevente" {{ 'selected' if u.perfil == 'escrevente' }}>Escrevente</option>
+                      <option value="administrador" {{ 'selected' if u.perfil == 'administrador' }}>Administrador</option>
+                    </select>
+                  </div>
+                  <label class="checkbox-label">
+                    <input type="checkbox" name="ativo" value="1" {{ 'checked' if u.ativo }}> Ativo
+                  </label>
+                  <div class="btn-group">
+                    <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEditForm({{ u.id }})">Cancelar</button>
+                  </div>
+                </div>
+              </form>
+            </td>
+          </tr>
+          <!-- Linha de alteração de senha -->
+          <tr class="edit-row" id="senha-{{ u.id }}" style="display: none;">
+            <td colspan="5">
+              <form method="post" action="{{ url_for('admin.usuarios_senha', user_id=u.id) }}">
+                <div class="inline-form">
+                  <div class="form-group">
+                    <label>Nova senha para {{ u.nome }}</label>
+                    <input type="password" name="nova_senha" required minlength="6" placeholder="Mínimo 6 caracteres">
+                  </div>
+                  <div class="form-group">
+                    <label>Confirmar senha</label>
+                    <input type="password" name="confirmar_senha" required minlength="6" placeholder="Repita a senha">
+                  </div>
+                  <div class="btn-group">
+                    <button type="submit" class="btn btn-primary btn-sm">Alterar Senha</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSenhaForm({{ u.id }})">Cancelar</button>
+                  </div>
+                </div>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not users %}
+          <tr>
+            <td colspan="5" class="empty-state">Nenhum usuário cadastrado além do master.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin_usuarios.js') }}"></script>
+{% endblock %}

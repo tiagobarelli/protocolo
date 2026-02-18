@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Portal de Protocolos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Hamburger (fallback mobile) -->
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i class="ph ph-stack"></i></div>
+      <h1>Protocolos</h1>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('main.index') }}" class="nav-item active">
+        <i class="ph ph-house"></i> Painel
+      </a>
+
+      {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
+      <a href="{{ url_for('main.cadastrar') }}" class="nav-item">
+        <i class="ph ph-plus-circle"></i> Novo Protocolo
+      </a>
+      {% endif %}
+
+      {% if current_user.perfil in ['master', 'administrador'] %}
+      <a href="{{ url_for('main.consultar') }}" class="nav-item">
+        <i class="ph ph-magnifying-glass"></i> Consultar
+      </a>
+      <a href="{{ url_for('main.relatorios') }}" class="nav-item">
+        <i class="ph ph-chart-bar"></i> Relatórios
+      </a>
+      {% endif %}
+
+      {% if current_user.perfil == 'master' %}
+      <a href="{{ url_for('admin.usuarios') }}" class="nav-item">
+        <i class="ph ph-users-three"></i> Usuários
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <span class="user-info"><i class="ph ph-user"></i> {{ current_user.nome }}</span>
+      <a href="{{ url_for('auth.logout') }}"><i class="ph ph-sign-out"></i> Sair</a>
+    </div>
+  </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="main-content">
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label for="filtroResponsavel">Responsável</label>
+        <select id="filtroResponsavel">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filtroStatus">Status</label>
+        <select id="filtroStatus">
+          <option value="Em andamento" selected>Em andamento</option>
+          <option value="">Todos</option>
+          <option value="Finalizado">Finalizado</option>
+          <option value="Cancelado">Cancelado</option>
+        </select>
+      </div>
+      <div class="filter-summary" id="filterSummary"></div>
+    </div>
+
+    <div class="protocol-grid" id="protocolGrid"></div>
+
+    <div class="loading-state" id="loadingState">
+      <div class="spinner"></div>
+      Carregando protocolos...
+    </div>
+
+    <div class="empty-state" id="emptyState" style="display: none;">
+      <i class="ph ph-folder-open"></i>
+      Nenhum protocolo encontrado para os filtros selecionados.
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Protocolo — Detalhe{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/protocolo.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+</div>
+
+<div class="container">
+  <a href="{{ url_for('main.index') }}" class="back-link">
+    <i class="ph ph-arrow-left"></i> Voltar ao painel
+  </a>
+
+  <!-- Cabeçalho -->
+  <div class="proto-header">
+    <h1 id="protoNumero">Carregando...</h1>
+    <span class="status-badge" id="protoBadge"></span>
+  </div>
+
+  <!-- Dados do Protocolo -->
+  <div class="card">
+    <div class="card-title"><i class="ph ph-file-text"></i> Informações do Protocolo</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">Interessado</div>
+        <div class="info-value destaque" id="infoInteressado">—</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Documento (CPF/CNPJ)</div>
+        <div class="info-value" id="infoDocumento">—</div>
+      </div>
+      <div class="info-item" id="infoAdvogadoRow" style="display: none;">
+        <div class="info-label">Advogado</div>
+        <div class="info-value" id="infoAdvogado">—</div>
+      </div>
+      <div class="info-item" id="infoOabRow" style="display: none;">
+        <div class="info-label">OAB</div>
+        <div class="info-value" id="infoOab">—</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Serviço</div>
+        <div class="info-value" id="infoServico">—</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Responsável</div>
+        <div class="info-value" id="infoResponsavel">—</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Data de Entrada</div>
+        <div class="info-value" id="infoDataEntrada">—</div>
+      </div>
+      <div class="info-item" id="infoAgendadoRow" style="display: none;">
+        <div class="info-label">Agendado para</div>
+        <div class="info-value" id="infoAgendado">—</div>
+      </div>
+      <div class="info-item" id="infoDepositoRow" style="display: none;">
+        <div class="info-label">Depósito Prévio</div>
+        <div class="info-value" id="infoDeposito">—</div>
+      </div>
+      <div class="info-item" id="infoTelefoneRow" style="display: none;">
+        <div class="info-label">Telefone</div>
+        <div class="info-value" id="infoTelefone">—</div>
+      </div>
+      <div class="info-item" id="infoEmailRow" style="display: none;">
+        <div class="info-label">E-mail</div>
+        <div class="info-value" id="infoEmail">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalhamentos (markdown) -->
+  <div class="card" id="infoDetalhamentosRow" style="display: none;">
+    <div class="card-title"><i class="ph ph-text-align-left"></i> Detalhamentos</div>
+    <div class="detalhamentos-content" id="infoDetalhamentos"></div>
+  </div>
+
+  <!-- Andamento (editável) -->
+  <div class="card andamento-card">
+    <div class="card-title"><i class="ph ph-pencil-line"></i> Andamento</div>
+    <textarea id="andamentoTexto" placeholder="Registre aqui o andamento do protocolo..."></textarea>
+    <div class="btn-row">
+      <button type="button" class="btn btn-primary" id="btnSalvarAndamento">
+        <i class="ph ph-floppy-disk"></i> Salvar Andamento
+      </button>
+      <div class="msg-box" id="andamentoMsg"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script>window.PROTOCOLO_ID = {{ protocolo_id }};</script>
+<script src="{{ url_for('static', filename='js/protocolo.js') }}"></script>
+{% endblock %}
