@@ -33,6 +33,13 @@ def consultar():
     return render_template("consultar.html")
 
 
+@main_bp.route("/clientes")
+@login_required
+@perfil_required("master", "administrador")
+def clientes():
+    return render_template("clientes.html")
+
+
 @main_bp.route("/relatorios")
 @login_required
 @perfil_required("master", "administrador")

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Gestão de Clientes - Sistema Interno{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/clientes.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+<div class="container">
+  <a href="{{ url_for('main.index') }}" class="back-link">
+    <i class="ph ph-arrow-left"></i> Voltar ao menu
+  </a>
+
+  <div class="page-header">
+    <h1><i class="ph ph-address-book" style="color: var(--accent);"></i> Gestão de Clientes</h1>
+    <p>Busque, cadastre ou edite clientes por CPF, CNPJ ou nome.</p>
+  </div>
+
+  <!-- ── BUSCA ── -->
+  <div class="card" id="buscaCard">
+    <div class="search-bar">
+      <div class="autocomplete-wrapper" style="flex:1;">
+        <input type="text" id="buscaInput"
+               placeholder="Busque por CPF, CNPJ ou nome do cliente"
+               autocomplete="off">
+        <div class="autocomplete-list" id="buscaAutoList"></div>
+      </div>
+      <button type="button" class="btn btn-secondary" id="btnBuscar">
+        <i class="ph ph-magnifying-glass"></i> Buscar
+      </button>
+      <button type="button" class="btn btn-primary" id="btnNovoCliente">
+        <i class="ph ph-user-plus"></i> Novo Cliente
+      </button>
+    </div>
+  </div>
+
+  <!-- ── FORMULÁRIO ── -->
+  <div class="card" id="formCard" style="display:none;">
+    <div id="formMsg" class="msg-box"></div>
+
+    <!-- Dados Pessoais -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-user"></i> Dados Pessoais</div>
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="nomeInput">Nome Completo <span class="hint">*</span></label>
+          <input type="text" id="nomeInput" placeholder="Ex: João da Silva" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cpfInput">CPF</label>
+          <input type="text" id="cpfInput" placeholder="000.000.000-00" maxlength="14" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="cnpjInput">CNPJ</label>
+          <input type="text" id="cnpjInput" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="rgInput">RG <span class="hint">(Opcional)</span></label>
+          <input type="text" id="rgInput" placeholder="Ex: 12.345.678-9" autocomplete="off">
+        </div>
+        <div class="form-group small">
+          <label for="nascimentoInput">Data de Nascimento</label>
+          <input type="date" id="nascimentoInput">
+        </div>
+        <div class="form-group">
+          <label for="profissaoInput">Profissão <span class="hint">(Opcional)</span></label>
+          <input type="text" id="profissaoInput" placeholder="Ex: Advogado" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado Civil -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-heart"></i> Estado Civil</div>
+      <div class="form-row">
+        <div class="form-group small">
+          <label for="estadoCivilSelect">Estado Civil</label>
+          <select id="estadoCivilSelect">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="conjugeInput">Cônjuge <span class="hint">— buscar na base</span></label>
+          <div class="autocomplete-wrapper">
+            <input type="text" id="conjugeInput"
+                   placeholder="Comece a digitar o nome..." autocomplete="off">
+            <div class="autocomplete-list" id="conjugeAutoList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contato -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-phone"></i> Contato</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="telefoneInput">Telefone <span class="hint">(Opcional)</span></label>
+          <input type="text" id="telefoneInput" placeholder="(00) 00000-0000" maxlength="15" autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label for="emailInput">E-mail <span class="hint">(Opcional)</span></label>
+          <input type="text" id="emailInput" placeholder="exemplo@email.com" autocomplete="email">
+        </div>
+      </div>
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="enderecoTextarea">Endereço <span class="hint">(Opcional)</span></label>
+          <textarea id="enderecoTextarea" placeholder="Rua, número, bairro, cidade..." rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Informações Complementares -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-note-pencil"></i> Informações Complementares</div>
+      <div class="form-row">
+        <div class="form-group small">
+          <label for="oabInput">OAB <span class="hint">(se advogado)</span></label>
+          <input type="text" id="oabInput" placeholder="Ex: 123456/SP" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-row single">
+        <div class="form-group">
+          <label>Outros / Anotações <span class="hint">(Markdown)</span></label>
+          <div class="md-grid">
+            <div class="md-editor-container">
+              <div class="md-toolbar">
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('list')" title="Lista"><i class="ph ph-list-bullets"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('heading')" title="Título"><i class="ph ph-text-h-two"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('code')" title="Código"><i class="ph ph-code"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('checklist')" title="Checklist"><i class="ph ph-check-square"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('hr')" title="Separador"><i class="ph ph-minus"></i></button>
+              </div>
+              <textarea id="outrosTextarea" placeholder="Observações adicionais..." autocomplete="off"></textarea>
+            </div>
+            <div id="outrosPreview" class="md-preview" aria-live="polite">
+              <div class="md-placeholder">Pré-visualização...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Protocolos Vinculados (readonly) -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-stack"></i> Protocolos Vinculados</div>
+      <div class="protocols-list" id="protocolosList">
+        <div class="protocols-empty">Nenhum protocolo vinculado.</div>
+      </div>
+    </div>
+
+    <!-- Botões -->
+    <div class="btn-row">
+      <button type="button" class="btn btn-secondary" id="btnLimpar">
+        <i class="ph ph-eraser"></i> Limpar
+      </button>
+      <button type="button" class="btn btn-primary" id="btnSalvar">
+        <i class="ph ph-floppy-disk"></i> Salvar Alterações
+      </button>
+    </div>
+  </div><!-- /#formCard -->
+
+</div><!-- /.container -->
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/clientes.js') }}"></script>
+{% endblock %}
