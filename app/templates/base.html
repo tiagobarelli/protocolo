@@ -64,6 +64,16 @@
   <main>
     {% block content %}{% endblock %}
   </main>
+  <script>
+function toggleNavGroup(btn) {
+  var group = btn.parentElement;
+  if (group.classList.contains('open')) {
+    group.classList.remove('open');
+  } else {
+    group.classList.add('open');
+  }
+}
+</script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

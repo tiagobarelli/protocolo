@@ -101,6 +101,86 @@ main { max-width: none; padding: 0; margin: 0; }
 
 .nav-item i { font-size: 1.15rem; }
 
+/* ==================== NAV GROUP (submenu accordion) ==================== */
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.nav-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-group-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nav-group.open .nav-group-toggle {
+  color: #fff;
+}
+
+.nav-group-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-group-label i {
+  font-size: 1.15rem;
+}
+
+.nav-group-arrow {
+  font-size: 0.85rem;
+  transition: transform 0.25s ease;
+}
+
+.nav-group.open .nav-group-arrow {
+  transform: rotate(180deg);
+}
+
+/* Sub-itens: ocultos por padrão, visíveis quando .open */
+.nav-group-items {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-group.open .nav-group-items {
+  max-height: 200px; /* valor suficiente para 3 sub-itens */
+}
+
+/* Sub-itens com recuo */
+.nav-item.sub {
+  padding-left: 38px;
+  font-size: 0.85rem;
+}
+
+.nav-item.sub i {
+  font-size: 1rem;
+}
+
+.nav-item.sub.active {
+  padding-left: 35px; /* compensa o border-left de 3px */
+}
+
 .sidebar-footer {
   padding: 16px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);

@@ -38,15 +38,25 @@
       <a href="{{ url_for('main.clientes') }}" class="nav-item">
         <i class="ph ph-address-book"></i> Clientes
       </a>
-      <a href="{{ url_for('main.controle') }}" class="nav-item">
-        <i class="ph ph-book-open"></i> Controle
-      </a>
-      <a href="{{ url_for('main.retificacoes') }}" class="nav-item">
-        <i class="ph ph-note-pencil"></i> Retificações
-      </a>
-      <a href="{{ url_for('main.substabelecimentos') }}" class="nav-item">
-        <i class="ph ph-swap"></i> Substabelecimentos
-      </a>
+      <!-- Submenu: Gestão de Atos -->
+      {% set gestao_atos_active = request.endpoint in ['main.controle', 'main.retificacoes', 'main.substabelecimentos'] %}
+      <div class="nav-group {% if gestao_atos_active %}open{% endif %}">
+        <button type="button" class="nav-group-toggle" onclick="toggleNavGroup(this)">
+          <span class="nav-group-label"><i class="ph ph-folders"></i> Gestão de Atos</span>
+          <i class="ph ph-caret-down nav-group-arrow"></i>
+        </button>
+        <div class="nav-group-items">
+          <a href="{{ url_for('main.controle') }}" class="nav-item sub {% if request.endpoint == 'main.controle' %}active{% endif %}">
+            <i class="ph ph-book-open"></i> Controle
+          </a>
+          <a href="{{ url_for('main.retificacoes') }}" class="nav-item sub {% if request.endpoint == 'main.retificacoes' %}active{% endif %}">
+            <i class="ph ph-note-pencil"></i> Retificações
+          </a>
+          <a href="{{ url_for('main.substabelecimentos') }}" class="nav-item sub {% if request.endpoint == 'main.substabelecimentos' %}active{% endif %}">
+            <i class="ph ph-swap"></i> Substabelecimentos
+          </a>
+        </div>
+      </div>
       <a href="{{ url_for('main.relatorios') }}" class="nav-item">
         <i class="ph ph-chart-bar"></i> Relatórios
       </a>
