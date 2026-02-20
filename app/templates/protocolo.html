@@ -11,14 +11,27 @@
 </div>
 
 <div class="container">
+  {% if request.args.get('origem') == 'consulta' %}
+  <a href="{{ url_for('main.consultar') }}" class="back-link">
+    <i class="ph ph-arrow-left"></i> Voltar à consulta
+  </a>
+  {% else %}
   <a href="{{ url_for('main.index') }}" class="back-link">
     <i class="ph ph-arrow-left"></i> Voltar ao painel
   </a>
+  {% endif %}
 
   <!-- Cabeçalho -->
   <div class="proto-header">
     <h1 id="protoNumero">Carregando...</h1>
     <span class="status-badge" id="protoBadge"></span>
+  </div>
+
+  <!-- Barra de ações -->
+  <div class="action-bar">
+    <a href="{{ url_for('main.protocolo_imprimir', protocolo_id=protocolo_id) }}" class="btn btn-outline">
+      <i class="ph ph-printer"></i> Imprimir Comprovante
+    </a>
   </div>
 
   <!-- Dados do Protocolo -->

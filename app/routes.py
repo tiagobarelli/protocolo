@@ -54,3 +54,10 @@ def protocolo_detalhe(protocolo_id):
     return render_template("protocolo.html", protocolo_id=protocolo_id)
 
 
+@main_bp.route("/protocolo/<int:protocolo_id>/imprimir")
+@login_required
+@perfil_required("master", "administrador", "escrevente")
+def protocolo_imprimir(protocolo_id):
+    return render_template("imprimir.html", protocolo_id=protocolo_id)
+
+

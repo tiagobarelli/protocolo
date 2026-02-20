@@ -23,25 +23,6 @@ var API_BASE = '/api/baserow';
     return { 'Content-Type': 'application/json' };
   }
 
-  if (window.marked) {
-    marked.use({ gfm: true, breaks: true });
-  }
-  function renderMarkdownInto(el, md) {
-    if (!el) return;
-    md = md || '';
-    if (window.marked) el.innerHTML = marked.parse(md);
-    else el.textContent = md;
-  }
-
-  function formatarDepositoExibicao(v) {
-    if (v === null || v === undefined || v === '') return '';
-    var num = parseFloat(String(v).replace(',', '.'));
-    if (isNaN(num)) return '';
-    var partes = num.toFixed(2).split('.');
-    var intPart = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return 'R$ ' + intPart + ',' + partes[1];
-  }
-
   document.getElementById('termoBusca').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') buscarProtocolo();
   });
@@ -63,7 +44,8 @@ var API_BASE = '/api/baserow';
       var resp = await fetch(url, { headers: apiHeaders() });
       var data = await resp.json();
       if (data.results && data.results.length > 0) {
-        await verComprovante(data.results[0].id);
+        window.location.href = '/protocolo/' + data.results[0].id + '?origem=consulta';
+        return;
       } else {
         document.getElementById('termoBusca').value = termo;
         buscarProtocolo();
@@ -166,7 +148,7 @@ var API_BASE = '/api/baserow';
         }
         var div = document.createElement('div');
         div.className = 'result-item';
-        div.innerHTML = '<div class="result-info"><strong>' + numProto + '<span class="status-badge ' + statusClass + '"><i class="' + statusIcon + '"></i> ' + statusTexto + '</span></strong><div class="result-meta"><i class="ph ph-user"></i> ' + interessado + ' &bull; <i class="ph ph-calendar-blank"></i> ' + dataEnt + '</div></div><button class="btn btn-secondary" onclick="verComprovante(' + proto.id + ')"><i class="ph ph-eye"></i> Visualizar</button>';
+        div.innerHTML = '<div class="result-info"><strong>' + numProto + '<span class="status-badge ' + statusClass + '"><i class="' + statusIcon + '"></i> ' + statusTexto + '</span></strong><div class="result-meta"><i class="ph ph-user"></i> ' + interessado + ' &bull; <i class="ph ph-calendar-blank"></i> ' + dataEnt + '</div></div><a href="/protocolo/' + proto.id + '?origem=consulta" class="btn btn-secondary"><i class="ph ph-eye"></i> Visualizar</a>';
         resultadosDiv.appendChild(div);
       }
       resultadosDiv.className = 'results active';
@@ -176,111 +158,6 @@ var API_BASE = '/api/baserow';
     } finally {
       overlay.classList.remove('active');
     }
-  }
-
-  async function verComprovante(idProtocolo) {
-    var overlay = document.getElementById('overlay');
-    overlay.classList.add('active');
-    try {
-      var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/' + idProtocolo + '/?user_field_names=false';
-      var resp = await fetch(url, { headers: apiHeaders() });
-      if (!resp.ok) throw new Error('Erro ao buscar protocolo');
-      var proto = await resp.json();
-      var nomeCliente = '—';
-      var docCliente = '—';
-      var telCliente = '';
-      var emailCliente = '';
-      var interessados = proto[CONFIG.fields.interessado];
-      if (interessados && interessados.length > 0) {
-        var idCliente = interessados[0].id;
-        var urlCli = API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' + idCliente + '/?user_field_names=false';
-        var respCli = await fetch(urlCli, { headers: apiHeaders() });
-        var cli = await respCli.json();
-        nomeCliente = cli[CONFIG.fields.clienteNome] || '—';
-        docCliente = cli[CONFIG.fields.clienteCpf] || cli[CONFIG.fields.clienteCnpj] || '—';
-        telCliente = cli[CONFIG.fields.clienteTelefone] || '';
-        emailCliente = cli[CONFIG.fields.clienteEmail] || '';
-      }
-      var nomeAdvogado = '';
-      var advogados = proto[CONFIG.fields.advogado];
-      if (advogados && advogados.length > 0) {
-        var idAdv = (typeof advogados[0] === 'object' && advogados[0].id) ? advogados[0].id : advogados[0];
-        var urlAdv = API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' + idAdv + '/?user_field_names=false';
-        var respAdv = await fetch(urlAdv, { headers: apiHeaders() });
-        var adv = await respAdv.json();
-        nomeAdvogado = adv[CONFIG.fields.clienteNome] || '';
-      }
-      var numProto = proto[CONFIG.fields.protocolo] || '—';
-      document.getElementById('recProtocoloTitulo').textContent = numProto;
-      document.getElementById('recInteressado').textContent = nomeCliente;
-      var boxAdv = document.getElementById('recAdvogadoBox');
-      if (nomeAdvogado) {
-        document.getElementById('recAdvogado').textContent = nomeAdvogado;
-        boxAdv.style.display = 'block';
-      } else {
-        boxAdv.style.display = 'none';
-      }
-      document.getElementById('recDocumento').textContent = docCliente;
-      var dataRaw = proto[CONFIG.fields.dataEntrada];
-      var dataFormatada = dataRaw ? dataRaw.split('-').reverse().join('/') : '—';
-      document.getElementById('recData').textContent = dataFormatada;
-      var servicoList = proto[CONFIG.fields.servico] || [];
-      var servico = '';
-      for (var si = 0; si < servicoList.length; si++) servico += (si ? ', ' : '') + (servicoList[si].value || '');
-      if (!servico) servico = '—';
-      document.getElementById('recServico').textContent = servico;
-      var respList = proto[CONFIG.fields.responsavel] || [];
-      var respNome = '';
-      for (var rn = 0; rn < respList.length; rn++) respNome += (rn ? ', ' : '') + (respList[rn].name || '');
-      if (!respNome) respNome = '—';
-      document.getElementById('recResponsavel').textContent = respNome;
-      var statusObj = proto[CONFIG.fields.status];
-      document.getElementById('recStatus').textContent = statusObj ? statusObj.value : '—';
-      var depositoRaw = proto[CONFIG.fields.depositoPrevio];
-      var boxDeposito = document.getElementById('recDepositoBox');
-      if (depositoRaw !== null && depositoRaw !== undefined && depositoRaw !== '') {
-        document.getElementById('recDeposito').textContent = formatarDepositoExibicao(depositoRaw);
-        boxDeposito.style.display = 'block';
-      } else {
-        boxDeposito.style.display = 'none';
-      }
-      var detalhes = proto[CONFIG.fields.detalhamentos];
-      var boxDetalhes = document.getElementById('recDetalhamentosBox');
-      var detEl = document.getElementById('recDetalhamentos');
-      if (detalhes && detalhes.trim()) {
-        renderMarkdownInto(detEl, detalhes);
-        boxDetalhes.style.display = 'block';
-      } else {
-        detEl.innerHTML = '';
-        boxDetalhes.style.display = 'none';
-      }
-      var boxTel = document.getElementById('recTelefoneBox');
-      if (telCliente) {
-        document.getElementById('recTelefone').textContent = telCliente;
-        boxTel.style.display = 'block';
-      } else {
-        boxTel.style.display = 'none';
-      }
-      var boxEmail = document.getElementById('recEmailBox');
-      if (emailCliente) {
-        document.getElementById('recEmail').textContent = emailCliente;
-        boxEmail.style.display = 'block';
-      } else {
-        boxEmail.style.display = 'none';
-      }
-      document.getElementById('searchView').style.display = 'none';
-      document.getElementById('receiptView').style.display = 'block';
-    } catch (e) {
-      console.error(e);
-      alert('Não foi possível carregar os dados do protocolo.');
-    } finally {
-      overlay.classList.remove('active');
-    }
-  }
-
-  function voltarBusca() {
-    document.getElementById('receiptView').style.display = 'none';
-    document.getElementById('searchView').style.display = 'block';
   }
 
   function mostrarMsg(id, tipo, txt) {

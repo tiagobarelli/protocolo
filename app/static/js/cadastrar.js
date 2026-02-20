@@ -626,9 +626,10 @@
         if (err.detail && err.detail.includes('unique')) throw new Error('O protocolo "' + numProtocolo + '" já existe.');
         throw new Error(err.detail || 'Erro ao cadastrar protocolo.');
       }
+      var rpData = await rp.json();
 
-      // 4. Comprovante
-      window.location.href = (window.URL_CONSULTAR || '/consultar') + '?protocolo=' + encodeURIComponent(numProtocolo);
+      // 4. Redirecionar para pagina de impressao
+      window.location.href = '/protocolo/' + rpData.id + '/imprimir';
 
     } catch (e) {
       mostrarMsg('formMsg', 'error', e.message);
@@ -639,15 +640,6 @@
     }
   }
 
-  function exibirComprovante(d) {
-    // Mantido para compatibilidade, mas o redirecionamento é feito para consultar.html
-  }
-
-  function novoProtocolo() {
-    document.getElementById('receiptView').style.display = 'none';
-    document.getElementById('formView').style.display = 'block';
-    limparFormulario();
-  }
 
   function limparFormulario() {
     clienteEncontrado = null;

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Imprimir Protocolo{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/imprimir.css') }}">
+{% endblock %}
+{% block content %}
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+<div class="imprimir-container">
+  <a href="{{ url_for('main.protocolo_detalhe', protocolo_id=protocolo_id) }}" class="back-link" id="backLink">
+    <i class="ph ph-arrow-left"></i> Voltar ao protocolo
+  </a>
+  <div class="receipt-paper">
+    <div class="print-header">
+      <h2>Tabelião de Notas e de Protesto de Letras e Títulos de Itápolis-SP</h2>
+      <p>Rua Barão do Rio Branco, n. 378 – Centro, Itápolis-SP (CEP 14900-057)</p>
+      <p>contato@cartorioitapolis.com.br | (16) 3273 9448</p>
+      <p>www.cartorioitapolis.com.br</p>
+    </div>
+    <div class="protocol-title">PROTOCOLO – <span id="recProtocoloTitulo"></span></div>
+    <table class="simple-table handwrite-table">
+      <tr><td class="label-col">LIVRO</td><td class="input-col"></td><td class="label-col">PÁGINA</td><td class="input-col"></td></tr>
+    </table>
+    <div class="info-grid">
+      <div class="info-item full-width"><span class="info-label">Interessado</span><span class="info-value" id="recInteressado"></span></div>
+      <div class="info-item"><span class="info-label">CPF / CNPJ</span><span class="info-value" id="recDocumento"></span></div>
+      <div class="info-item"><span class="info-label">Data de Entrada</span><span class="info-value" id="recData"></span></div>
+      <div class="info-item full-width" id="recAdvogadoBox" style="display:none"><span class="info-label">Advogado Assessor</span><span class="info-value" id="recAdvogado"></span></div>
+      <div class="info-item full-width"><span class="info-label">Serviço Solicitado</span><span class="info-value" id="recServico"></span></div>
+      <div class="info-item"><span class="info-label">Responsável</span><span class="info-value" id="recResponsavel"></span></div>
+      <div class="info-item"><span class="info-label">Status Atual</span><span class="info-value" id="recStatus"></span></div>
+      <div class="info-item" id="recTelefoneBox" style="display:none"><span class="info-label">Telefone</span><span class="info-value" id="recTelefone"></span></div>
+      <div class="info-item" id="recEmailBox" style="display:none"><span class="info-label">E-mail</span><span class="info-value" id="recEmail"></span></div>
+    </div>
+    <div class="info-item full-width" id="recDepositoBox" style="display:none; margin-bottom:20px;"><span class="info-label">Depósito Prévio</span><span class="info-value" id="recDeposito"></span></div>
+    <div class="details-box" id="recDetalhamentosBox" style="display:none"><span class="info-label">Detalhamentos / Observações</span><div class="details-content" id="recDetalhamentos"></div></div>
+    <table class="simple-table notes-table" style="margin-top: 30px;"><thead><tr><th>ANOTAÇÕES</th></tr></thead><tbody><tr><td></td></tr></tbody></table>
+  </div>
+  <div class="receipt-actions">
+    <button class="btn btn-primary" onclick="window.print()"><i class="ph ph-printer"></i> Imprimir</button>
+    <a href="{{ url_for('main.protocolo_detalhe', protocolo_id=protocolo_id) }}" class="btn btn-secondary"><i class="ph ph-arrow-left"></i> Voltar ao Protocolo</a>
+    <a href="{{ url_for('main.cadastrar') }}" class="btn btn-secondary"><i class="ph ph-plus"></i> Novo Protocolo</a>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script>window.PROTOCOLO_ID = {{ protocolo_id }};</script>
+<script src="{{ url_for('static', filename='js/imprimir.js') }}"></script>
+{% endblock %}
