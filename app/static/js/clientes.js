@@ -18,19 +18,26 @@ var FIELDS = {
   estadoCivil: 'field_7343',
   conjuge:     'field_7344',
   nascimento:  'field_7345',
-  profissao:   'field_7347',
-  protocolos:  'field_7247'
+  profissao:        'field_7347',
+  regraPatrimonial: 'field_7348',
+  protocolos:       'field_7247'
 };
 
 var ESTADO_CIVIL_OPTS = [
-  { id: 3092, label: 'Casado (comunhão parcial)' },
-  { id: 3093, label: 'Casado (comunhão universal)' },
-  { id: 3094, label: 'Casado (participação final nos aquestos)' },
-  { id: 3095, label: 'Casado (separação convencional)' },
-  { id: 3096, label: 'Casado (separação obrigatória)' },
+  { id: 3107, label: 'Solteiro' },
+  { id: 3092, label: 'Casado' },
   { id: 3097, label: 'Separado' },
   { id: 3098, label: 'Divorciado' },
-  { id: 3099, label: 'Viúvo' }
+  { id: 3099, label: 'Viúvo' },
+  { id: 3101, label: 'União estável' }
+];
+
+var REGRA_PATRIMONIAL_OPTS = [
+  { id: 3102, label: 'Comunhão parcial' },
+  { id: 3103, label: 'Comunhão universal' },
+  { id: 3104, label: 'Separação convencional' },
+  { id: 3105, label: 'Separação obrigatória' },
+  { id: 3106, label: 'Participação final nos aquestos' }
 ];
 
 // ── Estado global ──
@@ -269,6 +276,27 @@ function popularEstadoCivil() {
   }
 }
 
+function popularRegraPatrimonial() {
+  var select = document.getElementById('regraPatrimonialSelect');
+  for (var i = 0; i < REGRA_PATRIMONIAL_OPTS.length; i++) {
+    var opt = document.createElement('option');
+    opt.value = REGRA_PATRIMONIAL_OPTS[i].id;
+    opt.textContent = REGRA_PATRIMONIAL_OPTS[i].label;
+    select.appendChild(opt);
+  }
+}
+
+function atualizarVisibilidadeRegraPatrimonial() {
+  var ecVal = document.getElementById('estadoCivilSelect').value;
+  var grupo = document.getElementById('regraPatrimonialGroup');
+  if (ecVal === '3092' || ecVal === '3101') {
+    grupo.style.display = '';
+  } else {
+    grupo.style.display = 'none';
+    document.getElementById('regraPatrimonialSelect').value = '';
+  }
+}
+
 // ═══════════════════════════════════════════════════════
 // MÁSCARAS — configurar eventos
 // ═══════════════════════════════════════════════════════
@@ -465,6 +493,11 @@ function preencherFormulario(cli) {
   var ecObj = cli[FIELDS.estadoCivil];
   document.getElementById('estadoCivilSelect').value = (ecObj && ecObj.id) ? String(ecObj.id) : '';
 
+  // Regra patrimonial
+  var rpObj = cli[FIELDS.regraPatrimonial];
+  document.getElementById('regraPatrimonialSelect').value = (rpObj && rpObj.id) ? rpObj.id : '';
+  atualizarVisibilidadeRegraPatrimonial();
+
   // Cônjuge — link_row retorna [{ id: X, value: "Nome" }]
   var conjArr = cli[FIELDS.conjuge];
   if (conjArr && conjArr.length > 0) {
@@ -501,6 +534,8 @@ function limparCamposFormulario() {
   document.getElementById('outrosTextarea').value   = '';
   atualizarPreviewOutros();
   document.getElementById('estadoCivilSelect').value = '';
+  document.getElementById('regraPatrimonialSelect').value = '';
+  atualizarVisibilidadeRegraPatrimonial();
   document.getElementById('conjugeInput').value      = '';
   document.getElementById('protocolosList').innerHTML =
     '<div class="protocols-empty">Nenhum protocolo vinculado.</div>';
@@ -681,6 +716,9 @@ function construirPayload(incluirDocumentos) {
 
   var ecVal = document.getElementById('estadoCivilSelect').value;
   payload[FIELDS.estadoCivil] = ecVal ? parseInt(ecVal, 10) : null;
+
+  var rpVal = document.getElementById('regraPatrimonialSelect').value;
+  payload[FIELDS.regraPatrimonial] = rpVal ? parseInt(rpVal, 10) : null;
 
   payload[FIELDS.conjuge] = conjugeId ? [conjugeId] : [];
 
@@ -1023,6 +1061,8 @@ function configurarDrawer() {
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
   popularEstadoCivil();
+  popularRegraPatrimonial();
+  document.getElementById('estadoCivilSelect').addEventListener('change', atualizarVisibilidadeRegraPatrimonial);
   configurarBusca();
   configurarConjuge();
   configurarMascaras();
