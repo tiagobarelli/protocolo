@@ -36,13 +36,29 @@ var ESTADO_CIVIL_OPTS = [
 // ── Estado global ──
 var clienteAtual  = null;   // linha do Baserow carregada no formulário
 var modoNovo      = false;  // true = criando novo cliente
+var clienteCarregadoPorBusca = false; // true quando veio de busca positiva
 var conjugeId     = null;   // ID do cônjuge selecionado no autocomplete
 var buscaTimer    = null;   // debounce da busca por nome
 var conjugeTimer  = null;   // debounce do autocomplete de cônjuge
 
 // ── Paperless-ngx ──
 var PAPERLESS_API = '/api/paperless';
-var PAPERLESS_TAGS_DOCS = ['RG', 'CNH', 'Certid\u00e3o de Nascimento', 'Certid\u00e3o de Casamento'];
+var PAPERLESS_TAGS_DOCS = [
+  'Cart\u00e3o de assinatura',
+  'Certid\u00e3o de casamento',
+  'Certid\u00e3o de Interdi\u00e7\u00e3o',
+  'Certid\u00e3o de nascimento',
+  'Certid\u00e3o de \u00f3bito',
+  'CNH',
+  'CTPS',
+  'Documento particular de uni\u00e3o est\u00e1vel',
+  'Escritura de uni\u00e3o est\u00e1vel',
+  'Funcional (documento de identidade)',
+  'Passaporte',
+  'RG',
+  'RNE (Registro Nacional de Estrangeiro)',
+  'Uni\u00e3o est\u00e1vel (certid\u00e3o do RCPN)'
+];
 var paperlessTags = {};          // mapa id → nome (carregado uma vez)
 var paperlessTagsLoaded = false;
 var cacheDocsPaperless = {};     // chave: CPF, valor: array de docs
@@ -392,8 +408,10 @@ function fecharAutocompleteBusca() {
 function selecionarDaBusca(cli) {
   clienteAtual = cli;
   modoNovo = false;
+  clienteCarregadoPorBusca = true;
   preencherFormulario(cli);
   mostrarFormulario();
+  fecharDrawer();
   esconderOverlay();
 }
 
@@ -403,8 +421,10 @@ function selecionarDaBusca(cli) {
 function novoCliente() {
   clienteAtual = null;
   modoNovo = true;
+  clienteCarregadoPorBusca = false;
   conjugeId = null;
   limparCamposFormulario();
+  atualizarVisibilidadeDocumentos();
   document.getElementById('cpfInput').readOnly = false;
   document.getElementById('cnpjInput').readOnly = false;
   esconderMsg('formMsg');
@@ -490,6 +510,7 @@ function limparCamposFormulario() {
 function limparFormulario() {
   clienteAtual = null;
   modoNovo = false;
+  clienteCarregadoPorBusca = false;
   conjugeId = null;
   limparCamposFormulario();
   esconderMsg('formMsg');
@@ -734,6 +755,8 @@ function executarPost(btnSalvar) {
     .then(function(data) {
       clienteAtual = data;
       modoNovo = false;
+      clienteCarregadoPorBusca = false;
+      atualizarVisibilidadeDocumentos();
       document.getElementById('cpfInput').readOnly  = true;
       document.getElementById('cnpjInput').readOnly = true;
       esconderOverlay();
@@ -780,12 +803,25 @@ function atualizarVisibilidadeDocumentos() {
   var secao = document.getElementById('secaoDocumentos');
   if (!secao) return;
   var cpf = document.getElementById('cpfInput').value.trim();
-  if (clienteAtual && !modoNovo && cpf) {
+  var resumo = document.getElementById('docsResumo');
+  var deveExibir = !!(clienteAtual && !modoNovo && clienteCarregadoPorBusca && cpf);
+
+  if (deveExibir) {
     secao.style.display = '';
+
+    // Se já consultou esse CPF na sessão, reaproveita o resumo do cache.
+    if (resumo) {
+      if (cacheDocsPaperless[cpf]) {
+        atualizarResumoInline(cacheDocsPaperless[cpf]);
+      } else {
+        resumo.innerHTML = 'Clique em "Consultar" para verificar documentos no Paperless.';
+        resumo.classList.remove('clickable');
+        resumo.onclick = null;
+      }
+    }
   } else {
     secao.style.display = 'none';
-    // Resetar resumo
-    var resumo = document.getElementById('docsResumo');
+    fecharDrawer();
     if (resumo) {
       resumo.innerHTML = 'Clique em "Consultar" para verificar documentos no Paperless.';
       resumo.classList.remove('clickable');
@@ -925,6 +961,13 @@ function renderizarDocumentos(docs) {
   }
 }
 
+function normalizarNomeTag(nome) {
+  return String(nome || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/^\s+|\s+$/g, '');
+}
+
 function atualizarResumoInline(docs) {
   var resumo = document.getElementById('docsResumo');
   if (!resumo) return;
@@ -935,7 +978,7 @@ function atualizarResumoInline(docs) {
     var tagIds = docs[i].tags || [];
     for (var t = 0; t < tagIds.length; t++) {
       var nome = paperlessTags[tagIds[t]];
-      if (nome) tagsEncontradas[nome] = true;
+      if (nome) tagsEncontradas[normalizarNomeTag(nome)] = true;
     }
   }
 
@@ -943,7 +986,7 @@ function atualizarResumoInline(docs) {
   var partes = [];
   for (var j = 0; j < PAPERLESS_TAGS_DOCS.length; j++) {
     var tag = PAPERLESS_TAGS_DOCS[j];
-    if (tagsEncontradas[tag]) {
+    if (tagsEncontradas[normalizarNomeTag(tag)]) {
       partes.push('<span class="doc-ok">' + tag + ' \u2713</span>');
     } else {
       partes.push('<span class="doc-miss">' + tag + ' \u2717</span>');

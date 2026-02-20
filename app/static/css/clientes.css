@@ -49,6 +49,7 @@ main {
   box-shadow: var(--shadow-md);
   margin-bottom: 24px;
 }
+.docs-top-card { padding-top: 24px; padding-bottom: 24px; }
 
 /* ── Search bar ── */
 .search-bar {

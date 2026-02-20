@@ -36,6 +36,19 @@
     </div>
   </div>
 
+  <!-- ── DOCUMENTOS DIGITALIZADOS (visível somente após busca positiva) ── -->
+  <div class="card docs-top-card" id="secaoDocumentos" style="display:none;">
+    <div class="section-title">
+      <i class="ph ph-files"></i> Documentos Digitalizados
+      <button type="button" class="btn-docs" id="btnConsultarDocs">
+        <i class="ph ph-file-search"></i> Consultar
+      </button>
+    </div>
+    <div id="docsResumo" class="docs-resumo">
+      Clique em "Consultar" para verificar documentos no Paperless.
+    </div>
+  </div>
+
   <!-- ── FORMULÁRIO ── -->
   <div class="card" id="formCard" style="display:none;">
     <div id="formMsg" class="msg-box"></div>
@@ -155,19 +168,6 @@
       <div class="section-title"><i class="ph ph-stack"></i> Protocolos Vinculados</div>
       <div class="protocols-list" id="protocolosList">
         <div class="protocols-empty">Nenhum protocolo vinculado.</div>
-      </div>
-    </div>
-
-    <!-- Documentos Digitalizados (Paperless-ngx) -->
-    <div class="form-section" id="secaoDocumentos" style="display:none;">
-      <div class="section-title">
-        <i class="ph ph-files"></i> Documentos Digitalizados
-        <button type="button" class="btn-docs" id="btnConsultarDocs">
-          <i class="ph ph-file-search"></i> Consultar
-        </button>
-      </div>
-      <div id="docsResumo" class="docs-resumo">
-        Clique em "Consultar" para verificar documentos no Paperless.
       </div>
     </div>
 
