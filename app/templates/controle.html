@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Controle de Livros - Sistema Interno{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/controle.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Hamburger mobile -->
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<!-- Overlay de loading -->
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i class="ph ph-stack"></i></div>
+      <h1>Protocolos</h1>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('main.index') }}" class="nav-item">
+        <i class="ph ph-house"></i> Painel
+      </a>
+
+      {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
+      <a href="{{ url_for('main.cadastrar') }}" class="nav-item">
+        <i class="ph ph-plus-circle"></i> Novo Protocolo
+      </a>
+      {% endif %}
+
+      {% if current_user.perfil in ['master', 'administrador'] %}
+      <a href="{{ url_for('main.consultar') }}" class="nav-item">
+        <i class="ph ph-magnifying-glass"></i> Consultar
+      </a>
+      <a href="{{ url_for('main.clientes') }}" class="nav-item">
+        <i class="ph ph-address-book"></i> Clientes
+      </a>
+      <a href="{{ url_for('main.controle') }}" class="nav-item active">
+        <i class="ph ph-book-open"></i> Controle
+      </a>
+      <a href="{{ url_for('main.relatorios') }}" class="nav-item">
+        <i class="ph ph-chart-bar"></i> Relatórios
+      </a>
+      {% endif %}
+
+      {% if current_user.perfil == 'master' %}
+      <a href="{{ url_for('admin.usuarios') }}" class="nav-item">
+        <i class="ph ph-users-three"></i> Usuários
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <span class="user-info"><i class="ph ph-user"></i> {{ current_user.nome }}</span>
+      <a href="{{ url_for('auth.logout') }}"><i class="ph ph-sign-out"></i> Sair</a>
+    </div>
+  </aside>
+
+  <!-- CONTEUDO PRINCIPAL -->
+  <main class="main-content">
+
+    <!-- ===== CARD DE BUSCA ===== -->
+    <div class="card" id="searchCard">
+      <div class="page-header">
+        <h1><i class="ph ph-book-open" style="color:var(--accent);"></i> Controle de Livros de Notas</h1>
+        <p>Busque por identificador ou por Livro + Página para consultar ou criar um registro.</p>
+      </div>
+
+      <div id="searchMsg" class="msg-box"></div>
+
+      <!-- Busca por mascara -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-magnifying-glass"></i> Busca por Identificador</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="buscaMascara">Identificador</label>
+            <input type="text" id="buscaMascara" placeholder="L_XXX_P_YYY" autocomplete="off">
+          </div>
+          <div class="form-group small" style="justify-content:flex-end;">
+            <button type="button" class="btn btn-primary" id="btnBuscarMascara">
+              <i class="ph ph-magnifying-glass"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="search-divider">ou</div>
+
+      <!-- Busca por Livro + Pagina -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-book-open"></i> Busca por Livro e Página</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="buscaLivro">Livro</label>
+            <input type="text" id="buscaLivro" placeholder="Ex: 150" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="buscaPagina">Página <span class="hint">(máx 400)</span></label>
+            <input type="text" id="buscaPagina" placeholder="Ex: 25" maxlength="3" autocomplete="off">
+          </div>
+          <div class="form-group small" style="justify-content:flex-end;">
+            <button type="button" class="btn btn-primary" id="btnBuscarLP">
+              <i class="ph ph-magnifying-glass"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CARD DO FORMULARIO (oculto ate busca) ===== -->
+    <div class="card" id="formCard" style="display:none;">
+      <div id="formMsg" class="msg-box"></div>
+
+      <!-- Secao 1: Identificacao -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-identification-card"></i> Identificação</div>
+        <div class="form-row">
+          <div class="form-group small">
+            <label for="livroInput">Livro</label>
+            <input type="text" id="livroInput" readonly>
+          </div>
+          <div class="form-group small">
+            <label for="paginaInput">Página</label>
+            <input type="text" id="paginaInput" readonly>
+          </div>
+          <div class="form-group">
+            <label>Identificador</label>
+            <span class="identificador-display" id="identificadorDisplay">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secao 2: Dados da Escritura -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-file-text"></i> Dados da Escritura</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tipoEscrituraSelect">Tipo Escritura</label>
+            <select id="tipoEscrituraSelect"><option value="">Carregando...</option></select>
+          </div>
+          <div class="form-group">
+            <label for="escreventeSelect">Escrevente</label>
+            <select id="escreventeSelect"><option value="">Carregando...</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group small">
+            <label for="dataEscritura">Data da Escritura</label>
+            <input type="date" id="dataEscritura" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="protocoloInput">Protocolo <span class="hint">(opcional)</span></label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="protocoloInput" placeholder="Digite o número do protocolo..." autocomplete="off">
+              <div class="autocomplete-list" id="protocoloAutoList"></div>
+            </div>
+          </div>
+        </div>
+        <div id="protocoloInfo" class="msg-box"></div>
+      </div>
+
+      <!-- Secao 3: Status e Controle -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-check-square"></i> Status e Controle</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="digitalizacaoSelect">Digitalização</label>
+            <select id="digitalizacaoSelect"><option value="">Selecione...</option></select>
+          </div>
+          <div class="form-group">
+            <label for="doiSelect">DOI</label>
+            <select id="doiSelect"><option value="">Selecione...</option></select>
+          </div>
+          <div class="form-group">
+            <label for="odinSelect">ODIN</label>
+            <select id="odinSelect"><option value="">Selecione...</option></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secao 4: Pendencias -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-note-pencil"></i> Pendências</div>
+        <div class="form-row single">
+          <div class="form-group">
+            <div class="md-grid">
+              <div class="md-editor-container">
+                <div class="md-toolbar">
+                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('list')" title="Lista"><i class="ph ph-list-bullets"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('heading')" title="Título"><i class="ph ph-text-h-two"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('code')" title="Código"><i class="ph ph-code"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('checklist')" title="Checklist"><i class="ph ph-check-square"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('hr')" title="Separador"><i class="ph ph-minus"></i></button>
+                </div>
+                <textarea id="pendenciasTextarea" placeholder="Registre pendências aqui..." autocomplete="off"></textarea>
+              </div>
+              <div id="pendenciasPreview" class="md-preview"><div class="md-placeholder">Pré-visualização do Markdown...</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secao 5: Clientes (colapsavel) -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-users"></i> Clientes</div>
+        <div class="toggle-row">
+          <input type="checkbox" id="toggleClientes">
+          <label for="toggleClientes">Vincular clientes a esta escritura?</label>
+        </div>
+        <div class="collapsible" id="clientesSection">
+          <div class="form-row single">
+            <div class="form-group">
+              <label for="clienteInput">Buscar cliente por nome</label>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="clienteInput" placeholder="Digite o nome do cliente..." autocomplete="off">
+                <div class="autocomplete-list" id="clienteAutoList"></div>
+              </div>
+            </div>
+          </div>
+          <div class="chips-container" id="clientesChips"></div>
+        </div>
+      </div>
+
+      <!-- Secao 6: Imoveis (colapsavel) -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-buildings"></i> Imóveis</div>
+        <div class="toggle-row">
+          <input type="checkbox" id="toggleImoveis">
+          <label for="toggleImoveis">Cadastrar imóveis desta escritura?</label>
+        </div>
+        <div class="collapsible" id="imoveisSection">
+          <div id="imoveisContainer"></div>
+          <button type="button" class="btn-add-imovel" id="btnAddImovel" onclick="adicionarImovel()">
+            <i class="ph ph-plus-circle"></i> Adicionar Imóvel
+          </button>
+        </div>
+      </div>
+
+      <!-- Botoes de acao -->
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="limparFormulario()"><i class="ph ph-eraser"></i> Limpar</button>
+        <button type="button" class="btn btn-primary" id="btnSalvar" onclick="salvarControle()"><i class="ph ph-check-circle"></i> Salvar</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/controle.js') }}"></script>
+{% endblock %}

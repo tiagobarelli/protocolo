@@ -40,6 +40,13 @@ def clientes():
     return render_template("clientes.html")
 
 
+@main_bp.route("/controle")
+@login_required
+@perfil_required("master", "administrador")
+def controle():
+    return render_template("controle.html")
+
+
 @main_bp.route("/relatorios")
 @login_required
 @perfil_required("master", "administrador")
