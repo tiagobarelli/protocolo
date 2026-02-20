@@ -2,15 +2,21 @@
 {% block title %}Usuários — Administração{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <a href="{{ url_for('main.index') }}" class="back-link">
-    <i class="ph ph-arrow-left"></i> Voltar ao menu
-  </a>
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
 
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+<div class="container">
   <div class="page-header">
     <h1><i class="ph ph-users-three" style="color: var(--accent);"></i> Gerenciamento de Usuários</h1>
     <p>Cadastre, edite e gerencie os usuários do sistema.</p>
@@ -151,6 +157,8 @@
       </table>
     </div>
   </div>
+</div>
+  </main>
 </div>
 {% endblock %}
 

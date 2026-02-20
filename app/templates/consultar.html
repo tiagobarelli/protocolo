@@ -1,28 +1,42 @@
 {% extends "base.html" %}
 {% block title %}Consultar Protocolo - Sistema Interno{% endblock %}
+
 {% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/consultar.css') }}">
 {% endblock %}
+
 {% block content %}
-<div class="overlay" id="overlay"><div class="spinner"></div></div>
-<div class="consultar-container">
-  <div id="searchView">
-    <a href="{{ url_for('main.index') }}" class="back-link"><i class="ph ph-arrow-left"></i> Voltar ao menu</a>
-    <div class="search-card">
-      <div class="search-header">
-        <h1><i class="ph ph-magnifying-glass" style="color: var(--accent);"></i> Consultar Protocolo</h1>
-        <p>Busque por número do protocolo, nome do interessado ou documento.</p>
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+    <div class="overlay" id="overlay"><div class="spinner"></div></div>
+    <div class="consultar-container">
+      <div id="searchView">
+        <div class="search-card">
+          <div class="search-header">
+            <h1><i class="ph ph-magnifying-glass" style="color: var(--accent);"></i> Consultar Protocolo</h1>
+            <p>Busque por numero do protocolo, nome do interessado ou documento.</p>
+          </div>
+          <div class="search-box-wrapper">
+            <input type="text" id="termoBusca" placeholder="Ex: 2026-001234 ou CPF/Nome" autofocus>
+            <button class="btn btn-primary" onclick="buscarProtocolo()">Buscar</button>
+          </div>
+          <div id="searchMsg" class="msg-box"></div>
+          <div class="results" id="resultados"></div>
+        </div>
       </div>
-      <div class="search-box-wrapper">
-        <input type="text" id="termoBusca" placeholder="Ex: 2026-001234 ou CPF/Nome" autofocus>
-        <button class="btn btn-primary" onclick="buscarProtocolo()">Buscar</button>
-      </div>
-      <div id="searchMsg" class="msg-box"></div>
-      <div class="results" id="resultados"></div>
     </div>
-  </div>
+  </main>
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/consultar.js') }}"></script>
 {% endblock %}

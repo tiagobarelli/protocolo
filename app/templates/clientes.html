@@ -2,17 +2,23 @@
 {% block title %}Gestão de Clientes - Sistema Interno{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/clientes.css') }}">
 {% endblock %}
 
 {% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
 <div class="overlay" id="overlay"><div class="spinner"></div></div>
 
 <div class="container">
-  <a href="{{ url_for('main.index') }}" class="back-link">
-    <i class="ph ph-arrow-left"></i> Voltar ao menu
-  </a>
-
   <div class="page-header">
     <h1><i class="ph ph-address-book" style="color: var(--accent);"></i> Gestão de Clientes</h1>
     <p>Busque, cadastre ou edite clientes por CPF, CNPJ ou nome.</p>
@@ -201,6 +207,8 @@
   <div class="drawer-overlay" id="drawerOverlay"></div>
 
 </div><!-- /.container -->
+  </main>
+</div>
 {% endblock %}
 
 {% block extra_js %}

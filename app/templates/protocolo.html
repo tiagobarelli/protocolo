@@ -2,25 +2,25 @@
 {% block title %}Protocolo — Detalhe{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/protocolo.css') }}">
 {% endblock %}
 
 {% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
 <div class="overlay" id="loadingOverlay">
   <div class="spinner"></div>
 </div>
 
 <div class="container">
-  {% if request.args.get('origem') == 'consulta' %}
-  <a href="{{ url_for('main.consultar') }}" class="back-link">
-    <i class="ph ph-arrow-left"></i> Voltar à consulta
-  </a>
-  {% else %}
-  <a href="{{ url_for('main.index') }}" class="back-link">
-    <i class="ph ph-arrow-left"></i> Voltar ao painel
-  </a>
-  {% endif %}
-
   <!-- Cabeçalho -->
   <div class="proto-header">
     <h1 id="protoNumero">Carregando...</h1>
@@ -106,6 +106,8 @@
       <div class="msg-box" id="andamentoMsg"></div>
     </div>
   </div>
+</div>
+  </main>
 </div>
 {% endblock %}
 

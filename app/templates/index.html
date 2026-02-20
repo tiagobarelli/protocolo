@@ -13,69 +13,9 @@
 <div class="sidebar-overlay"></div>
 
 <div class="app-layout">
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo"><i class="ph ph-stack"></i></div>
-      <h1>Protocolos</h1>
-    </div>
+  {% include "partials/sidebar.html" %}
 
-    <nav class="sidebar-nav">
-      <a href="{{ url_for('main.index') }}" class="nav-item active">
-        <i class="ph ph-house"></i> Painel
-      </a>
-
-      {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
-      <a href="{{ url_for('main.cadastrar') }}" class="nav-item">
-        <i class="ph ph-plus-circle"></i> Novo Protocolo
-      </a>
-      {% endif %}
-
-      {% if current_user.perfil in ['master', 'administrador'] %}
-      <a href="{{ url_for('main.consultar') }}" class="nav-item">
-        <i class="ph ph-magnifying-glass"></i> Consultar
-      </a>
-      <a href="{{ url_for('main.clientes') }}" class="nav-item">
-        <i class="ph ph-address-book"></i> Clientes
-      </a>
-      <!-- Submenu: Gestão de Atos -->
-      {% set gestao_atos_active = request.endpoint in ['main.controle', 'main.retificacoes', 'main.substabelecimentos'] %}
-      <div class="nav-group {% if gestao_atos_active %}open{% endif %}">
-        <button type="button" class="nav-group-toggle" onclick="toggleNavGroup(this)">
-          <span class="nav-group-label"><i class="ph ph-folders"></i> Gestão de Atos</span>
-          <i class="ph ph-caret-down nav-group-arrow"></i>
-        </button>
-        <div class="nav-group-items">
-          <a href="{{ url_for('main.controle') }}" class="nav-item sub {% if request.endpoint == 'main.controle' %}active{% endif %}">
-            <i class="ph ph-book-open"></i> Controle
-          </a>
-          <a href="{{ url_for('main.retificacoes') }}" class="nav-item sub {% if request.endpoint == 'main.retificacoes' %}active{% endif %}">
-            <i class="ph ph-note-pencil"></i> Retificações
-          </a>
-          <a href="{{ url_for('main.substabelecimentos') }}" class="nav-item sub {% if request.endpoint == 'main.substabelecimentos' %}active{% endif %}">
-            <i class="ph ph-swap"></i> Substabelecimentos
-          </a>
-        </div>
-      </div>
-      <a href="{{ url_for('main.relatorios') }}" class="nav-item">
-        <i class="ph ph-chart-bar"></i> Relatórios
-      </a>
-      {% endif %}
-
-      {% if current_user.perfil == 'master' %}
-      <a href="{{ url_for('admin.usuarios') }}" class="nav-item">
-        <i class="ph ph-users-three"></i> Usuários
-      </a>
-      {% endif %}
-    </nav>
-
-    <div class="sidebar-footer">
-      <span class="user-info"><i class="ph ph-user"></i> {{ current_user.nome }}</span>
-      <a href="{{ url_for('auth.logout') }}"><i class="ph ph-sign-out"></i> Sair</a>
-    </div>
-  </aside>
-
-  <!-- CONTEÚDO PRINCIPAL -->
+<!-- CONTEÚDO PRINCIPAL -->
   <main class="main-content">
     <div class="filters-bar">
       <div class="filter-group">
