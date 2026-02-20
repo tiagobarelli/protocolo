@@ -239,6 +239,7 @@ main { max-width: none; padding: 0; margin: 0; }
   border-color: #fcd34d;
 }
 .protocol-card.card-warning:hover { border-color: var(--warning); }
+.protocol-card.card-warning::before { background: var(--warning); }
 
 /* Card com mais de 20 dias em aberto — fundo vermelho suave */
 .protocol-card.card-danger {
