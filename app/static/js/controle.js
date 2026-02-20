@@ -10,7 +10,8 @@ var CONFIG = {
     escreventes: 747,
     clientes: 754,
     protocolo: 755,
-    imoveis: 773
+    imoveis: 773,
+    retificacoes: 753
   },
   fields: {
     // Controle (745)
@@ -40,7 +41,11 @@ var CONFIG = {
     // Protocolo (755)
     protoNumero: 'field_7240',
     protoInteressado: 'field_7241',
-    protoStatus: 'field_7252'
+    protoStatus: 'field_7252',
+    // Retificacoes (campo reverso no Controle + campos da tabela 753)
+    retificacaoReversa: 'field_7232',
+    retifLivro: 'field_7228',
+    retifPagina: 'field_7229'
   },
   statusEmAndamento: 3064,
   statusFinalizado: 3065,
@@ -476,6 +481,9 @@ function preencherFormularioExistente(row) {
   if (imoveisArr && imoveisArr.length > 0) {
     carregarImoveisExistentes(imoveisArr);
   }
+
+  // Verificar se escritura foi retificada
+  verificarRetificacoes(row);
 }
 
 function carregarImoveisExistentes(imoveisArr) {
@@ -555,6 +563,7 @@ function resetarEstadoFormulario() {
 
   esconderMsg('formMsg');
   esconderMsg('protocoloInfo');
+  document.getElementById('retificacaoBannerContainer').innerHTML = '';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -957,6 +966,45 @@ function configurarToggleImoveis() {
 function fecharAutoList(listId) {
   var el = document.getElementById(listId);
   if (el) el.classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════
+// VERIFICAR RETIFICACOES (banner)
+// ═══════════════════════════════════════════════════════
+function verificarRetificacoes(row) {
+  var container = document.getElementById('retificacaoBannerContainer');
+  container.innerHTML = '';
+
+  var retifArr = row[CONFIG.fields.retificacaoReversa];
+  if (!retifArr || retifArr.length === 0) return;
+
+  var promises = [];
+  for (var i = 0; i < retifArr.length; i++) {
+    (function(retifId) {
+      promises.push(
+        fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.retificacoes + '/' + retifId + '/?user_field_names=false', {
+          headers: apiHeaders()
+        }).then(function(r) { return r.json(); })
+      );
+    })(retifArr[i].id);
+  }
+
+  Promise.all(promises)
+    .then(function(rows) {
+      for (var j = 0; j < rows.length; j++) {
+        var livro = rows[j][CONFIG.fields.retifLivro] || '';
+        var pagina = rows[j][CONFIG.fields.retifPagina] || '';
+        var banner = document.createElement('div');
+        banner.className = 'retificacao-banner';
+        banner.innerHTML =
+          '<i class="ph ph-warning-circle"></i>' +
+          '<span>Escritura retificada pela escritura: <strong>Livro ' + livro + ', Página ' + pagina + '</strong></span>';
+        container.appendChild(banner);
+      }
+    })
+    .catch(function(e) {
+      console.error('Erro ao verificar retificações:', e);
+    });
 }
 
 // ═══════════════════════════════════════════════════════

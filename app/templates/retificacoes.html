@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Controle de Livros - Sistema Interno{% endblock %}
+{% block title %}Retificações - Sistema Interno{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/controle.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/retificacoes.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -41,10 +41,10 @@
       <a href="{{ url_for('main.clientes') }}" class="nav-item">
         <i class="ph ph-address-book"></i> Clientes
       </a>
-      <a href="{{ url_for('main.controle') }}" class="nav-item active">
+      <a href="{{ url_for('main.controle') }}" class="nav-item">
         <i class="ph ph-book-open"></i> Controle
       </a>
-      <a href="{{ url_for('main.retificacoes') }}" class="nav-item">
+      <a href="{{ url_for('main.retificacoes') }}" class="nav-item active">
         <i class="ph ph-note-pencil"></i> Retificações
       </a>
       <a href="{{ url_for('main.relatorios') }}" class="nav-item">
@@ -71,8 +71,8 @@
     <!-- ===== CARD DE BUSCA ===== -->
     <div class="card" id="searchCard">
       <div class="page-header">
-        <h1><i class="ph ph-book-open" style="color:var(--accent);"></i> Controle de Livros de Notas</h1>
-        <p>Busque por identificador ou por Livro + Página para consultar ou criar um registro.</p>
+        <h1><i class="ph ph-note-pencil" style="color:var(--accent);"></i> Retificações</h1>
+        <p>Busque por identificador ou por Livro + Página da Retificadora para consultar ou criar um registro.</p>
       </div>
 
       <div id="searchMsg" class="msg-box"></div>
@@ -100,11 +100,11 @@
         <div class="section-title"><i class="ph ph-book-open"></i> Busca por Livro e Página</div>
         <div class="form-row">
           <div class="form-group">
-            <label for="buscaLivro">Livro</label>
+            <label for="buscaLivro">Livro Retificadora</label>
             <input type="text" id="buscaLivro" placeholder="Ex: 150" autocomplete="off">
           </div>
           <div class="form-group">
-            <label for="buscaPagina">Página <span class="hint">(máx 400)</span></label>
+            <label for="buscaPagina">Página Retificadora <span class="hint">(máx 400)</span></label>
             <input type="text" id="buscaPagina" placeholder="Ex: 25" maxlength="3" autocomplete="off">
           </div>
           <div class="form-group small" style="justify-content:flex-end;">
@@ -119,18 +119,17 @@
     <!-- ===== CARD DO FORMULARIO (oculto ate busca) ===== -->
     <div class="card" id="formCard" style="display:none;">
       <div id="formMsg" class="msg-box"></div>
-      <div id="retificacaoBannerContainer"></div>
 
       <!-- Secao 1: Identificacao -->
       <div class="form-section">
         <div class="section-title"><i class="ph ph-identification-card"></i> Identificação</div>
         <div class="form-row">
           <div class="form-group small">
-            <label for="livroInput">Livro</label>
+            <label for="livroInput">Livro Retificadora</label>
             <input type="text" id="livroInput" readonly>
           </div>
           <div class="form-group small">
-            <label for="paginaInput">Página</label>
+            <label for="paginaInput">Página Retificadora</label>
             <input type="text" id="paginaInput" readonly>
           </div>
           <div class="form-group">
@@ -140,13 +139,28 @@
         </div>
       </div>
 
-      <!-- Secao 2: Dados da Escritura -->
+      <!-- Secao 2: Escritura(s) Retificada(s) -->
       <div class="form-section">
-        <div class="section-title"><i class="ph ph-file-text"></i> Dados da Escritura</div>
-        <div class="form-row">
+        <div class="section-title"><i class="ph ph-link"></i> Escritura(s) Retificada(s)</div>
+        <div class="form-row single">
           <div class="form-group">
-            <label for="tipoEscrituraSelect">Tipo Escritura</label>
-            <select id="tipoEscrituraSelect"><option value="">Carregando...</option></select>
+            <label for="escrituraInput">Buscar escritura por identificador</label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="escrituraInput" placeholder="Digite o identificador (ex: L_150)..." autocomplete="off">
+              <div class="autocomplete-list" id="escrituraAutoList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="chips-container" id="escriturasChips"></div>
+      </div>
+
+      <!-- Secao 3: Dados da Retificacao -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-file-text"></i> Dados da Retificação</div>
+        <div class="form-row">
+          <div class="form-group small">
+            <label for="dataRetificacao">Data</label>
+            <input type="date" id="dataRetificacao" autocomplete="off">
           </div>
           <div class="form-group">
             <label for="escreventeSelect">Escrevente</label>
@@ -154,104 +168,45 @@
           </div>
         </div>
         <div class="form-row">
-          <div class="form-group small">
-            <label for="dataEscritura">Data da Escritura</label>
-            <input type="date" id="dataEscritura" autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label for="protocoloInput">Protocolo <span class="hint">(opcional)</span></label>
-            <div class="autocomplete-wrapper">
-              <input type="text" id="protocoloInput" placeholder="Digite o número do protocolo..." autocomplete="off">
-              <div class="autocomplete-list" id="protocoloAutoList"></div>
-            </div>
-          </div>
-        </div>
-        <div id="protocoloInfo" class="msg-box"></div>
-      </div>
-
-      <!-- Secao 3: Status e Controle -->
-      <div class="form-section">
-        <div class="section-title"><i class="ph ph-check-square"></i> Status e Controle</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="digitalizacaoSelect">Digitalização</label>
-            <select id="digitalizacaoSelect"><option value="">Selecione...</option></select>
-          </div>
-          <div class="form-group">
-            <label for="doiSelect">DOI</label>
-            <select id="doiSelect"><option value="">Selecione...</option></select>
-          </div>
           <div class="form-group">
             <label for="odinSelect">ODIN</label>
             <select id="odinSelect"><option value="">Selecione...</option></select>
           </div>
+          <div class="form-group">
+            <label for="anotadoSelect">Anotado?</label>
+            <select id="anotadoSelect"><option value="">Selecione...</option></select>
+          </div>
         </div>
       </div>
 
-      <!-- Secao 4: Pendencias -->
+      <!-- Secao 4: Observacao -->
       <div class="form-section">
-        <div class="section-title"><i class="ph ph-note-pencil"></i> Pendências</div>
+        <div class="section-title"><i class="ph ph-note-pencil"></i> Observação</div>
         <div class="form-row single">
           <div class="form-group">
             <div class="md-grid">
               <div class="md-editor-container">
                 <div class="md-toolbar">
-                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
-                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
-                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('list')" title="Lista"><i class="ph ph-list-bullets"></i></button>
-                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('heading')" title="Título"><i class="ph ph-text-h-two"></i></button>
-                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('code')" title="Código"><i class="ph ph-code"></i></button>
-                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('checklist')" title="Checklist"><i class="ph ph-check-square"></i></button>
-                  <button type="button" class="md-btn" onclick="addMarkdownPendencias('hr')" title="Separador"><i class="ph ph-minus"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('list')" title="Lista"><i class="ph ph-list-bullets"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('heading')" title="Título"><i class="ph ph-text-h-two"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('code')" title="Código"><i class="ph ph-code"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('checklist')" title="Checklist"><i class="ph ph-check-square"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('hr')" title="Separador"><i class="ph ph-minus"></i></button>
                 </div>
-                <textarea id="pendenciasTextarea" placeholder="Registre pendências aqui..." autocomplete="off"></textarea>
+                <textarea id="observacaoTextarea" placeholder="Registre observações aqui..." autocomplete="off"></textarea>
               </div>
-              <div id="pendenciasPreview" class="md-preview"><div class="md-placeholder">Pré-visualização do Markdown...</div></div>
+              <div id="observacaoPreview" class="md-preview"><div class="md-placeholder">Pré-visualização do Markdown...</div></div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Secao 5: Clientes (colapsavel) -->
-      <div class="form-section">
-        <div class="section-title"><i class="ph ph-users"></i> Clientes</div>
-        <div class="toggle-row">
-          <input type="checkbox" id="toggleClientes">
-          <label for="toggleClientes">Vincular clientes a esta escritura?</label>
-        </div>
-        <div class="collapsible" id="clientesSection">
-          <div class="form-row single">
-            <div class="form-group">
-              <label for="clienteInput">Buscar cliente por nome</label>
-              <div class="autocomplete-wrapper">
-                <input type="text" id="clienteInput" placeholder="Digite o nome do cliente..." autocomplete="off">
-                <div class="autocomplete-list" id="clienteAutoList"></div>
-              </div>
-            </div>
-          </div>
-          <div class="chips-container" id="clientesChips"></div>
-        </div>
-      </div>
-
-      <!-- Secao 6: Imoveis (colapsavel) -->
-      <div class="form-section">
-        <div class="section-title"><i class="ph ph-buildings"></i> Imóveis</div>
-        <div class="toggle-row">
-          <input type="checkbox" id="toggleImoveis">
-          <label for="toggleImoveis">Cadastrar imóveis desta escritura?</label>
-        </div>
-        <div class="collapsible" id="imoveisSection">
-          <div id="imoveisContainer"></div>
-          <button type="button" class="btn-add-imovel" id="btnAddImovel" onclick="adicionarImovel()">
-            <i class="ph ph-plus-circle"></i> Adicionar Imóvel
-          </button>
         </div>
       </div>
 
       <!-- Botoes de acao -->
       <div class="btn-row">
         <button type="button" class="btn btn-secondary" onclick="limparFormulario()"><i class="ph ph-eraser"></i> Limpar</button>
-        <button type="button" class="btn btn-primary" id="btnSalvar" onclick="salvarControle()"><i class="ph ph-check-circle"></i> Salvar</button>
+        <button type="button" class="btn btn-primary" id="btnSalvar" onclick="salvarRetificacao()"><i class="ph ph-check-circle"></i> Salvar</button>
       </div>
     </div>
 
@@ -261,5 +216,5 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
-<script src="{{ url_for('static', filename='js/controle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/retificacoes.js') }}"></script>
 {% endblock %}

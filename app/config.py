@@ -24,6 +24,7 @@ class BaseConfig:
     BASEROW_TABLE_CONTROLE = os.environ.get("BASEROW_TABLE_CONTROLE", "745")
     BASEROW_TABLE_ESCREVENTES = os.environ.get("BASEROW_TABLE_ESCREVENTES", "747")
     BASEROW_TABLE_IMOVEIS = os.environ.get("BASEROW_TABLE_IMOVEIS", "773")
+    BASEROW_TABLE_RETIFICACOES = os.environ.get("BASEROW_TABLE_RETIFICACOES", "753")
 
     # Paperless-ngx (proxy somente leitura)
     PAPERLESS_URL = os.environ.get("PAPERLESS_URL", "http://192.168.0.31:8094").rstrip("/")
