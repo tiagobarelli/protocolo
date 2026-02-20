@@ -158,6 +158,19 @@
       </div>
     </div>
 
+    <!-- Documentos Digitalizados (Paperless-ngx) -->
+    <div class="form-section" id="secaoDocumentos" style="display:none;">
+      <div class="section-title">
+        <i class="ph ph-files"></i> Documentos Digitalizados
+        <button type="button" class="btn-docs" id="btnConsultarDocs">
+          <i class="ph ph-file-search"></i> Consultar
+        </button>
+      </div>
+      <div id="docsResumo" class="docs-resumo">
+        Clique em "Consultar" para verificar documentos no Paperless.
+      </div>
+    </div>
+
     <!-- Botões -->
     <div class="btn-row">
       <button type="button" class="btn btn-secondary" id="btnLimpar">
@@ -168,6 +181,18 @@
       </button>
     </div>
   </div><!-- /#formCard -->
+
+  <!-- Drawer lateral — Documentos Paperless -->
+  <div id="paperlessDrawer" class="paperless-drawer">
+    <div class="drawer-header">
+      <h3><i class="ph ph-files"></i> Documentos Digitalizados</h3>
+      <button type="button" class="drawer-close" id="btnCloseDrawer">
+        <i class="ph ph-x"></i>
+      </button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </div>
+  <div class="drawer-overlay" id="drawerOverlay"></div>
 
 </div><!-- /.container -->
 {% endblock %}

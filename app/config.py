@@ -22,6 +22,10 @@ class BaseConfig:
     BASEROW_TABLE_PROTOCOLO = os.environ.get("BASEROW_TABLE_PROTOCOLO", "755")
     BASEROW_TABLE_SERVICOS = os.environ.get("BASEROW_TABLE_SERVICOS", "746")
 
+    # Paperless-ngx (proxy somente leitura)
+    PAPERLESS_URL = os.environ.get("PAPERLESS_URL", "http://192.168.0.31:8094").rstrip("/")
+    PAPERLESS_TOKEN = os.environ.get("PAPERLESS_TOKEN", "")
+
 
 class DevConfig(BaseConfig):
     """Configuração de desenvolvimento."""

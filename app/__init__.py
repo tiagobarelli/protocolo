@@ -27,10 +27,12 @@ def create_app(config=None):
     from app.routes import main_bp
     from app.baserow_proxy import baserow_bp
     from app.admin import admin_bp
+    from app.paperless_proxy import paperless_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(baserow_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(paperless_bp)
 
     return app

@@ -40,6 +40,13 @@ var conjugeId     = null;   // ID do cônjuge selecionado no autocomplete
 var buscaTimer    = null;   // debounce da busca por nome
 var conjugeTimer  = null;   // debounce do autocomplete de cônjuge
 
+// ── Paperless-ngx ──
+var PAPERLESS_API = '/api/paperless';
+var PAPERLESS_TAGS_DOCS = ['RG', 'CNH', 'Certid\u00e3o de Nascimento', 'Certid\u00e3o de Casamento'];
+var paperlessTags = {};          // mapa id → nome (carregado uma vez)
+var paperlessTagsLoaded = false;
+var cacheDocsPaperless = {};     // chave: CPF, valor: array de docs
+
 // ── API header ──
 function apiHeaders() {
   return { 'Content-Type': 'application/json' };
@@ -455,6 +462,9 @@ function preencherFormulario(cli) {
 
   // Protocolos vinculados (async)
   carregarProtocolos(cli[FIELDS.protocolos] || []);
+
+  // Documentos Digitalizados (Paperless) — mostrar seção se tem CPF
+  atualizarVisibilidadeDocumentos();
 }
 
 function limparCamposFormulario() {
@@ -484,6 +494,9 @@ function limparFormulario() {
   limparCamposFormulario();
   esconderMsg('formMsg');
   esconderFormulario();
+  fecharDrawer();
+  cacheDocsPaperless = {};
+  atualizarVisibilidadeDocumentos();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -761,6 +774,208 @@ function executarPatch(btnSalvar) {
 }
 
 // ═══════════════════════════════════════════════════════
+// PAPERLESS-NGX — Documentos Digitalizados
+// ═══════════════════════════════════════════════════════
+function atualizarVisibilidadeDocumentos() {
+  var secao = document.getElementById('secaoDocumentos');
+  if (!secao) return;
+  var cpf = document.getElementById('cpfInput').value.trim();
+  if (clienteAtual && !modoNovo && cpf) {
+    secao.style.display = '';
+  } else {
+    secao.style.display = 'none';
+    // Resetar resumo
+    var resumo = document.getElementById('docsResumo');
+    if (resumo) {
+      resumo.innerHTML = 'Clique em "Consultar" para verificar documentos no Paperless.';
+      resumo.classList.remove('clickable');
+      resumo.onclick = null;
+    }
+  }
+}
+
+function carregarTagsPaperless(callback) {
+  if (paperlessTagsLoaded) { callback(); return; }
+  fetch(PAPERLESS_API + '/api/tags/?page_size=100')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var results = data.results || [];
+      for (var i = 0; i < results.length; i++) {
+        paperlessTags[results[i].id] = results[i].name;
+      }
+      paperlessTagsLoaded = true;
+      callback();
+    })
+    .catch(function(e) {
+      console.error('Erro ao carregar tags Paperless:', e);
+      callback();
+    });
+}
+
+function abrirDrawer() {
+  document.getElementById('paperlessDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('active');
+}
+
+function fecharDrawer() {
+  document.getElementById('paperlessDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('active');
+}
+
+function buscarDocumentosPaperless(cpf) {
+  if (!cpf) return;
+
+  // Cache hit
+  if (cacheDocsPaperless[cpf]) {
+    abrirDrawer();
+    renderizarDocumentos(cacheDocsPaperless[cpf]);
+    atualizarResumoInline(cacheDocsPaperless[cpf]);
+    return;
+  }
+
+  // Mostrar loading e abrir drawer
+  var body = document.getElementById('drawerBody');
+  body.innerHTML =
+    '<div class="doc-loading">' +
+    '<div class="spinner"></div>' +
+    'Consultando Paperless...' +
+    '</div>';
+  abrirDrawer();
+
+  carregarTagsPaperless(function() {
+    var query = encodeURIComponent('["CPF","exact","' + cpf + '"]');
+    var url = PAPERLESS_API + '/api/documents/?custom_field_query=' + query + '&page_size=50';
+    fetch(url)
+      .then(function(r) {
+        if (!r.ok) throw new Error('Erro HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(data) {
+        var docs = data.results || [];
+        cacheDocsPaperless[cpf] = docs;
+        renderizarDocumentos(docs);
+        atualizarResumoInline(docs);
+      })
+      .catch(function(e) {
+        console.error('Erro ao buscar documentos Paperless:', e);
+        body.innerHTML =
+          '<div class="doc-empty">' +
+          '<i class="ph ph-warning"></i>' +
+          '<strong>Erro:</strong> ' + (e.message || e) +
+          '</div>';
+      });
+  });
+}
+
+function renderizarDocumentos(docs) {
+  var body = document.getElementById('drawerBody');
+  body.innerHTML = '';
+
+  if (docs.length === 0) {
+    body.innerHTML =
+      '<div class="doc-empty">' +
+      '<i class="ph ph-file-dashed"></i>' +
+      'Nenhum documento encontrado para este CPF.' +
+      '</div>';
+    return;
+  }
+
+  for (var i = 0; i < docs.length; i++) {
+    var doc = docs[i];
+    var card = document.createElement('div');
+    card.className = 'doc-card';
+
+    // Thumbnail
+    var thumb = document.createElement('img');
+    thumb.className = 'doc-thumb';
+    thumb.src = PAPERLESS_API + '/api/documents/' + doc.id + '/thumb/';
+    thumb.alt = doc.title || 'Documento';
+    thumb.title = 'Clique para abrir o PDF';
+    (function(docId) {
+      thumb.addEventListener('click', function() {
+        window.open(PAPERLESS_API + '/api/documents/' + docId + '/preview/', '_blank');
+      });
+    })(doc.id);
+    card.appendChild(thumb);
+
+    // Info
+    var info = document.createElement('div');
+    info.className = 'doc-info';
+
+    var title = document.createElement('div');
+    title.className = 'doc-title';
+    title.textContent = doc.title || 'Sem t\u00edtulo';
+    info.appendChild(title);
+
+    // Tags
+    var tagsContainer = document.createElement('div');
+    tagsContainer.className = 'doc-tags';
+    var tagIds = doc.tags || [];
+    for (var t = 0; t < tagIds.length; t++) {
+      var tagName = paperlessTags[tagIds[t]] || ('Tag ' + tagIds[t]);
+      var badge = document.createElement('span');
+      badge.className = 'doc-tag';
+      badge.textContent = tagName;
+      tagsContainer.appendChild(badge);
+    }
+    info.appendChild(tagsContainer);
+
+    card.appendChild(info);
+    body.appendChild(card);
+  }
+}
+
+function atualizarResumoInline(docs) {
+  var resumo = document.getElementById('docsResumo');
+  if (!resumo) return;
+
+  // Montar set de tags encontradas
+  var tagsEncontradas = {};
+  for (var i = 0; i < docs.length; i++) {
+    var tagIds = docs[i].tags || [];
+    for (var t = 0; t < tagIds.length; t++) {
+      var nome = paperlessTags[tagIds[t]];
+      if (nome) tagsEncontradas[nome] = true;
+    }
+  }
+
+  // Montar checklist
+  var partes = [];
+  for (var j = 0; j < PAPERLESS_TAGS_DOCS.length; j++) {
+    var tag = PAPERLESS_TAGS_DOCS[j];
+    if (tagsEncontradas[tag]) {
+      partes.push('<span class="doc-ok">' + tag + ' \u2713</span>');
+    } else {
+      partes.push('<span class="doc-miss">' + tag + ' \u2717</span>');
+    }
+  }
+  resumo.innerHTML = partes.join(' \u00b7 ');
+  resumo.classList.add('clickable');
+  resumo.onclick = function() {
+    var cpf = document.getElementById('cpfInput').value.trim();
+    if (cpf) buscarDocumentosPaperless(cpf);
+  };
+}
+
+function configurarDrawer() {
+  document.getElementById('btnCloseDrawer').addEventListener('click', fecharDrawer);
+  document.getElementById('drawerOverlay').addEventListener('click', fecharDrawer);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      var drawer = document.getElementById('paperlessDrawer');
+      if (drawer && drawer.classList.contains('open')) {
+        fecharDrawer();
+      }
+    }
+  });
+
+  document.getElementById('btnConsultarDocs').addEventListener('click', function() {
+    var cpf = document.getElementById('cpfInput').value.trim();
+    if (cpf) buscarDocumentosPaperless(cpf);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
 // INICIALIZAÇÃO
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
@@ -773,6 +988,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnNovoCliente').addEventListener('click', novoCliente);
   document.getElementById('btnSalvar').addEventListener('click', salvarCliente);
   document.getElementById('btnLimpar').addEventListener('click', limparFormulario);
+  configurarDrawer();
 
   // Fechar dropdowns ao clicar fora
   document.addEventListener('click', function(e) {
