@@ -11,7 +11,8 @@ var CONFIG = {
     clientes: 754,
     protocolo: 755,
     imoveis: 773,
-    retificacoes: 753
+    retificacoes: 753,
+    substabelecimentos: 762
   },
   fields: {
     // Controle (745)
@@ -45,7 +46,11 @@ var CONFIG = {
     // Retificacoes (campo reverso no Controle + campos da tabela 753)
     retificacaoReversa: 'field_7232',
     retifLivro: 'field_7228',
-    retifPagina: 'field_7229'
+    retifPagina: 'field_7229',
+    // Substabelecimentos (campo reverso no Controle + campos da tabela 762)
+    substabelecimentoReverso: 'field_7331',
+    substLivro: 'field_7322',
+    substPagina: 'field_7323'
   },
   statusEmAndamento: 3064,
   statusFinalizado: 3065,
@@ -484,6 +489,9 @@ function preencherFormularioExistente(row) {
 
   // Verificar se escritura foi retificada
   verificarRetificacoes(row);
+
+  // Verificar se escritura possui substabelecimentos
+  verificarSubstabelecimentos(row);
 }
 
 function carregarImoveisExistentes(imoveisArr) {
@@ -564,6 +572,7 @@ function resetarEstadoFormulario() {
   esconderMsg('formMsg');
   esconderMsg('protocoloInfo');
   document.getElementById('retificacaoBannerContainer').innerHTML = '';
+  document.getElementById('substabelecimentoBannerContainer').innerHTML = '';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1004,6 +1013,45 @@ function verificarRetificacoes(row) {
     })
     .catch(function(e) {
       console.error('Erro ao verificar retificações:', e);
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// SUBSTABELECIMENTOS — Banner informativo
+// ═══════════════════════════════════════════════════════
+function verificarSubstabelecimentos(row) {
+  var container = document.getElementById('substabelecimentoBannerContainer');
+  container.innerHTML = '';
+
+  var substArr = row[CONFIG.fields.substabelecimentoReverso];
+  if (!substArr || substArr.length === 0) return;
+
+  var promises = [];
+  for (var i = 0; i < substArr.length; i++) {
+    (function(substId) {
+      promises.push(
+        fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.substabelecimentos + '/' + substId + '/?user_field_names=false', {
+          headers: apiHeaders()
+        }).then(function(r) { return r.json(); })
+      );
+    })(substArr[i].id);
+  }
+
+  Promise.all(promises)
+    .then(function(rows) {
+      for (var j = 0; j < rows.length; j++) {
+        var livro = rows[j][CONFIG.fields.substLivro] || '';
+        var pagina = rows[j][CONFIG.fields.substPagina] || '';
+        var banner = document.createElement('div');
+        banner.className = 'substabelecimento-banner';
+        banner.innerHTML =
+          '<i class="ph ph-warning-circle"></i>' +
+          '<span>Esta procuração possui substabelecimento: <strong>Livro ' + livro + ', Página ' + pagina + '</strong></span>';
+        container.appendChild(banner);
+      }
+    })
+    .catch(function(e) {
+      console.error('Erro ao verificar substabelecimentos:', e);
     });
 }
 

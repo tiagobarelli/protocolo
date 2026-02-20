@@ -61,6 +61,13 @@ def retificacoes():
     return render_template("retificacoes.html")
 
 
+@main_bp.route("/substabelecimentos")
+@login_required
+@perfil_required("master", "administrador")
+def substabelecimentos():
+    return render_template("substabelecimentos.html")
+
+
 @main_bp.route("/protocolo/<int:protocolo_id>")
 @login_required
 @perfil_required("master", "administrador", "escrevente")
