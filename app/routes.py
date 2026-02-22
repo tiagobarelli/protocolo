@@ -35,7 +35,7 @@ def consultar():
 
 @main_bp.route("/clientes")
 @login_required
-@perfil_required("master", "administrador")
+@perfil_required("master", "administrador", "escrevente")
 def clientes():
     return render_template("clientes.html")
 

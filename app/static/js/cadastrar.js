@@ -19,7 +19,8 @@
       advogado: 'field_7254',
       agendadoPara: 'field_7268',
       depositoPrevio: 'field_7340',
-      clienteAlerta: 'field_7394'
+      clienteAlerta: 'field_7394',
+      clienteLogs: 'field_7395'
     },
     statusDefault: 3064,
     collaborators: [
@@ -335,10 +336,10 @@
         nomeInput.readOnly = true;
         var telVal = clienteEncontrado[CONFIG.fields.clienteTelefone] || '';
         document.getElementById('telefone').value = telVal;
-        document.getElementById('telefone').readOnly = !!telVal;
+        document.getElementById('telefone').readOnly = false;
         var emailVal = clienteEncontrado[CONFIG.fields.clienteEmail] || '';
         document.getElementById('email').value = emailVal;
-        document.getElementById('email').readOnly = !!emailVal;
+        document.getElementById('email').readOnly = false;
         // Exibir alerta do cliente, se existir
         var alertaCliente = clienteEncontrado[CONFIG.fields.clienteAlerta] || '';
         var alertaEl = document.getElementById('alertaCliente');
@@ -576,8 +577,33 @@
       if (clienteEncontrado) {
         clienteId = clienteEncontrado.id;
         var atualiza = {};
-        if (telefone && !clienteEncontrado[CONFIG.fields.clienteTelefone]) atualiza[CONFIG.fields.clienteTelefone] = telefone;
-        if (email && !clienteEncontrado[CONFIG.fields.clienteEmail]) atualiza[CONFIG.fields.clienteEmail] = email;
+        var linhasLogCad = [];
+        var telOriginal = clienteEncontrado[CONFIG.fields.clienteTelefone] || '';
+        var emailOriginal = clienteEncontrado[CONFIG.fields.clienteEmail] || '';
+        var nomeUsuario = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : 'Usuário';
+        var agora = new Date();
+        var dia = ('0' + agora.getDate()).slice(-2);
+        var mes = ('0' + (agora.getMonth() + 1)).slice(-2);
+        var ano = agora.getFullYear();
+        var hora = ('0' + agora.getHours()).slice(-2);
+        var minuto = ('0' + agora.getMinutes()).slice(-2);
+        var dataHora = dia + '/' + mes + '/' + ano + ' ' + hora + ':' + minuto;
+
+        if (telefone !== telOriginal) {
+          atualiza[CONFIG.fields.clienteTelefone] = telefone;
+          linhasLogCad.push(nomeUsuario + '. ' + dataHora + ': O campo Telefone foi alterado. Valor anterior: ' + (telOriginal || '(vazio)') + '.');
+        }
+        if (email !== emailOriginal) {
+          atualiza[CONFIG.fields.clienteEmail] = email;
+          linhasLogCad.push(nomeUsuario + '. ' + dataHora + ': O campo E-mail foi alterado. Valor anterior: ' + (emailOriginal || '(vazio)') + '.');
+        }
+
+        if (linhasLogCad.length > 0) {
+          var logsExistentes = clienteEncontrado[CONFIG.fields.clienteLogs] || '';
+          var novasLinhas = linhasLogCad.join('\n');
+          atualiza[CONFIG.fields.clienteLogs] = logsExistentes ? (novasLinhas + '\n' + logsExistentes) : novasLinhas;
+        }
+
         if (Object.keys(atualiza).length > 0) {
           await fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' + clienteId + '/?user_field_names=false',
             { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(atualiza) });

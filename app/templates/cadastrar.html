@@ -161,6 +161,13 @@
 </div>
 {% endblock %}
 {% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
 <script>
 window.TEMPLATES_SERVICO = {

@@ -330,3 +330,18 @@ textarea { resize: vertical; min-height: 80px; }
   border-color: var(--border-focus, var(--accent));
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
+
+/* ==================== LOGS DE ALTERAÇÕES ==================== */
+.log-card .card-title {
+  margin-bottom: 12px;
+}
+
+.log-texto {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+}

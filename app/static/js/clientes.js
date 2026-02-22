@@ -21,7 +21,25 @@ var FIELDS = {
   profissao:        'field_7347',
   regraPatrimonial: 'field_7348',
   protocolos:       'field_7247',
-  alerta:           'field_7394'
+  alerta:           'field_7394',
+  logs:             'field_7395'
+};
+
+var FIELD_LABELS = {
+  nome:             'Nome',
+  cpf:              'CPF',
+  cnpj:             'CNPJ',
+  telefone:         'Telefone',
+  email:            'E-mail',
+  endereco:         'Endereço',
+  oab:              'OAB',
+  rg:               'RG',
+  estadoCivil:      'Estado Civil',
+  conjuge:          'Cônjuge',
+  nascimento:       'Data de Nascimento',
+  profissao:        'Profissão',
+  regraPatrimonial: 'Regra Patrimonial',
+  alerta:           'Alerta'
 };
 
 var ESTADO_CIVIL_OPTS = [
@@ -48,6 +66,7 @@ var clienteCarregadoPorBusca = false; // true quando veio de busca positiva
 var conjugeId     = null;   // ID do cônjuge selecionado no autocomplete
 var buscaTimer    = null;   // debounce da busca por nome
 var conjugeTimer  = null;   // debounce do autocomplete de cônjuge
+var snapshotCliente = null;  // snapshot dos dados originais para detecção de alterações
 
 // ── Paperless-ngx ──
 var PAPERLESS_API = '/api/paperless';
@@ -451,6 +470,7 @@ function novoCliente() {
   clienteAtual = null;
   modoNovo = true;
   clienteCarregadoPorBusca = false;
+  snapshotCliente = null;
   conjugeId = null;
   limparCamposFormulario();
   atualizarVisibilidadeDocumentos();
@@ -479,6 +499,122 @@ function mostrarFormulario() {
 
 function esconderFormulario() {
   document.getElementById('formCard').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+// LOGS — snapshot e detecção de alterações
+// ═══════════════════════════════════════════════════════
+function capturarSnapshot(cli) {
+  if (!cli) return null;
+  var snap = {};
+  snap.nome      = cli[FIELDS.nome] || '';
+  snap.cpf       = cli[FIELDS.cpf] || '';
+  snap.cnpj      = cli[FIELDS.cnpj] || '';
+  snap.telefone  = cli[FIELDS.telefone] || '';
+  snap.email     = cli[FIELDS.email] || '';
+  snap.endereco  = cli[FIELDS.endereco] || '';
+  snap.oab       = cli[FIELDS.oab] || '';
+  snap.rg        = cli[FIELDS.rg] || '';
+  snap.profissao = cli[FIELDS.profissao] || '';
+  snap.alerta    = cli[FIELDS.alerta] || '';
+  snap.nascimento = cli[FIELDS.nascimento] || '';
+  var ecObj = cli[FIELDS.estadoCivil];
+  snap.estadoCivil = (ecObj && ecObj.value) ? ecObj.value : '';
+  var rpObj = cli[FIELDS.regraPatrimonial];
+  snap.regraPatrimonial = (rpObj && rpObj.value) ? rpObj.value : '';
+  var conjArr = cli[FIELDS.conjuge];
+  snap.conjuge = (conjArr && conjArr.length > 0 && conjArr[0].value) ? conjArr[0].value : '';
+  return snap;
+}
+
+function capturarEstadoAtualFormulario() {
+  var estado = {};
+  estado.nome      = document.getElementById('nomeInput').value.trim();
+  estado.cpf       = document.getElementById('cpfInput').value.trim();
+  estado.cnpj      = document.getElementById('cnpjInput').value.trim();
+  estado.telefone  = document.getElementById('telefoneInput').value.trim();
+  estado.email     = document.getElementById('emailInput').value.trim();
+  estado.endereco  = document.getElementById('enderecoTextarea').value.trim();
+  estado.oab       = document.getElementById('oabInput').value.trim();
+  estado.rg        = document.getElementById('rgInput').value.trim();
+  estado.profissao = document.getElementById('profissaoInput').value.trim();
+  estado.nascimento = document.getElementById('nascimentoInput').value || '';
+
+  var alertaEl = document.getElementById('alertaTextarea');
+  var podeEditarAlerta = window.CURRENT_USER &&
+    (window.CURRENT_USER.perfil === 'master' || window.CURRENT_USER.perfil === 'administrador');
+  if (podeEditarAlerta && alertaEl) {
+    estado.alerta = alertaEl.value;
+  } else {
+    estado.alerta = snapshotCliente ? snapshotCliente.alerta : '';
+  }
+
+  var ecVal = document.getElementById('estadoCivilSelect').value;
+  estado.estadoCivil = '';
+  if (ecVal) {
+    for (var i = 0; i < ESTADO_CIVIL_OPTS.length; i++) {
+      if (String(ESTADO_CIVIL_OPTS[i].id) === String(ecVal)) {
+        estado.estadoCivil = ESTADO_CIVIL_OPTS[i].label;
+        break;
+      }
+    }
+  }
+
+  var rpVal = document.getElementById('regraPatrimonialSelect').value;
+  estado.regraPatrimonial = '';
+  if (rpVal) {
+    for (var j = 0; j < REGRA_PATRIMONIAL_OPTS.length; j++) {
+      if (String(REGRA_PATRIMONIAL_OPTS[j].id) === String(rpVal)) {
+        estado.regraPatrimonial = REGRA_PATRIMONIAL_OPTS[j].label;
+        break;
+      }
+    }
+  }
+
+  estado.conjuge = conjugeId ? document.getElementById('conjugeInput').value.trim() : '';
+
+  return estado;
+}
+
+function gerarLinhasLog(snapAnterior, estadoAtual) {
+  if (!snapAnterior) return [];
+
+  var agora = new Date();
+  var dia = ('0' + agora.getDate()).slice(-2);
+  var mes = ('0' + (agora.getMonth() + 1)).slice(-2);
+  var ano = agora.getFullYear();
+  var hora = ('0' + agora.getHours()).slice(-2);
+  var min = ('0' + agora.getMinutes()).slice(-2);
+  var dataHora = dia + '/' + mes + '/' + ano + ' ' + hora + ':' + min;
+
+  var nomeUsuario = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : 'Usuário';
+
+  var linhas = [];
+  var chaves = Object.keys(FIELD_LABELS);
+  for (var i = 0; i < chaves.length; i++) {
+    var chave = chaves[i];
+    var anterior = (snapAnterior[chave] !== undefined && snapAnterior[chave] !== null) ? String(snapAnterior[chave]) : '';
+    var atual = (estadoAtual[chave] !== undefined && estadoAtual[chave] !== null) ? String(estadoAtual[chave]) : '';
+    if (anterior !== atual) {
+      var valorAnterior = anterior || '(vazio)';
+      linhas.push(nomeUsuario + '. ' + dataHora + ': O campo ' + FIELD_LABELS[chave] + ' foi alterado. Valor anterior: ' + valorAnterior + '.');
+    }
+  }
+  return linhas;
+}
+
+function exibirLogs(cli) {
+  var logCard = document.getElementById('logCard');
+  var logContent = document.getElementById('logContent');
+  var logsVal = (cli && cli[FIELDS.logs]) ? cli[FIELDS.logs] : '';
+
+  if (logsVal.trim()) {
+    logContent.textContent = logsVal;
+    logCard.style.display = '';
+  } else {
+    logContent.textContent = '';
+    logCard.style.display = 'none';
+  }
 }
 
 function preencherFormulario(cli) {
@@ -550,6 +686,12 @@ function preencherFormulario(cli) {
     alertaCard.classList.remove('alerta-ativo');
   }
 
+  // Capturar snapshot para detecção de alterações
+  snapshotCliente = capturarSnapshot(cli);
+
+  // Exibir logs
+  exibirLogs(cli);
+
   // Protocolos vinculados (async)
   carregarProtocolos(cli[FIELDS.protocolos] || []);
 
@@ -581,6 +723,9 @@ function limparCamposFormulario() {
   document.getElementById('alertaReadonly').textContent = '';
   document.getElementById('alertaCard').style.display = 'none';
   document.getElementById('alertaCard').classList.remove('alerta-ativo');
+  snapshotCliente = null;
+  document.getElementById('logContent').textContent = '';
+  document.getElementById('logCard').style.display = 'none';
 }
 
 function limparFormulario() {
@@ -857,7 +1002,19 @@ function executarPost(btnSalvar) {
 }
 
 function executarPatch(btnSalvar) {
+  // Gerar logs de alteração antes do PATCH
+  var estadoAtual = capturarEstadoAtualFormulario();
+  var linhasLog = gerarLinhasLog(snapshotCliente, estadoAtual);
+
   var payload = construirPayload(false);
+
+  // Se houve alterações, adicionar logs ao payload
+  if (linhasLog.length > 0) {
+    var logsExistentes = (clienteAtual && clienteAtual[FIELDS.logs]) ? clienteAtual[FIELDS.logs] : '';
+    var novasLinhas = linhasLog.join('\n');
+    payload[FIELDS.logs] = logsExistentes ? (novasLinhas + '\n' + logsExistentes) : novasLinhas;
+  }
+
   var url = API_BASE + '/database/rows/table/' + TABLE_CLIENTES + '/' +
     clienteAtual.id + '/?user_field_names=false';
   fetch(url, { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(payload) })
@@ -869,6 +1026,8 @@ function executarPatch(btnSalvar) {
     })
     .then(function(data) {
       clienteAtual = data;
+      snapshotCliente = capturarSnapshot(data);
+      exibirLogs(data);
       esconderOverlay();
       btnSalvar.disabled = false;
       mostrarMsg('formMsg', 'success', 'Alterações salvas com sucesso!');
