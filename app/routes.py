@@ -82,3 +82,9 @@ def protocolo_imprimir(protocolo_id):
     return render_template("imprimir.html", protocolo_id=protocolo_id)
 
 
+@main_bp.route("/notificacoes")
+@login_required
+def notificacoes():
+    return render_template("notificacoes.html")
+
+

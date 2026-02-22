@@ -183,6 +183,32 @@
       <div class="msg-box" id="andamentoMsg"></div>
     </div>
   </div>
+
+  <!-- Comentários -->
+  <div class="card comments-card">
+    <div class="card-title"><i class="ph ph-chat-dots"></i> Comentários</div>
+
+    <!-- Lista de comentários -->
+    <div id="commentsList" class="comments-list">
+      <div class="comments-empty">Nenhum comentário ainda.</div>
+    </div>
+
+    <!-- Formulário de novo comentário -->
+    <div class="comment-form">
+      <div class="comment-input-wrapper">
+        <textarea id="commentTexto" class="comment-textarea" placeholder="Escreva um comentário... Use @ para mencionar alguém" rows="3" maxlength="2000"></textarea>
+        <!-- Dropdown de menções (oculto por padrão) -->
+        <div id="mentionDropdown" class="mention-dropdown" style="display:none;"></div>
+      </div>
+      <div class="comment-form-footer">
+        <div class="comment-mentions-tags" id="mentionsTags"></div>
+        <button type="button" class="btn btn-primary btn-sm" id="btnEnviarComentario">
+          <i class="ph ph-paper-plane-tilt"></i> Enviar
+        </button>
+      </div>
+      <div class="msg-box" id="commentMsg"></div>
+    </div>
+  </div>
 </div>
   </main>
 </div>

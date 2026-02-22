@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Notificações{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/notificacoes.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header-notif">
+        <h1><i class="ph ph-bell" style="color: var(--accent);"></i> Notificações</h1>
+        <button type="button" class="btn btn-outline btn-sm" id="btnMarcarTodasLidas">
+          <i class="ph ph-checks"></i> Marcar todas como lidas
+        </button>
+      </div>
+
+      <div id="notificationsContainer">
+        <div class="loading-state" id="loadingState">
+          <div class="spinner"></div>
+          Carregando notificações...
+        </div>
+      </div>
+
+      <!-- Paginação -->
+      <div class="pagination" id="paginationContainer" style="display:none;"></div>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
+<script src="{{ url_for('static', filename='js/notificacoes.js') }}"></script>
+{% endblock %}

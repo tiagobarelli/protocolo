@@ -63,6 +63,31 @@ def init_db(app):
             );
             CREATE INDEX IF NOT EXISTS idx_protocol_files_protocolo
                 ON protocol_files(protocolo_id);
+
+            CREATE TABLE IF NOT EXISTS comments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                protocolo_id INTEGER NOT NULL,
+                usuario_id INTEGER NOT NULL,
+                usuario_nome TEXT NOT NULL,
+                conteudo TEXT NOT NULL,
+                criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_comments_protocolo
+                ON comments(protocolo_id);
+
+            CREATE TABLE IF NOT EXISTS notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                destinatario_id INTEGER NOT NULL,
+                remetente_id INTEGER NOT NULL,
+                remetente_nome TEXT NOT NULL,
+                comment_id INTEGER NOT NULL,
+                protocolo_id INTEGER NOT NULL,
+                previa TEXT NOT NULL,
+                lida INTEGER NOT NULL DEFAULT 0,
+                criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_notifications_destinatario
+                ON notifications(destinatario_id, lida);
         """)
         conn.commit()
         conn.close()

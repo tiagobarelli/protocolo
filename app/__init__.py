@@ -29,6 +29,8 @@ def create_app(config=None):
     from app.admin import admin_bp
     from app.paperless_proxy import paperless_bp
     from app.uploads import uploads_bp
+    from app.comments import comments_bp, users_bp
+    from app.notifications import notifications_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -36,5 +38,8 @@ def create_app(config=None):
     app.register_blueprint(admin_bp)
     app.register_blueprint(paperless_bp)
     app.register_blueprint(uploads_bp)
+    app.register_blueprint(comments_bp)
+    app.register_blueprint(users_bp)
+    app.register_blueprint(notifications_bp)
 
     return app

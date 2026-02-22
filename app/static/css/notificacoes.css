@@ -1,0 +1,199 @@
+/* notificacoes.css — Página de notificações */
+
+.topbar { display: none !important; }
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.page-header-notif {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-header-notif h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-dark, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Notification items */
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 8px;
+  margin-bottom: 2px;
+}
+
+.notification-item:hover {
+  background: var(--accent-soft, #eff6ff);
+}
+
+.notification-item.unread {
+  background: var(--accent-soft, #eff6ff);
+  border-left: 3px solid var(--accent, #2563eb);
+}
+
+.notification-item.read {
+  background: transparent;
+}
+
+.notification-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft, #eff6ff);
+  color: var(--accent, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+.notification-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-meta {
+  font-size: 0.85rem;
+  color: var(--text-main, #334155);
+  line-height: 1.5;
+}
+
+.notification-sender {
+  font-weight: 700;
+  color: var(--text-dark, #0f172a);
+}
+
+.notification-protocol {
+  font-weight: 700;
+  color: var(--accent, #2563eb);
+}
+
+.notification-date {
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  margin-left: 8px;
+}
+
+.notification-preview {
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent, #2563eb);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+/* Empty state */
+.notifications-empty {
+  text-align: center;
+  color: var(--text-muted, #64748b);
+  padding: 48px 0;
+  font-size: 0.95rem;
+}
+
+/* Loading */
+.loading-state {
+  text-align: center;
+  padding: 48px 0;
+  color: var(--text-muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.loading-state .spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border, #e2e8f0);
+  border-top-color: var(--accent, #2563eb);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin: 0 auto 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+}
+
+.pagination-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface, #ffffff);
+  color: var(--text-main, #334155);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+
+.pagination-btn:hover {
+  background: var(--accent-soft, #eff6ff);
+  border-color: var(--accent, #2563eb);
+}
+
+.pagination-btn.active {
+  background: var(--accent, #2563eb);
+  color: #fff;
+  border-color: var(--accent, #2563eb);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border, #e2e8f0);
+  color: var(--text-main, #334155);
+}
+
+.btn-outline:hover {
+  background: var(--accent-soft, #eff6ff);
+  border-color: var(--accent, #2563eb);
+  color: var(--accent, #2563eb);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}

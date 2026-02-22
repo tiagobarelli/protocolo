@@ -7,6 +7,7 @@
   {% set gestao_atos_active = request.endpoint in ['main.controle', 'main.retificacoes', 'main.substabelecimentos'] %}
   {% set consultar_active = request.endpoint in ['main.consultar', 'main.protocolo_detalhe', 'main.protocolo_imprimir'] %}
   {% set relatorios_active = request.endpoint in ['main.relatorio_controle_atos'] %}
+  {% set notificacoes_active = request.endpoint == 'main.notificacoes' %}
 
   <nav class="sidebar-nav">
     <a href="{{ url_for('main.index') }}" class="nav-item {% if request.endpoint == 'main.index' %}active{% endif %}">
@@ -73,7 +74,13 @@
   </nav>
 
   <div class="sidebar-footer">
+    <a href="/notificacoes" class="notification-bell{% if notificacoes_active %} active{% endif %}" id="notificationBell" title="Notificações">
+      <i class="ph ph-bell"></i> Notificações
+      <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+    </a>
     <span class="user-info"><i class="ph ph-user"></i> {{ current_user.nome }}</span>
     <a href="{{ url_for('auth.logout') }}"><i class="ph ph-sign-out"></i> Sair</a>
   </div>
 </aside>
+
+<script src="{{ url_for('static', filename='js/notifications-badge.js') }}"></script>

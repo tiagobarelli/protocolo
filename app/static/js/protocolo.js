@@ -1041,6 +1041,289 @@ function deletarArquivo(fileId, nomeOriginal) {
     });
 }
 
+/* ---------- COMENTÁRIOS ---------- */
+
+var commentUsers = [];
+var mentionedUsers = [];
+
+function carregarComentarios() {
+  var list = document.getElementById('commentsList');
+  if (!list) return;
+
+  fetch('/api/comments/' + window.PROTOCOLO_ID)
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao carregar comentários');
+      return resp.json();
+    })
+    .then(function(data) {
+      if (!data.comments || data.comments.length === 0) {
+        list.innerHTML = '<div class="comments-empty">Nenhum comentário ainda.</div>';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < data.comments.length; i++) {
+        var c = data.comments[i];
+        html += renderizarComentario(c);
+      }
+      list.innerHTML = html;
+      list.scrollTop = list.scrollHeight;
+    })
+    .catch(function(err) {
+      list.innerHTML = '<div class="comments-empty">Erro ao carregar comentários.</div>';
+    });
+}
+
+function renderizarComentario(c) {
+  var iniciais = c.usuario_nome.split(' ').map(function(p) { return p.charAt(0).toUpperCase(); }).join('').substring(0, 2);
+  var dataFormatada = formatarDataComentario(c.criado_em);
+  var textoHtml = escapeHtml(c.conteudo).replace(/\n/g, '<br>');
+  textoHtml = destacarMencoes(textoHtml);
+
+  return '<div class="comment-item">' +
+    '<div class="comment-avatar">' + iniciais + '</div>' +
+    '<div class="comment-body">' +
+      '<div class="comment-header">' +
+        '<span class="comment-author">' + escapeHtml(c.usuario_nome) + '</span>' +
+        '<span class="comment-date">' + dataFormatada + '</span>' +
+      '</div>' +
+      '<div class="comment-text">' + textoHtml + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function formatarDataComentario(str) {
+  if (!str) return '';
+  var d = new Date(str.replace(' ', 'T'));
+  if (isNaN(d.getTime())) return str;
+  var dd = ('0' + d.getDate()).slice(-2);
+  var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+  var yyyy = d.getFullYear();
+  var hh = ('0' + d.getHours()).slice(-2);
+  var min = ('0' + d.getMinutes()).slice(-2);
+  return dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + min;
+}
+
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(text));
+  return div.innerHTML;
+}
+
+function destacarMencoes(html) {
+  return html.replace(/@([\w\sÀ-ÿ]+)/g, function(match) {
+    return '<span class="mention-highlight">' + match + '</span>';
+  });
+}
+
+function carregarUsuariosMencao() {
+  fetch('/api/users/active')
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao carregar usuários');
+      return resp.json();
+    })
+    .then(function(data) {
+      commentUsers = data.users || [];
+    })
+    .catch(function() {
+      commentUsers = [];
+    });
+}
+
+function onCommentInput() {
+  var textarea = document.getElementById('commentTexto');
+  var dropdown = document.getElementById('mentionDropdown');
+  if (!textarea || !dropdown) return;
+
+  var val = textarea.value;
+  var cursorPos = textarea.selectionStart;
+  var textBeforeCursor = val.substring(0, cursorPos);
+
+  // Encontrar o último @ antes do cursor
+  var atIndex = textBeforeCursor.lastIndexOf('@');
+  if (atIndex === -1) {
+    dropdown.style.display = 'none';
+    return;
+  }
+
+  // Verificar se o @ está no início ou após um espaço/newline
+  if (atIndex > 0 && textBeforeCursor.charAt(atIndex - 1) !== ' ' && textBeforeCursor.charAt(atIndex - 1) !== '\n') {
+    dropdown.style.display = 'none';
+    return;
+  }
+
+  var query = textBeforeCursor.substring(atIndex + 1).toLowerCase();
+
+  // Se há espaço duplo após o nome, fechar dropdown
+  if (query.indexOf('  ') !== -1) {
+    dropdown.style.display = 'none';
+    return;
+  }
+
+  var filtered = [];
+  for (var i = 0; i < commentUsers.length; i++) {
+    var u = commentUsers[i];
+    if (u.id === window.CURRENT_USER.id) continue;
+    if (u.nome.toLowerCase().indexOf(query) !== -1) {
+      filtered.push(u);
+    }
+  }
+
+  if (filtered.length === 0) {
+    dropdown.style.display = 'none';
+    return;
+  }
+
+  var html = '';
+  for (var j = 0; j < filtered.length; j++) {
+    html += '<div class="mention-dropdown-item" data-id="' + filtered[j].id + '" data-nome="' + escapeHtml(filtered[j].nome) + '">' +
+      '<i class="ph ph-user"></i> ' + escapeHtml(filtered[j].nome) +
+    '</div>';
+  }
+  dropdown.innerHTML = html;
+  dropdown.style.display = 'block';
+
+  // Registrar cliques nos itens
+  var items = dropdown.querySelectorAll('.mention-dropdown-item');
+  for (var k = 0; k < items.length; k++) {
+    items[k].addEventListener('click', function() {
+      var uid = parseInt(this.getAttribute('data-id'));
+      var uname = this.getAttribute('data-nome');
+      selecionarMencao(uid, uname);
+    });
+  }
+}
+
+function selecionarMencao(userId, userName) {
+  var textarea = document.getElementById('commentTexto');
+  var dropdown = document.getElementById('mentionDropdown');
+  if (!textarea) return;
+
+  var val = textarea.value;
+  var cursorPos = textarea.selectionStart;
+  var textBeforeCursor = val.substring(0, cursorPos);
+  var textAfterCursor = val.substring(cursorPos);
+
+  var atIndex = textBeforeCursor.lastIndexOf('@');
+  if (atIndex === -1) return;
+
+  // Substituir o @query pelo @Nome
+  var newText = val.substring(0, atIndex) + '@' + userName + ' ' + textAfterCursor;
+  textarea.value = newText;
+  var newCursorPos = atIndex + 1 + userName.length + 1;
+  textarea.setSelectionRange(newCursorPos, newCursorPos);
+  textarea.focus();
+
+  // Adicionar ao array de mencionados
+  if (mentionedUsers.indexOf(userId) === -1) {
+    mentionedUsers.push(userId);
+    renderizarTagsMencao();
+  }
+
+  if (dropdown) dropdown.style.display = 'none';
+}
+
+function removerMencao(userId) {
+  var idx = mentionedUsers.indexOf(userId);
+  if (idx !== -1) {
+    mentionedUsers.splice(idx, 1);
+    renderizarTagsMencao();
+  }
+}
+
+function renderizarTagsMencao() {
+  var container = document.getElementById('mentionsTags');
+  if (!container) return;
+
+  if (mentionedUsers.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < mentionedUsers.length; i++) {
+    var uid = mentionedUsers[i];
+    var nome = '';
+    for (var j = 0; j < commentUsers.length; j++) {
+      if (commentUsers[j].id === uid) {
+        nome = commentUsers[j].nome;
+        break;
+      }
+    }
+    html += '<span class="mention-tag" data-id="' + uid + '">' +
+      '<i class="ph ph-at"></i> ' + escapeHtml(nome) +
+      '<button type="button" class="mention-tag-remove" data-id="' + uid + '">&times;</button>' +
+    '</span>';
+  }
+  container.innerHTML = html;
+
+  // Registrar cliques nos botões de remover
+  var btns = container.querySelectorAll('.mention-tag-remove');
+  for (var k = 0; k < btns.length; k++) {
+    btns[k].addEventListener('click', function() {
+      removerMencao(parseInt(this.getAttribute('data-id')));
+    });
+  }
+}
+
+function enviarComentario() {
+  var textarea = document.getElementById('commentTexto');
+  var msgBox = document.getElementById('commentMsg');
+  if (!textarea) return;
+
+  var texto = textarea.value.trim();
+  if (!texto) {
+    if (msgBox) {
+      msgBox.className = 'msg-box error';
+      msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Escreva um comentário antes de enviar.';
+      msgBox.style.display = 'flex';
+    }
+    return;
+  }
+
+  if (texto.length > 2000) {
+    if (msgBox) {
+      msgBox.className = 'msg-box error';
+      msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Comentário excede 2000 caracteres.';
+      msgBox.style.display = 'flex';
+    }
+    return;
+  }
+
+  var body = {
+    conteudo: texto,
+    mencionados: mentionedUsers.slice()
+  };
+
+  fetch('/api/comments/' + window.PROTOCOLO_ID, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) {
+      if (!resp.ok) return resp.json().then(function(d) { throw new Error(d.error || 'Erro ao enviar'); });
+      return resp.json();
+    })
+    .then(function() {
+      textarea.value = '';
+      mentionedUsers = [];
+      renderizarTagsMencao();
+      carregarComentarios();
+      if (msgBox) {
+        msgBox.className = 'msg-box success';
+        msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Comentário enviado.';
+        msgBox.style.display = 'flex';
+        setTimeout(function() { msgBox.style.display = 'none'; }, 3000);
+      }
+    })
+    .catch(function(err) {
+      if (msgBox) {
+        msgBox.className = 'msg-box error';
+        msgBox.innerHTML = '<i class="ph ph-x-circle"></i> ' + err.message;
+        msgBox.style.display = 'flex';
+      }
+    });
+}
+
 /* ---------- INIT ---------- */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1048,6 +1331,8 @@ document.addEventListener('DOMContentLoaded', function() {
   carregarCollaborators().then(function() {
     if (typeof window.PROTOCOLO_ID !== 'undefined') {
       carregarProtocolo(window.PROTOCOLO_ID);
+      carregarUsuariosMencao();
+      carregarComentarios();
     }
   });
 
@@ -1137,4 +1422,28 @@ document.addEventListener('DOMContentLoaded', function() {
       fileInput.value = '';
     });
   }
+
+  // Comentários
+  var commentTexto = document.getElementById('commentTexto');
+  if (commentTexto) {
+    commentTexto.addEventListener('input', onCommentInput);
+    commentTexto.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        enviarComentario();
+      }
+    });
+  }
+  var btnEnviar = document.getElementById('btnEnviarComentario');
+  if (btnEnviar) {
+    btnEnviar.addEventListener('click', enviarComentario);
+  }
+
+  // Fechar dropdown de menções ao clicar fora
+  document.addEventListener('click', function(e) {
+    var dropdown = document.getElementById('mentionDropdown');
+    if (dropdown && !dropdown.contains(e.target) && e.target.id !== 'commentTexto') {
+      dropdown.style.display = 'none';
+    }
+  });
 });
