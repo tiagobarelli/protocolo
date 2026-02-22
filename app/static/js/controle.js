@@ -1300,6 +1300,16 @@ document.addEventListener('DOMContentLoaded', function() {
     overlayEl.addEventListener('click', toggleSidebar);
   }
 
-  // Foco inicial
-  document.getElementById('buscaMascara').focus();
+  // Abertura via query params (ex: /controle?livro=150&pagina=025)
+  var urlParams = new URLSearchParams(window.location.search);
+  var livroParam = urlParams.get('livro');
+  var paginaParam = urlParams.get('pagina');
+  if (livroParam && paginaParam) {
+    document.getElementById('buscaLivro').value = livroParam;
+    document.getElementById('buscaPagina').value = paginaParam;
+    executarBusca(livroParam, paginaParam);
+  } else {
+    // Foco inicial
+    document.getElementById('buscaMascara').focus();
+  }
 });

@@ -47,11 +47,11 @@ def controle():
     return render_template("controle.html")
 
 
-@main_bp.route("/relatorios")
+@main_bp.route("/relatorios/controle-atos")
 @login_required
 @perfil_required("master", "administrador")
-def relatorios():
-    return render_template("relatorios.html")
+def relatorio_controle_atos():
+    return render_template("relatorio_controle_atos.html")
 
 
 @main_bp.route("/retificacoes")

@@ -6,6 +6,7 @@
 
   {% set gestao_atos_active = request.endpoint in ['main.controle', 'main.retificacoes', 'main.substabelecimentos'] %}
   {% set consultar_active = request.endpoint in ['main.consultar', 'main.protocolo_detalhe', 'main.protocolo_imprimir'] %}
+  {% set relatorios_active = request.endpoint in ['main.relatorio_controle_atos'] %}
 
   <nav class="sidebar-nav">
     <a href="{{ url_for('main.index') }}" class="nav-item {% if request.endpoint == 'main.index' %}active{% endif %}">
@@ -45,9 +46,18 @@
       </div>
     </div>
 
-    <a href="{{ url_for('main.relatorios') }}" class="nav-item {% if request.endpoint == 'main.relatorios' %}active{% endif %}">
-      <i class="ph ph-chart-bar"></i> Relat&oacute;rios
-    </a>
+    <!-- Submenu: Relat&oacute;rios -->
+    <div class="nav-group {% if relatorios_active %}open{% endif %}">
+      <button type="button" class="nav-group-toggle" onclick="toggleNavGroup(this)">
+        <span class="nav-group-label"><i class="ph ph-chart-bar"></i> Relat&oacute;rios</span>
+        <i class="ph ph-caret-down nav-group-arrow"></i>
+      </button>
+      <div class="nav-group-items">
+        <a href="{{ url_for('main.relatorio_controle_atos') }}" class="nav-item sub {% if request.endpoint == 'main.relatorio_controle_atos' %}active{% endif %}">
+          <i class="ph ph-book-open-text"></i> Controle de Atos
+        </a>
+      </div>
+    </div>
     {% endif %}
 
     {% if current_user.perfil == 'master' %}
