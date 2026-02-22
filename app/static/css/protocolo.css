@@ -57,7 +57,7 @@ main {
 }
 .status-badge.andamento { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
 .status-badge.finalizado { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-.status-badge.cancelado { background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; }
+.status-badge.cancelado { background: #eeac92; color: #4b5563; border: 1px solid #d1d5db; }
 
 /* Barra de ações */
 .action-bar {
@@ -296,6 +296,155 @@ main {
   .info-item.full-width { grid-column: span 1; }
   .proto-header { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
+
+/* ==================== DROPDOWN DE STATUS ==================== */
+.status-select {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.status-select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.status-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==================== JUSTIFICATIVA DE CANCELAMENTO ==================== */
+.justificativa-card {
+  border-left: 3px solid var(--danger);
+}
+.justificativa-texto {
+  font-size: 0.9rem;
+  color: var(--text-main);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.justificativa-textarea {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-dark);
+  width: 100%;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s;
+}
+.justificativa-textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--danger);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-danger:hover { background: #dc2626; }
+.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+}
+
+/* ==================== LOGS DE ALTERAÇÕES ==================== */
+.log-card .card-title {
+  margin-bottom: 12px;
+}
+.log-texto {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* ==================== EDIÇÃO INLINE ==================== */
+.info-item-editable {
+  position: relative;
+}
+.btn-inline-edit {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.info-item-editable:hover .btn-inline-edit {
+  opacity: 1;
+}
+.inline-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.inline-input {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-dark);
+  flex: 1;
+  transition: border-color 0.2s;
+}
+.inline-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.btn-inline-save,
+.btn-inline-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+.btn-inline-save { background: var(--success-bg); color: var(--success); }
+.btn-inline-save:hover { background: var(--success); color: #fff; }
+.btn-inline-cancel { background: var(--danger-bg); color: var(--danger); }
+.btn-inline-cancel:hover { background: var(--danger); color: #fff; }
 
 /* ==================== ALERTA INLINE DE CLIENTE ==================== */
 .alerta-inline-proto {

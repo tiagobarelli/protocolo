@@ -143,7 +143,7 @@
 
     var md = ta.value || '';
     if (!md.trim()) {
-      prev.innerHTML = '<div class="md-placeholder">Pré-visualização do Markdown…</div>';
+      prev.innerHTML = '<div class="md-placeholder">Pré-visualização da formatação</div>';
       return;
     }
     renderMarkdownInto(prev, md);
@@ -200,6 +200,11 @@
       var data = await resp.json();
       select.innerHTML = '<option value="">Selecione o serviço</option>';
       servicosCache = data.results || [];
+      servicosCache.sort(function(a, b) {
+        var tipoA = a['Tipo'] || '';
+        var tipoB = b['Tipo'] || '';
+        return tipoA.localeCompare(tipoB, 'pt-BR');
+      });
       servicosCache.forEach(function(row) {
         var opt = document.createElement('option');
         opt.value = row.id;

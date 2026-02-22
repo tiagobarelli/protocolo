@@ -24,11 +24,42 @@ var CONFIG = {
     clienteTelefone: 'field_7243',
     clienteEmail: 'field_7244',
     clienteOab: 'field_7256',
-    clienteAlerta: 'field_7394'
-  }
+    clienteAlerta: 'field_7394',
+    justificativaCancelamento: 'field_7396',
+    log: 'field_7397'
+  },
+  statusIds: {
+    emAndamento: 3064,
+    finalizado: 3065,
+    cancelado: 3066
+  },
+  statusLabels: {
+    3064: 'Em andamento',
+    3065: 'Finalizado',
+    3066: 'Cancelado'
+  },
+  collaborators: [
+    { id: 4, name: 'Aderbal W. Curioni' },
+    { id: 6, name: 'Daniela T. Barbosa' },
+    { id: 7, name: 'Edmundo M. Filho' },
+    { id: 2, name: 'Fernanda R. T. Palhari' },
+    { id: 5, name: 'José A. S. Oliveira' },
+    { id: 8, name: 'Júlia Cazetta' },
+    { id: 3, name: 'Natália M. Rodrigues' },
+    { id: 1, name: 'Tiago Barelli' }
+  ]
 };
 
 var protocoloRowId = null;
+var protocoloAtual = null;
+var snapshotProtocolo = null;
+var collaboratorsList = [];
+
+var FIELD_LABELS = {
+  status: 'Status',
+  agendadoPara: 'Agendado para',
+  responsavel: 'Responsável'
+};
 
 function apiHeaders() {
   return { 'Content-Type': 'application/json' };
@@ -48,12 +79,18 @@ function carregarProtocolo(id) {
       return resp.json();
     })
     .then(function(proto) {
+      protocoloAtual = proto;
+      snapshotProtocolo = capturarSnapshotProtocolo(proto);
       preencherCabecalho(proto);
       preencherDadosProtocolo(proto);
       preencherAndamento(proto);
+      renderizarControleStatus(proto);
+      exibirJustificativa(proto);
+      exibirLogsProtocolo(proto);
       return carregarCliente(proto);
     })
     .then(function() {
+      configurarEdicaoInline(protocoloAtual);
       mostrarOverlay(false);
       carregarArquivos();
     })
@@ -91,10 +128,7 @@ function preencherDadosProtocolo(proto) {
   setText('infoDataEntrada', formatarData(proto[CONFIG.fields.dataEntrada]));
 
   var agendado = proto[CONFIG.fields.agendadoPara];
-  if (agendado) {
-    setText('infoAgendado', formatarData(agendado));
-    document.getElementById('infoAgendadoRow').style.display = '';
-  }
+  setText('infoAgendado', agendado ? formatarData(agendado) : '—');
 
   var deposito = proto[CONFIG.fields.depositoPrevio];
   if (deposito) {
@@ -261,6 +295,600 @@ function mostrarOverlay(show) {
   if (overlay) overlay.style.display = show ? 'flex' : 'none';
 }
 
+/* ---------- PERMISSÕES ---------- */
+
+function ehResponsavel() {
+  if (!protocoloAtual) return false;
+  var respArr = protocoloAtual[CONFIG.fields.responsavel] || [];
+  if (respArr.length === 0) return false;
+  for (var i = 0; i < respArr.length; i++) {
+    if (respArr[i].name === window.CURRENT_USER.nome) return true;
+  }
+  return false;
+}
+
+function podeEditarStatus() {
+  var perfil = window.CURRENT_USER.perfil;
+  if (perfil === 'master' || perfil === 'administrador') return true;
+  if (perfil === 'escrevente' && ehResponsavel()) return true;
+  return false;
+}
+
+function podeEditarAgendado() {
+  var perfil = window.CURRENT_USER.perfil;
+  if (perfil === 'master' || perfil === 'administrador') return true;
+  if (perfil === 'escrevente' && ehResponsavel()) return true;
+  return false;
+}
+
+function podeEditarResponsavel() {
+  var perfil = window.CURRENT_USER.perfil;
+  return (perfil === 'master' || perfil === 'administrador');
+}
+
+function statusAtualEhCancelado() {
+  if (!protocoloAtual) return false;
+  var statusObj = protocoloAtual[CONFIG.fields.status];
+  var statusId = statusObj ? statusObj.id : null;
+  return statusId === CONFIG.statusIds.cancelado;
+}
+
+function getStatusTextoAtual() {
+  if (!protocoloAtual) return '';
+  var statusObj = protocoloAtual[CONFIG.fields.status];
+  return statusObj ? (statusObj.value || '') : '';
+}
+
+/* ---------- CONTROLE DE STATUS ---------- */
+
+function renderizarControleStatus(proto) {
+  var select = document.getElementById('statusSelect');
+  if (!select) return;
+
+  if (!podeEditarStatus()) {
+    select.style.display = 'none';
+    return;
+  }
+
+  var statusObj = proto[CONFIG.fields.status];
+  var statusId = statusObj ? statusObj.id : null;
+
+  // Pré-selecionar status atual
+  select.value = statusId ? String(statusId) : '';
+
+  // Desabilitar se cancelado e não é master
+  if (statusId === CONFIG.statusIds.cancelado && window.CURRENT_USER.perfil !== 'master') {
+    select.disabled = true;
+  } else {
+    select.disabled = false;
+  }
+
+  select.style.display = '';
+}
+
+function onStatusChange() {
+  var select = document.getElementById('statusSelect');
+  var novoStatusId = parseInt(select.value);
+  var statusObj = protocoloAtual ? protocoloAtual[CONFIG.fields.status] : null;
+  var statusIdAnterior = statusObj ? statusObj.id : null;
+  var statusTextoAnterior = statusObj ? (statusObj.value || '') : '';
+
+  // Se selecionou Cancelado → mostrar textarea de justificativa
+  if (novoStatusId === CONFIG.statusIds.cancelado) {
+    mostrarJustificativaEditavel();
+    return;
+  }
+
+  // Se revertendo de Cancelado (só master pode)
+  if (statusIdAnterior === CONFIG.statusIds.cancelado) {
+    if (window.CURRENT_USER.perfil !== 'master') {
+      select.value = String(statusIdAnterior);
+      return;
+    }
+    if (!confirm('Deseja reverter o status de "Cancelado" para "' + CONFIG.statusLabels[novoStatusId] + '"?')) {
+      select.value = String(statusIdAnterior);
+      return;
+    }
+    reverterCancelamento(novoStatusId, statusTextoAnterior);
+    return;
+  }
+
+  // Alteração normal de status
+  salvarStatusChange(novoStatusId, statusTextoAnterior);
+}
+
+function salvarStatusChange(novoStatusId, statusTextoAnterior) {
+  mostrarOverlay(true);
+
+  var logDescricao = 'O campo Status foi alterado. Valor anterior: ' + (statusTextoAnterior || '(vazio)') + '.';
+  var novaLinhaLog = gerarLinhaLog(logDescricao);
+  var logsAtualizados = prependLog(novaLinhaLog);
+
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/' + protocoloRowId + '/?user_field_names=false';
+  var body = {};
+  body[CONFIG.fields.status] = novoStatusId;
+  body[CONFIG.fields.log] = logsAtualizados;
+
+  fetch(url, {
+    method: 'PATCH',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao alterar status');
+      return resp.json();
+    })
+    .then(function(data) {
+      protocoloAtual = data;
+      snapshotProtocolo = capturarSnapshotProtocolo(data);
+      atualizarBadgeStatus(data);
+      renderizarControleStatus(data);
+      exibirJustificativa(data);
+      exibirLogsProtocolo(data);
+      mostrarOverlay(false);
+    })
+    .catch(function(err) {
+      console.error('Erro ao alterar status:', err);
+      mostrarOverlay(false);
+      alert('Erro ao alterar status: ' + err.message);
+      // Restaurar select para valor anterior
+      var statusObj = protocoloAtual ? protocoloAtual[CONFIG.fields.status] : null;
+      var select = document.getElementById('statusSelect');
+      if (select && statusObj) select.value = String(statusObj.id);
+    });
+}
+
+function reverterCancelamento(novoStatusId, statusTextoAnterior) {
+  mostrarOverlay(true);
+
+  var justificativaAnterior = protocoloAtual ? (protocoloAtual[CONFIG.fields.justificativaCancelamento] || '') : '';
+  var logDescricao = 'O campo Status foi alterado. Valor anterior: ' + statusTextoAnterior + '.';
+  if (justificativaAnterior.trim()) {
+    logDescricao += ' Justificativa removida: "' + justificativaAnterior.trim() + '".';
+  }
+  var novaLinhaLog = gerarLinhaLog(logDescricao);
+  var logsAtualizados = prependLog(novaLinhaLog);
+
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/' + protocoloRowId + '/?user_field_names=false';
+  var body = {};
+  body[CONFIG.fields.status] = novoStatusId;
+  body[CONFIG.fields.justificativaCancelamento] = '';
+  body[CONFIG.fields.log] = logsAtualizados;
+
+  fetch(url, {
+    method: 'PATCH',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao reverter cancelamento');
+      return resp.json();
+    })
+    .then(function(data) {
+      protocoloAtual = data;
+      snapshotProtocolo = capturarSnapshotProtocolo(data);
+      atualizarBadgeStatus(data);
+      renderizarControleStatus(data);
+      exibirJustificativa(data);
+      exibirLogsProtocolo(data);
+      mostrarOverlay(false);
+    })
+    .catch(function(err) {
+      console.error('Erro ao reverter cancelamento:', err);
+      mostrarOverlay(false);
+      alert('Erro ao reverter cancelamento: ' + err.message);
+      var statusObj = protocoloAtual ? protocoloAtual[CONFIG.fields.status] : null;
+      var select = document.getElementById('statusSelect');
+      if (select && statusObj) select.value = String(statusObj.id);
+    });
+}
+
+function mostrarJustificativaEditavel() {
+  var card = document.getElementById('justificativaCard');
+  var editavel = document.getElementById('justificativaEditavel');
+  var readonly = document.getElementById('justificativaReadonly');
+  if (card) card.style.display = '';
+  if (editavel) editavel.style.display = '';
+  if (readonly) readonly.style.display = 'none';
+  var textarea = document.getElementById('justificativaTexto');
+  if (textarea) {
+    textarea.value = '';
+    textarea.focus();
+  }
+}
+
+function confirmarCancelamento() {
+  var textarea = document.getElementById('justificativaTexto');
+  var msgBox = document.getElementById('justificativaMsg');
+  var justificativa = textarea ? textarea.value.trim() : '';
+
+  if (!justificativa) {
+    if (msgBox) {
+      msgBox.className = 'msg-box error';
+      msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Informe a justificativa do cancelamento.';
+      msgBox.style.display = 'flex';
+    }
+    return;
+  }
+
+  if (msgBox) msgBox.style.display = 'none';
+  mostrarOverlay(true);
+
+  var statusTextoAnterior = getStatusTextoAtual();
+  var logDescricao = 'O campo Status foi alterado. Valor anterior: ' + (statusTextoAnterior || '(vazio)') + '.';
+  var novaLinhaLog = gerarLinhaLog(logDescricao);
+  var logsAtualizados = prependLog(novaLinhaLog);
+
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/' + protocoloRowId + '/?user_field_names=false';
+  var body = {};
+  body[CONFIG.fields.status] = CONFIG.statusIds.cancelado;
+  body[CONFIG.fields.justificativaCancelamento] = justificativa;
+  body[CONFIG.fields.log] = logsAtualizados;
+
+  fetch(url, {
+    method: 'PATCH',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao cancelar protocolo');
+      return resp.json();
+    })
+    .then(function(data) {
+      protocoloAtual = data;
+      snapshotProtocolo = capturarSnapshotProtocolo(data);
+      atualizarBadgeStatus(data);
+      renderizarControleStatus(data);
+      exibirJustificativa(data);
+      exibirLogsProtocolo(data);
+      // Ocultar área editável
+      var editavel = document.getElementById('justificativaEditavel');
+      if (editavel) editavel.style.display = 'none';
+      mostrarOverlay(false);
+    })
+    .catch(function(err) {
+      console.error('Erro ao cancelar protocolo:', err);
+      mostrarOverlay(false);
+      if (msgBox) {
+        msgBox.className = 'msg-box error';
+        msgBox.innerHTML = '<i class="ph ph-x-circle"></i> ' + err.message;
+        msgBox.style.display = 'flex';
+      }
+    });
+}
+
+function cancelarCancelamento() {
+  var card = document.getElementById('justificativaCard');
+  var editavel = document.getElementById('justificativaEditavel');
+  var msgBox = document.getElementById('justificativaMsg');
+  if (editavel) editavel.style.display = 'none';
+  if (msgBox) msgBox.style.display = 'none';
+  // Se protocolo não é cancelado, ocultar card
+  if (!statusAtualEhCancelado() && card) {
+    card.style.display = 'none';
+  }
+  // Restaurar select para valor anterior
+  var statusObj = protocoloAtual ? protocoloAtual[CONFIG.fields.status] : null;
+  var select = document.getElementById('statusSelect');
+  if (select && statusObj) select.value = String(statusObj.id);
+}
+
+function exibirJustificativa(proto) {
+  var card = document.getElementById('justificativaCard');
+  var readonly = document.getElementById('justificativaReadonly');
+  var editavel = document.getElementById('justificativaEditavel');
+  if (!card || !readonly) return;
+
+  var statusObj = proto[CONFIG.fields.status];
+  var statusId = statusObj ? statusObj.id : null;
+  var justificativa = proto[CONFIG.fields.justificativaCancelamento] || '';
+
+  if (statusId === CONFIG.statusIds.cancelado && justificativa.trim()) {
+    readonly.textContent = justificativa;
+    readonly.style.display = '';
+    if (editavel) editavel.style.display = 'none';
+    card.style.display = '';
+  } else {
+    readonly.style.display = 'none';
+    if (editavel) editavel.style.display = 'none';
+    card.style.display = 'none';
+  }
+}
+
+function atualizarBadgeStatus(proto) {
+  var statusObj = proto[CONFIG.fields.status];
+  var statusTexto = statusObj ? (statusObj.value || '') : '';
+  var badge = document.getElementById('protoBadge');
+  if (badge) {
+    badge.textContent = statusTexto;
+    badge.className = 'status-badge ' + classificarStatus(statusTexto);
+  }
+}
+
+/* ---------- SISTEMA DE LOGS ---------- */
+
+function capturarSnapshotProtocolo(proto) {
+  if (!proto) return null;
+  var snap = {};
+  var statusObj = proto[CONFIG.fields.status];
+  snap.status = statusObj ? (statusObj.value || '') : '';
+  snap.agendadoPara = proto[CONFIG.fields.agendadoPara] || '';
+  var respArr = proto[CONFIG.fields.responsavel] || [];
+  snap.responsavel = respArr.length > 0 ? respArr[0].name : '';
+  return snap;
+}
+
+function gerarLinhaLog(descricao) {
+  var agora = new Date();
+  var dia = ('0' + agora.getDate()).slice(-2);
+  var mes = ('0' + (agora.getMonth() + 1)).slice(-2);
+  var ano = agora.getFullYear();
+  var hora = ('0' + agora.getHours()).slice(-2);
+  var min = ('0' + agora.getMinutes()).slice(-2);
+  var dataHora = dia + '/' + mes + '/' + ano + ' ' + hora + ':' + min;
+  var nomeUsuario = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : 'Usuário';
+  return nomeUsuario + '. ' + dataHora + ': ' + descricao;
+}
+
+function prependLog(novaLinha) {
+  var logsExistentes = (protocoloAtual && protocoloAtual[CONFIG.fields.log]) ? protocoloAtual[CONFIG.fields.log] : '';
+  return logsExistentes ? (novaLinha + '\n' + logsExistentes) : novaLinha;
+}
+
+function salvarLogProtocolo(novaLinha) {
+  var logsAtualizados = prependLog(novaLinha);
+  // Atualizar localmente para evitar race condition
+  if (protocoloAtual) {
+    protocoloAtual[CONFIG.fields.log] = logsAtualizados;
+  }
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/' + protocoloRowId + '/?user_field_names=false';
+  var body = {};
+  body[CONFIG.fields.log] = logsAtualizados;
+  return fetch(url, {
+    method: 'PATCH',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) { return resp.json(); })
+    .then(function(data) {
+      protocoloAtual[CONFIG.fields.log] = data[CONFIG.fields.log];
+      exibirLogsProtocolo(data);
+    });
+}
+
+function exibirLogsProtocolo(proto) {
+  var logCard = document.getElementById('logCardProto');
+  var logContent = document.getElementById('logContentProto');
+  if (!logCard || !logContent) return;
+  var logsVal = (proto && proto[CONFIG.fields.log]) ? proto[CONFIG.fields.log] : '';
+  if (logsVal.trim()) {
+    logContent.textContent = logsVal;
+    logCard.style.display = '';
+  } else {
+    logContent.textContent = '';
+    logCard.style.display = 'none';
+  }
+}
+
+/* ---------- EDIÇÃO INLINE ---------- */
+
+function carregarCollaborators() {
+  var url = API_BASE + '/database/fields/table/' + CONFIG.tables.protocolo + '/';
+  return fetch(url, { headers: apiHeaders() })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao carregar campos');
+      return resp.json();
+    })
+    .then(function(fields) {
+      var fieldResp = null;
+      for (var i = 0; i < fields.length; i++) {
+        if (fields[i].id === 7249) {
+          fieldResp = fields[i];
+          break;
+        }
+      }
+      if (fieldResp && fieldResp.available_collaborators && fieldResp.available_collaborators.length > 0) {
+        collaboratorsList = fieldResp.available_collaborators;
+      } else {
+        collaboratorsList = CONFIG.collaborators;
+      }
+    })
+    .catch(function(err) {
+      console.error('Erro ao carregar collaborators:', err);
+      collaboratorsList = CONFIG.collaborators;
+    });
+}
+
+function configurarEdicaoInline(proto) {
+  var btnEditAgendado = document.getElementById('btnEditAgendado');
+  var btnEditResp = document.getElementById('btnEditResponsavel');
+
+  if (btnEditAgendado && podeEditarAgendado()) {
+    btnEditAgendado.style.display = '';
+  }
+
+  if (btnEditResp && podeEditarResponsavel()) {
+    btnEditResp.style.display = '';
+    popularSelectResponsavel(proto);
+  }
+}
+
+function popularSelectResponsavel(proto) {
+  var select = document.getElementById('editResponsavelSelect');
+  if (!select) return;
+  select.innerHTML = '<option value="">Selecione...</option>';
+  for (var i = 0; i < collaboratorsList.length; i++) {
+    var c = collaboratorsList[i];
+    var opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    select.appendChild(opt);
+  }
+  // Pré-selecionar atual
+  var respArr = proto[CONFIG.fields.responsavel] || [];
+  if (respArr.length > 0) {
+    select.value = String(respArr[0].id);
+  }
+}
+
+function iniciarEdicaoAgendado() {
+  var display = document.getElementById('infoAgendado');
+  var editArea = document.getElementById('infoAgendadoEdit');
+  var input = document.getElementById('editAgendadoInput');
+  var btnEdit = document.getElementById('btnEditAgendado');
+  if (display) display.style.display = 'none';
+  if (btnEdit) btnEdit.style.display = 'none';
+  if (editArea) editArea.style.display = 'flex';
+  // Preencher com valor atual em formato YYYY-MM-DD
+  var agendado = protocoloAtual ? (protocoloAtual[CONFIG.fields.agendadoPara] || '') : '';
+  if (input) input.value = agendado;
+}
+
+function cancelarEdicaoAgendado() {
+  var display = document.getElementById('infoAgendado');
+  var editArea = document.getElementById('infoAgendadoEdit');
+  var btnEdit = document.getElementById('btnEditAgendado');
+  if (display) display.style.display = '';
+  if (editArea) editArea.style.display = 'none';
+  if (btnEdit && podeEditarAgendado()) btnEdit.style.display = '';
+}
+
+function salvarAgendado() {
+  var input = document.getElementById('editAgendadoInput');
+  var novoValor = input ? input.value : '';
+  var valorAnterior = snapshotProtocolo ? snapshotProtocolo.agendadoPara : '';
+
+  // Se não mudou, só fechar
+  if (novoValor === valorAnterior) {
+    cancelarEdicaoAgendado();
+    return;
+  }
+
+  mostrarOverlay(true);
+
+  var valorAnteriorFormatado = valorAnterior ? formatarData(valorAnterior) : '(vazio)';
+  var logDescricao = 'O campo Agendado para foi alterado. Valor anterior: ' + valorAnteriorFormatado + '.';
+  var novaLinhaLog = gerarLinhaLog(logDescricao);
+  var logsAtualizados = prependLog(novaLinhaLog);
+
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/' + protocoloRowId + '/?user_field_names=false';
+  var body = {};
+  body[CONFIG.fields.agendadoPara] = novoValor || null;
+  body[CONFIG.fields.log] = logsAtualizados;
+
+  fetch(url, {
+    method: 'PATCH',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao salvar agendamento');
+      return resp.json();
+    })
+    .then(function(data) {
+      protocoloAtual = data;
+      snapshotProtocolo = capturarSnapshotProtocolo(data);
+      var agendado = data[CONFIG.fields.agendadoPara];
+      setText('infoAgendado', agendado ? formatarData(agendado) : '—');
+      exibirLogsProtocolo(data);
+      cancelarEdicaoAgendado();
+      mostrarOverlay(false);
+    })
+    .catch(function(err) {
+      console.error('Erro ao salvar agendamento:', err);
+      mostrarOverlay(false);
+      alert('Erro ao salvar agendamento: ' + err.message);
+    });
+}
+
+function iniciarEdicaoResponsavel() {
+  var display = document.getElementById('infoResponsavel');
+  var editArea = document.getElementById('infoResponsavelEdit');
+  var btnEdit = document.getElementById('btnEditResponsavel');
+  if (display) display.style.display = 'none';
+  if (btnEdit) btnEdit.style.display = 'none';
+  if (editArea) editArea.style.display = 'flex';
+  // Pré-selecionar atual
+  var respArr = protocoloAtual ? (protocoloAtual[CONFIG.fields.responsavel] || []) : [];
+  var select = document.getElementById('editResponsavelSelect');
+  if (select && respArr.length > 0) {
+    select.value = String(respArr[0].id);
+  }
+}
+
+function cancelarEdicaoResponsavel() {
+  var display = document.getElementById('infoResponsavel');
+  var editArea = document.getElementById('infoResponsavelEdit');
+  var btnEdit = document.getElementById('btnEditResponsavel');
+  if (display) display.style.display = '';
+  if (editArea) editArea.style.display = 'none';
+  if (btnEdit && podeEditarResponsavel()) btnEdit.style.display = '';
+}
+
+function salvarResponsavel() {
+  var select = document.getElementById('editResponsavelSelect');
+  var novoId = select ? parseInt(select.value) : 0;
+  if (!novoId) {
+    alert('Selecione um responsável.');
+    return;
+  }
+
+  // Encontrar nome do novo responsável
+  var novoNome = '';
+  for (var i = 0; i < collaboratorsList.length; i++) {
+    if (collaboratorsList[i].id === novoId) {
+      novoNome = collaboratorsList[i].name;
+      break;
+    }
+  }
+
+  var nomeAnterior = snapshotProtocolo ? snapshotProtocolo.responsavel : '';
+
+  // Se não mudou, só fechar
+  if (novoNome === nomeAnterior) {
+    cancelarEdicaoResponsavel();
+    return;
+  }
+
+  mostrarOverlay(true);
+
+  var logDescricao = 'O campo Responsável foi alterado. Valor anterior: ' + (nomeAnterior || '(vazio)') + '.';
+  var novaLinhaLog = gerarLinhaLog(logDescricao);
+  var logsAtualizados = prependLog(novaLinhaLog);
+
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/' + protocoloRowId + '/?user_field_names=false';
+  var body = {};
+  body[CONFIG.fields.responsavel] = [{ id: novoId }];
+  body[CONFIG.fields.log] = logsAtualizados;
+
+  fetch(url, {
+    method: 'PATCH',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao salvar responsável');
+      return resp.json();
+    })
+    .then(function(data) {
+      protocoloAtual = data;
+      snapshotProtocolo = capturarSnapshotProtocolo(data);
+      var respArr = data[CONFIG.fields.responsavel] || [];
+      setText('infoResponsavel', respArr.length > 0 ? respArr[0].name : '—');
+      exibirLogsProtocolo(data);
+      cancelarEdicaoResponsavel();
+      // Reavaliar permissões (escrevente pode perder acesso)
+      renderizarControleStatus(data);
+      configurarEdicaoInline(data);
+      mostrarOverlay(false);
+    })
+    .catch(function(err) {
+      console.error('Erro ao salvar responsável:', err);
+      mostrarOverlay(false);
+      alert('Erro ao salvar responsável: ' + err.message);
+    });
+}
+
 /* ---------- ARQUIVOS ANEXADOS ---------- */
 
 var ALLOWED_EXTENSIONS = ['doc', 'docx', 'odt', 'pdf', 'jpg', 'png', 'txt', 'md', 'xls'];
@@ -376,6 +1004,9 @@ function uploadArquivo(file) {
       msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Arquivo enviado com sucesso.';
       msgBox.style.display = 'flex';
       carregarArquivos();
+      // Log de upload
+      var logLinha = gerarLinhaLog('Arquivo anexado: "' + file.name + '".');
+      salvarLogProtocolo(logLinha);
       setTimeout(function() {
         msgBox.style.display = 'none';
       }, 4000);
@@ -401,6 +1032,9 @@ function deletarArquivo(fileId, nomeOriginal) {
     })
     .then(function() {
       carregarArquivos();
+      // Log de exclusão
+      var logLinha = gerarLinhaLog('Arquivo removido: "' + nomeOriginal + '".');
+      salvarLogProtocolo(logLinha);
     })
     .catch(function(err) {
       alert('Erro: ' + err.message);
@@ -410,13 +1044,61 @@ function deletarArquivo(fileId, nomeOriginal) {
 /* ---------- INIT ---------- */
 
 document.addEventListener('DOMContentLoaded', function() {
-  if (typeof window.PROTOCOLO_ID !== 'undefined') {
-    carregarProtocolo(window.PROTOCOLO_ID);
-  }
+  // Carregar collaborators antes do protocolo para ter a lista pronta
+  carregarCollaborators().then(function() {
+    if (typeof window.PROTOCOLO_ID !== 'undefined') {
+      carregarProtocolo(window.PROTOCOLO_ID);
+    }
+  });
 
+  // Andamento
   var btnSalvar = document.getElementById('btnSalvarAndamento');
   if (btnSalvar) {
     btnSalvar.addEventListener('click', salvarAndamento);
+  }
+
+  // Status
+  var statusSelect = document.getElementById('statusSelect');
+  if (statusSelect) {
+    statusSelect.addEventListener('change', onStatusChange);
+  }
+
+  // Justificativa de cancelamento
+  var btnConfirmar = document.getElementById('btnConfirmarCancelamento');
+  if (btnConfirmar) {
+    btnConfirmar.addEventListener('click', confirmarCancelamento);
+  }
+  var btnCancelar = document.getElementById('btnCancelarCancelamento');
+  if (btnCancelar) {
+    btnCancelar.addEventListener('click', cancelarCancelamento);
+  }
+
+  // Edição inline - Agendado
+  var btnEditAgendado = document.getElementById('btnEditAgendado');
+  if (btnEditAgendado) {
+    btnEditAgendado.addEventListener('click', iniciarEdicaoAgendado);
+  }
+  var btnSalvarAgendado = document.getElementById('btnSalvarAgendado');
+  if (btnSalvarAgendado) {
+    btnSalvarAgendado.addEventListener('click', salvarAgendado);
+  }
+  var btnCancelarAgendado = document.getElementById('btnCancelarAgendado');
+  if (btnCancelarAgendado) {
+    btnCancelarAgendado.addEventListener('click', cancelarEdicaoAgendado);
+  }
+
+  // Edição inline - Responsável
+  var btnEditResp = document.getElementById('btnEditResponsavel');
+  if (btnEditResp) {
+    btnEditResp.addEventListener('click', iniciarEdicaoResponsavel);
+  }
+  var btnSalvarResp = document.getElementById('btnSalvarResponsavel');
+  if (btnSalvarResp) {
+    btnSalvarResp.addEventListener('click', salvarResponsavel);
+  }
+  var btnCancelarResp = document.getElementById('btnCancelarResponsavel');
+  if (btnCancelarResp) {
+    btnCancelarResp.addEventListener('click', cancelarEdicaoResponsavel);
   }
 
   // Upload de arquivos

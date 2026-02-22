@@ -25,6 +25,29 @@
   <div class="proto-header">
     <h1 id="protoNumero">Carregando...</h1>
     <span class="status-badge" id="protoBadge"></span>
+    <select id="statusSelect" class="status-select" style="display:none;">
+      <option value="3064">Em andamento</option>
+      <option value="3065">Finalizado</option>
+      <option value="3066">Cancelado</option>
+    </select>
+  </div>
+
+  <!-- Justificativa de Cancelamento -->
+  <div class="card justificativa-card" id="justificativaCard" style="display:none;">
+    <div class="card-title"><i class="ph ph-warning-circle"></i> Justificativa do Cancelamento</div>
+    <div id="justificativaReadonly" class="justificativa-texto" style="display:none;"></div>
+    <div id="justificativaEditavel" style="display:none;">
+      <textarea id="justificativaTexto" class="justificativa-textarea" placeholder="Descreva o motivo do cancelamento..." rows="3"></textarea>
+      <div class="btn-row">
+        <button type="button" class="btn btn-danger" id="btnConfirmarCancelamento">
+          <i class="ph ph-prohibit"></i> Confirmar Cancelamento
+        </button>
+        <button type="button" class="btn btn-outline btn-sm" id="btnCancelarCancelamento">
+          Voltar
+        </button>
+        <div class="msg-box" id="justificativaMsg"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Barra de ações -->
@@ -59,9 +82,21 @@
         <div class="info-label">Serviço</div>
         <div class="info-value" id="infoServico">—</div>
       </div>
-      <div class="info-item">
+      <div class="info-item info-item-editable" id="infoResponsavelRow">
         <div class="info-label">Responsável</div>
         <div class="info-value" id="infoResponsavel">—</div>
+        <div class="inline-edit" id="infoResponsavelEdit" style="display:none;">
+          <select id="editResponsavelSelect" class="inline-input"></select>
+          <button type="button" class="btn-inline-save" id="btnSalvarResponsavel" title="Salvar">
+            <i class="ph ph-check"></i>
+          </button>
+          <button type="button" class="btn-inline-cancel" id="btnCancelarResponsavel" title="Cancelar">
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
+        <button type="button" class="btn-inline-edit" id="btnEditResponsavel" style="display:none;" title="Editar">
+          <i class="ph ph-pencil-simple"></i>
+        </button>
       </div>
       <div class="info-item" id="infoCriadoPorRow" style="display: none;">
         <div class="info-label">Criado por</div>
@@ -71,9 +106,21 @@
         <div class="info-label">Data de Entrada</div>
         <div class="info-value" id="infoDataEntrada">—</div>
       </div>
-      <div class="info-item" id="infoAgendadoRow" style="display: none;">
+      <div class="info-item info-item-editable" id="infoAgendadoRow">
         <div class="info-label">Agendado para</div>
         <div class="info-value" id="infoAgendado">—</div>
+        <div class="inline-edit" id="infoAgendadoEdit" style="display:none;">
+          <input type="date" id="editAgendadoInput" class="inline-input">
+          <button type="button" class="btn-inline-save" id="btnSalvarAgendado" title="Salvar">
+            <i class="ph ph-check"></i>
+          </button>
+          <button type="button" class="btn-inline-cancel" id="btnCancelarAgendado" title="Cancelar">
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
+        <button type="button" class="btn-inline-edit" id="btnEditAgendado" style="display:none;" title="Editar">
+          <i class="ph ph-pencil-simple"></i>
+        </button>
       </div>
       <div class="info-item" id="infoDepositoRow" style="display: none;">
         <div class="info-label">Depósito Prévio</div>
@@ -115,6 +162,12 @@
     <div id="filesList" class="files-list">
       <div class="files-empty">Nenhum arquivo anexado.</div>
     </div>
+  </div>
+
+  <!-- Histórico de Alterações -->
+  <div class="card log-card" id="logCardProto" style="display:none;">
+    <div class="card-title"><i class="ph ph-clock-counter-clockwise"></i> Histórico de Alterações</div>
+    <div id="logContentProto" class="log-texto"></div>
   </div>
 
   <!-- Andamento (editável) -->
