@@ -18,7 +18,8 @@
       status: 'field_7252',
       advogado: 'field_7254',
       agendadoPara: 'field_7268',
-      depositoPrevio: 'field_7340'
+      depositoPrevio: 'field_7340',
+      clienteAlerta: 'field_7394'
     },
     statusDefault: 3064,
     collaborators: [
@@ -259,6 +260,8 @@
       document.getElementById('email').value = '';
       document.getElementById('email').readOnly = false;
       document.getElementById('searchStatus').className = 'search-status';
+      document.getElementById('alertaCliente').style.display = 'none';
+      document.getElementById('alertaCliente').textContent = '';
       esconderMsg('clienteInfo');
       if (tipoSelect.value === 'cpf') {
         docLabel.textContent = 'CPF';
@@ -336,6 +339,16 @@
         var emailVal = clienteEncontrado[CONFIG.fields.clienteEmail] || '';
         document.getElementById('email').value = emailVal;
         document.getElementById('email').readOnly = !!emailVal;
+        // Exibir alerta do cliente, se existir
+        var alertaCliente = clienteEncontrado[CONFIG.fields.clienteAlerta] || '';
+        var alertaEl = document.getElementById('alertaCliente');
+        if (alertaCliente.trim()) {
+          alertaEl.textContent = 'Alerta cadastrado nos dados do cliente: ' + alertaCliente.trim();
+          alertaEl.style.display = '';
+        } else {
+          alertaEl.textContent = '';
+          alertaEl.style.display = 'none';
+        }
         status.className = 'search-status found';
         status.innerHTML = '<i class="ph ph-check-circle" style="color: var(--success);"></i>';
         mostrarMsg('clienteInfo', 'success', 'Cliente encontrado: ' + nomeInput.value);
@@ -346,6 +359,8 @@
         document.getElementById('telefone').readOnly = false;
         document.getElementById('email').value = '';
         document.getElementById('email').readOnly = false;
+        document.getElementById('alertaCliente').style.display = 'none';
+        document.getElementById('alertaCliente').textContent = '';
         nomeInput.focus();
         status.className = 'search-status not-found';
         status.innerHTML = '<i class="ph ph-x-circle" style="color: var(--text-muted);"></i>';
@@ -353,6 +368,8 @@
       }
     } catch (e) {
       status.className = 'search-status not-found';
+      document.getElementById('alertaCliente').style.display = 'none';
+      document.getElementById('alertaCliente').textContent = '';
       mostrarMsg('clienteInfo', 'error', 'Erro ao consultar o banco de dados.');
       console.error(e);
     }
@@ -668,6 +685,8 @@
     document.getElementById('toggleAdvogado').checked = false;
     document.getElementById('advogadoSection').classList.remove('open');
     limparAdvogado();
+    document.getElementById('alertaCliente').style.display = 'none';
+    document.getElementById('alertaCliente').textContent = '';
   }
 
   function mostrarMsg(id, tipo, texto) {

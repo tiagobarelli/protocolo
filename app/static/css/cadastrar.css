@@ -110,3 +110,13 @@ textarea { resize: vertical; min-height: 100px; }
 @media print {
   .overlay, .topbar, .flash { display: none !important; }
 }
+
+/* ==================== ALERTA INLINE DE CLIENTE ==================== */
+.alerta-inline {
+  font-size: 0.8rem;
+  color: #991b1b;
+  line-height: 1.4;
+  padding: 4px 0 0 0;
+  margin-top: -8px;
+  margin-bottom: 8px;
+}

@@ -183,6 +183,15 @@
       </div>
     </div>
 
+    <!-- Alerta do Cliente -->
+    <div class="card alert-card" id="alertaCard" style="display:none;">
+      <div class="card-title"><i class="ph ph-warning-circle"></i> Alerta</div>
+      <div id="alertaReadonly" class="alerta-texto" style="display:none;"></div>
+      <div id="alertaEditavel" style="display:none;">
+        <textarea id="alertaTextarea" placeholder="Descreva o alerta sobre este cliente..." rows="3" autocomplete="off"></textarea>
+      </div>
+    </div>
+
     <!-- Botões -->
     <div class="btn-row">
       <button type="button" class="btn btn-secondary" id="btnLimpar">
@@ -212,6 +221,13 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
 <script src="{{ url_for('static', filename='js/clientes.js') }}"></script>
 {% endblock %}

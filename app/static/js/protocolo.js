@@ -23,7 +23,8 @@ var CONFIG = {
     clienteCnpj: 'field_7239',
     clienteTelefone: 'field_7243',
     clienteEmail: 'field_7244',
-    clienteOab: 'field_7256'
+    clienteOab: 'field_7256',
+    clienteAlerta: 'field_7394'
   }
 };
 
@@ -151,6 +152,16 @@ function carregarCliente(proto) {
       var cnpj = cliente[CONFIG.fields.clienteCnpj] || '';
       var doc = cpf || cnpj || '—';
       setText('infoDocumento', doc);
+
+      // Exibir alerta do cliente, se existir
+      var alertaVal = cliente[CONFIG.fields.clienteAlerta] || '';
+      var alertaEl = document.getElementById('alertaProtocolo');
+      if (alertaVal.trim()) {
+        alertaEl.textContent = 'Alerta cadastrado nos dados do cliente: ' + alertaVal.trim();
+        alertaEl.style.display = '';
+      } else {
+        alertaEl.style.display = 'none';
+      }
 
       if (advArr.length > 0) {
         var advId = advArr[0].id;

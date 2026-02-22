@@ -20,7 +20,8 @@ var FIELDS = {
   nascimento:  'field_7345',
   profissao:        'field_7347',
   regraPatrimonial: 'field_7348',
-  protocolos:       'field_7247'
+  protocolos:       'field_7247',
+  alerta:           'field_7394'
 };
 
 var ESTADO_CIVIL_OPTS = [
@@ -456,6 +457,13 @@ function novoCliente() {
   document.getElementById('cpfInput').readOnly = false;
   document.getElementById('cnpjInput').readOnly = false;
   esconderMsg('formMsg');
+  var podeEditarAlerta = window.CURRENT_USER &&
+    (window.CURRENT_USER.perfil === 'master' || window.CURRENT_USER.perfil === 'administrador');
+  if (podeEditarAlerta) {
+    document.getElementById('alertaCard').style.display = '';
+    document.getElementById('alertaEditavel').style.display = '';
+    document.getElementById('alertaReadonly').style.display = 'none';
+  }
   mostrarFormulario();
   document.getElementById('nomeInput').focus();
 }
@@ -513,6 +521,35 @@ function preencherFormulario(cli) {
   document.getElementById('cpfInput').readOnly  = editando;
   document.getElementById('cnpjInput').readOnly = editando;
 
+  // Alerta
+  var alertaVal = cli[FIELDS.alerta] || '';
+  var alertaCard = document.getElementById('alertaCard');
+  var alertaReadonly = document.getElementById('alertaReadonly');
+  var alertaEditavel = document.getElementById('alertaEditavel');
+  var alertaTextarea = document.getElementById('alertaTextarea');
+  var podeEditarAlerta = window.CURRENT_USER &&
+    (window.CURRENT_USER.perfil === 'master' || window.CURRENT_USER.perfil === 'administrador');
+
+  if (podeEditarAlerta) {
+    alertaCard.style.display = '';
+    alertaEditavel.style.display = '';
+    alertaReadonly.style.display = 'none';
+    alertaTextarea.value = alertaVal;
+  } else if (alertaVal.trim()) {
+    alertaCard.style.display = '';
+    alertaReadonly.style.display = '';
+    alertaEditavel.style.display = 'none';
+    alertaReadonly.textContent = alertaVal;
+  } else {
+    alertaCard.style.display = 'none';
+  }
+
+  if (alertaVal.trim()) {
+    alertaCard.classList.add('alerta-ativo');
+  } else {
+    alertaCard.classList.remove('alerta-ativo');
+  }
+
   // Protocolos vinculados (async)
   carregarProtocolos(cli[FIELDS.protocolos] || []);
 
@@ -540,6 +577,10 @@ function limparCamposFormulario() {
   document.getElementById('protocolosList').innerHTML =
     '<div class="protocols-empty">Nenhum protocolo vinculado.</div>';
   conjugeId = null;
+  document.getElementById('alertaTextarea').value = '';
+  document.getElementById('alertaReadonly').textContent = '';
+  document.getElementById('alertaCard').style.display = 'none';
+  document.getElementById('alertaCard').classList.remove('alerta-ativo');
 }
 
 function limparFormulario() {
@@ -727,6 +768,12 @@ function construirPayload(incluirDocumentos) {
     var cnpjFormatado = document.getElementById('cnpjInput').value.trim();
     if (cpfFormatado)  payload[FIELDS.cpf]  = cpfFormatado;
     if (cnpjFormatado) payload[FIELDS.cnpj] = cnpjFormatado;
+  }
+
+  var podeEditarAlerta = window.CURRENT_USER &&
+    (window.CURRENT_USER.perfil === 'master' || window.CURRENT_USER.perfil === 'administrador');
+  if (podeEditarAlerta) {
+    payload[FIELDS.alerta] = document.getElementById('alertaTextarea').value;
   }
 
   return payload;

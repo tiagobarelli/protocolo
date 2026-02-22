@@ -296,3 +296,11 @@ main {
   .info-item.full-width { grid-column: span 1; }
   .proto-header { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
+
+/* ==================== ALERTA INLINE DE CLIENTE ==================== */
+.alerta-inline-proto {
+  font-size: 0.8rem;
+  color: #991b1b;
+  line-height: 1.4;
+  padding: 2px 0;
+}
