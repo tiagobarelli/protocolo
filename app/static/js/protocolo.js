@@ -54,6 +54,7 @@ function carregarProtocolo(id) {
     })
     .then(function() {
       mostrarOverlay(false);
+      carregarArquivos();
     })
     .catch(function(err) {
       console.error('Erro:', err);
@@ -249,6 +250,152 @@ function mostrarOverlay(show) {
   if (overlay) overlay.style.display = show ? 'flex' : 'none';
 }
 
+/* ---------- ARQUIVOS ANEXADOS ---------- */
+
+var ALLOWED_EXTENSIONS = ['doc', 'docx', 'odt', 'pdf', 'jpg', 'png', 'txt', 'md', 'xls'];
+var MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+
+function iconeExtensao(ext) {
+  var e = (ext || '').toLowerCase();
+  if (e === 'pdf') return 'ph-file-pdf';
+  if (e === 'doc' || e === 'docx' || e === 'odt') return 'ph-file-doc';
+  if (e === 'jpg' || e === 'png') return 'ph-file-image';
+  if (e === 'txt' || e === 'md') return 'ph-file-text';
+  if (e === 'xls') return 'ph-file-xls';
+  return 'ph-file';
+}
+
+function formatarTamanho(bytes) {
+  if (!bytes || bytes === 0) return '0 KB';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1).replace('.', ',') + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
+}
+
+function formatarDataHora(dataStr) {
+  if (!dataStr) return '';
+  var d = new Date(dataStr);
+  if (isNaN(d.getTime())) return dataStr;
+  var dia = ('0' + d.getDate()).slice(-2);
+  var mes = ('0' + (d.getMonth() + 1)).slice(-2);
+  var ano = d.getFullYear();
+  var hora = ('0' + d.getHours()).slice(-2);
+  var min = ('0' + d.getMinutes()).slice(-2);
+  return dia + '/' + mes + '/' + ano + ' ' + hora + ':' + min;
+}
+
+function carregarArquivos() {
+  var container = document.getElementById('filesList');
+  if (!container) return;
+
+  fetch('/api/uploads/' + window.PROTOCOLO_ID, { headers: apiHeaders() })
+    .then(function(resp) { return resp.json(); })
+    .then(function(data) {
+      renderizarListaArquivos(data.files || []);
+    })
+    .catch(function(err) {
+      console.error('Erro ao carregar arquivos:', err);
+      container.innerHTML = '<div class="files-empty">Erro ao carregar arquivos.</div>';
+    });
+}
+
+function renderizarListaArquivos(files) {
+  var container = document.getElementById('filesList');
+  if (!container) return;
+
+  if (!files || files.length === 0) {
+    container.innerHTML = '<div class="files-empty">Nenhum arquivo anexado.</div>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    var iconClass = iconeExtensao(f.extensao);
+    var podeDeletar = (
+      window.CURRENT_USER.id === f.usuario_id ||
+      window.CURRENT_USER.perfil === 'master' ||
+      window.CURRENT_USER.perfil === 'administrador'
+    );
+
+    html += '<div class="file-item">';
+    html += '  <i class="ph ' + iconClass + ' file-icon"></i>';
+    html += '  <div class="file-info">';
+    html += '    <a href="/api/uploads/download/' + f.id + '" class="file-name">' + f.nome_original + '</a>';
+    html += '    <span class="file-meta">Enviado por ' + f.usuario_nome + ' em ' + formatarDataHora(f.criado_em) + ' — ' + formatarTamanho(f.tamanho) + '</span>';
+    html += '  </div>';
+    if (podeDeletar) {
+      html += '  <button type="button" class="file-delete" onclick="deletarArquivo(' + f.id + ', \'' + f.nome_original.replace(/'/g, "\\'") + '\')" title="Excluir arquivo">';
+      html += '    <i class="ph ph-trash"></i>';
+      html += '  </button>';
+    }
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+function uploadArquivo(file) {
+  var msgBox = document.getElementById('uploadMsg');
+  msgBox.className = 'msg-box';
+  msgBox.style.display = 'none';
+
+  // Mostrar feedback de upload
+  msgBox.className = 'msg-box success';
+  msgBox.innerHTML = '<i class="ph ph-spinner"></i> Enviando arquivo...';
+  msgBox.style.display = 'flex';
+
+  var formData = new FormData();
+  formData.append('arquivo', file);
+
+  fetch('/api/uploads/' + window.PROTOCOLO_ID, {
+    method: 'POST',
+    body: formData
+  })
+    .then(function(resp) {
+      if (!resp.ok) {
+        return resp.json().then(function(data) {
+          throw new Error(data.erro || 'Erro ao enviar arquivo.');
+        });
+      }
+      return resp.json();
+    })
+    .then(function() {
+      msgBox.className = 'msg-box success';
+      msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Arquivo enviado com sucesso.';
+      msgBox.style.display = 'flex';
+      carregarArquivos();
+      setTimeout(function() {
+        msgBox.style.display = 'none';
+      }, 4000);
+    })
+    .catch(function(err) {
+      msgBox.className = 'msg-box error';
+      msgBox.innerHTML = '<i class="ph ph-x-circle"></i> ' + err.message;
+      msgBox.style.display = 'flex';
+    });
+}
+
+function deletarArquivo(fileId, nomeOriginal) {
+  if (!confirm('Deseja excluir o arquivo "' + nomeOriginal + '"?')) return;
+
+  fetch('/api/uploads/' + fileId, { method: 'DELETE' })
+    .then(function(resp) {
+      if (!resp.ok) {
+        return resp.json().then(function(data) {
+          throw new Error(data.erro || 'Erro ao excluir arquivo.');
+        });
+      }
+      return resp.json();
+    })
+    .then(function() {
+      carregarArquivos();
+    })
+    .catch(function(err) {
+      alert('Erro: ' + err.message);
+    });
+}
+
 /* ---------- INIT ---------- */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -259,5 +406,42 @@ document.addEventListener('DOMContentLoaded', function() {
   var btnSalvar = document.getElementById('btnSalvarAndamento');
   if (btnSalvar) {
     btnSalvar.addEventListener('click', salvarAndamento);
+  }
+
+  // Upload de arquivos
+  var btnSelectFile = document.getElementById('btnSelectFile');
+  var fileInput = document.getElementById('fileInput');
+  if (btnSelectFile && fileInput) {
+    btnSelectFile.addEventListener('click', function() {
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', function() {
+      var file = fileInput.files[0];
+      if (!file) return;
+
+      // Validar extensão
+      var ext = file.name.split('.').pop().toLowerCase();
+      if (ALLOWED_EXTENSIONS.indexOf(ext) === -1) {
+        var msgBox = document.getElementById('uploadMsg');
+        msgBox.className = 'msg-box error';
+        msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Extensão ".' + ext + '" não permitida.';
+        msgBox.style.display = 'flex';
+        fileInput.value = '';
+        return;
+      }
+
+      // Validar tamanho
+      if (file.size > MAX_FILE_SIZE) {
+        var msgBox = document.getElementById('uploadMsg');
+        msgBox.className = 'msg-box error';
+        msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Arquivo excede o tamanho máximo de 20 MB.';
+        msgBox.style.display = 'flex';
+        fileInput.value = '';
+        return;
+      }
+
+      uploadArquivo(file);
+      fileInput.value = '';
+    });
   }
 });

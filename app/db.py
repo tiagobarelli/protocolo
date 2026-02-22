@@ -49,6 +49,20 @@ def init_db(app):
                 criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
                 ultimo_login DATETIME
             );
+
+            CREATE TABLE IF NOT EXISTS protocol_files (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                protocolo_id INTEGER NOT NULL,
+                nome_original TEXT NOT NULL,
+                nome_disco TEXT NOT NULL,
+                extensao TEXT NOT NULL,
+                tamanho INTEGER NOT NULL,
+                usuario_id INTEGER NOT NULL,
+                usuario_nome TEXT NOT NULL,
+                criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_protocol_files_protocolo
+                ON protocol_files(protocolo_id);
         """)
         conn.commit()
         conn.close()

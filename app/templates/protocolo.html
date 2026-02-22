@@ -95,6 +95,27 @@
     <div class="detalhamentos-content" id="infoDetalhamentos"></div>
   </div>
 
+  <!-- Arquivos Anexados -->
+  <div class="card">
+    <div class="card-title"><i class="ph ph-paperclip"></i> Arquivos Anexados</div>
+
+    <!-- Área de upload -->
+    <div class="upload-area">
+      <input type="file" id="fileInput" style="display: none;"
+             accept=".doc,.docx,.odt,.pdf,.jpg,.png,.txt,.md,.xls">
+      <button type="button" class="btn btn-outline" id="btnSelectFile">
+        <i class="ph ph-upload-simple"></i> Selecionar Arquivo
+      </button>
+      <span class="upload-hint">Formatos: DOC, DOCX, ODT, PDF, JPG, PNG, TXT, MD, XLS — Máx: 20 MB</span>
+      <div class="msg-box" id="uploadMsg"></div>
+    </div>
+
+    <!-- Lista de arquivos -->
+    <div id="filesList" class="files-list">
+      <div class="files-empty">Nenhum arquivo anexado.</div>
+    </div>
+  </div>
+
   <!-- Andamento (editável) -->
   <div class="card andamento-card">
     <div class="card-title"><i class="ph ph-pencil-line"></i> Andamento</div>
@@ -113,6 +134,13 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
-<script>window.PROTOCOLO_ID = {{ protocolo_id }};</script>
+<script>
+  window.PROTOCOLO_ID = {{ protocolo_id }};
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
 <script src="{{ url_for('static', filename='js/protocolo.js') }}"></script>
 {% endblock %}

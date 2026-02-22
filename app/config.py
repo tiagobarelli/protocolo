@@ -27,6 +27,11 @@ class BaseConfig:
     BASEROW_TABLE_RETIFICACOES = os.environ.get("BASEROW_TABLE_RETIFICACOES", "753")
     BASEROW_TABLE_SUBSTABELECIMENTOS = os.environ.get("BASEROW_TABLE_SUBSTABELECIMENTOS", "762")
 
+    # Upload de arquivos
+    UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", str(BASE_DIR / "data" / "uploads"))
+    MAX_CONTENT_LENGTH = 20 * 1024 * 1024  # 20 MB
+    MAX_UPLOAD_SIZE = 20 * 1024 * 1024
+
     # Paperless-ngx (proxy somente leitura)
     PAPERLESS_URL = os.environ.get("PAPERLESS_URL", "http://192.168.0.31:8094").rstrip("/")
     PAPERLESS_TOKEN = os.environ.get("PAPERLESS_TOKEN", "")
