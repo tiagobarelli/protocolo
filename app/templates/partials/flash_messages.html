@@ -1,0 +1,15 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-container">
+    {% for category, msg in messages %}
+    <div class="flash-item {{ category }}">
+      {% if category == 'success' %}<i class="ph ph-check-circle"></i>
+      {% elif category == 'error' %}<i class="ph ph-x-circle"></i>
+      {% else %}<i class="ph ph-info"></i>
+      {% endif %}
+      {{ msg }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}

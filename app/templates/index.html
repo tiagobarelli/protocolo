@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 {% endblock %}
 
+{% block flash_messages %}{% endblock %}
 {% block content %}
 <!-- Hamburger (fallback mobile) -->
 <button type="button" class="hamburger-btn" onclick="toggleSidebar()">
@@ -17,6 +18,7 @@
 
 <!-- CONTEÚDO PRINCIPAL -->
   <main class="main-content">
+    {% include "partials/flash_messages.html" %}
     <div class="filters-bar">
       <div class="filter-group">
         <label for="filtroResponsavel">Responsável</label>

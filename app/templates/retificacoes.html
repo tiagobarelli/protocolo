@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/retificacoes.css') }}">
 {% endblock %}
 
+{% block flash_messages %}{% endblock %}
 {% block content %}
 <!-- Hamburger mobile -->
 <button type="button" class="hamburger-btn" onclick="toggleSidebar()">
@@ -20,6 +21,7 @@
 
 <!-- CONTEUDO PRINCIPAL -->
   <main class="main-content">
+    {% include "partials/flash_messages.html" %}
 
     <!-- ===== CARD DE BUSCA ===== -->
     <div class="card" id="searchCard">

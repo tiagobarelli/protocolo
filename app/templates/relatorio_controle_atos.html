@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/relatorio_controle_atos.css') }}">
 {% endblock %}
 
+{% block flash_messages %}{% endblock %}
 {% block content %}
 <button type="button" class="hamburger-btn" onclick="toggleSidebar()">
   <i class="ph ph-list"></i>
@@ -19,6 +20,7 @@
   {% include "partials/sidebar.html" %}
 
   <main class="main-content">
+    {% include "partials/flash_messages.html" %}
     <div class="container">
 
       <!-- Card de Busca -->

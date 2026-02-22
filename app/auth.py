@@ -24,7 +24,6 @@ def login():
         flash("E-mail ou senha inválidos.", "error")
         return render_template("login.html"), 401
     login_user(user, remember=False)
-    flash("Login realizado com sucesso.", "success")
     return redirect(url_for("main.index"))
 
 

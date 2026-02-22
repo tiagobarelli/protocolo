@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 {% endblock %}
 
+{% block flash_messages %}{% endblock %}
 {% block content %}
 <button type="button" class="hamburger-btn" onclick="toggleSidebar()">
   <i class="ph ph-list"></i>
@@ -16,6 +17,7 @@
   {% include "partials/sidebar.html" %}
 
   <main class="main-content">
+{% include "partials/flash_messages.html" %}
 <div class="container">
   <div class="page-header">
     <h1><i class="ph ph-users-three" style="color: var(--accent);"></i> Gerenciamento de Usuários</h1>
