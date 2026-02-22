@@ -41,3 +41,9 @@ class DevConfig(BaseConfig):
     """Configuração de desenvolvimento."""
     FLASK_ENV = os.environ.get("FLASK_ENV", "development")
     DEBUG = os.environ.get("FLASK_DEBUG", "1") == "1"
+
+
+class ProdConfig(BaseConfig):
+    """Configuração de produção."""
+    FLASK_ENV = "production"
+    DEBUG = False

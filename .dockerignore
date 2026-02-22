@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.env.example
+data/
+venv/
+__pycache__
+*.pyc
+*.pyo
+.cursor/
+.claude/
+CLAUDE.md
+README.md
+*.md
+!requirements.txt

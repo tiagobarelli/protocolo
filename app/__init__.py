@@ -2,14 +2,14 @@
 from flask import Flask
 from flask_login import LoginManager
 
-from app.config import DevConfig
+from app.config import ProdConfig
 from app.db import close_db, init_db
 from app.models import User
 
 
 def create_app(config=None):
     app = Flask(__name__)
-    app.config.from_object(config or DevConfig)
+    app.config.from_object(config or ProdConfig)
 
     init_db(app)
     app.teardown_appcontext(close_db)

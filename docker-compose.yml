@@ -1,0 +1,14 @@
+services:
+  protocolo:
+    build: .
+    container_name: protocolo-app
+    restart: unless-stopped
+    ports:
+      - "5050:5000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - DATABASE_PATH=/app/data/sistema.db
+      - UPLOAD_FOLDER=/app/data/uploads
