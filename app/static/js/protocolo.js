@@ -15,6 +15,7 @@ var CONFIG = {
     status: 'field_7252',
     advogado: 'field_7254',
     criadoPor: 'field_7248',
+    criadoPorSistema: 'field_7398',
     agendadoPara: 'field_7268',
     depositoPrevio: 'field_7340',
     andamento: 'field_7346',
@@ -119,9 +120,11 @@ function preencherDadosProtocolo(proto) {
   var respArr = proto[CONFIG.fields.responsavel] || [];
   setText('infoResponsavel', respArr.length > 0 ? respArr[0].name : '—');
 
-  var criadoPor = proto[CONFIG.fields.criadoPor];
-  if (criadoPor && criadoPor.name) {
-    setText('infoCriadoPor', criadoPor.name);
+  var criadoPorSistema = proto[CONFIG.fields.criadoPorSistema] || '';
+  var criadoPorBaserow = proto[CONFIG.fields.criadoPor];
+  var nomeCriador = criadoPorSistema || (criadoPorBaserow && criadoPorBaserow.name ? criadoPorBaserow.name : '');
+  if (nomeCriador) {
+    setText('infoCriadoPor', nomeCriador);
     document.getElementById('infoCriadoPorRow').style.display = '';
   }
 

@@ -20,7 +20,8 @@
       agendadoPara: 'field_7268',
       depositoPrevio: 'field_7340',
       clienteAlerta: 'field_7394',
-      clienteLogs: 'field_7395'
+      clienteLogs: 'field_7395',
+      criadoPorSistema: 'field_7398'
     },
     statusDefault: 3064,
     collaborators: [
@@ -668,6 +669,7 @@
       payload[CONFIG.fields.responsavel] = [{ id: parseInt(responsavelId) }];
       payload[CONFIG.fields.dataEntrada] = dataEntrada;
       payload[CONFIG.fields.status] = CONFIG.statusDefault;
+      payload[CONFIG.fields.criadoPorSistema] = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
       if (advogadoId) payload[CONFIG.fields.advogado] = [advogadoId];
       if (agendadoPara) payload[CONFIG.fields.agendadoPara] = agendadoPara;
       var depositoValorAPI = moedaParaAPI(depositoPrevioRaw);
