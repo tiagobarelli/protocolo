@@ -1152,27 +1152,48 @@ function buscarDocumentosPaperless(cpf) {
   abrirDrawer();
 
   carregarTagsPaperless(function() {
-    var query = encodeURIComponent('["CPF","exact","' + cpf + '"]');
-    var url = PAPERLESS_API + '/api/documents/?custom_field_query=' + query + '&page_size=50';
-    fetch(url)
-      .then(function(r) {
-        if (!r.ok) throw new Error('Erro HTTP ' + r.status);
-        return r.json();
-      })
-      .then(function(data) {
-        var docs = data.results || [];
-        cacheDocsPaperless[cpf] = docs;
-        renderizarDocumentos(docs);
-        atualizarResumoInline(docs);
-      })
-      .catch(function(e) {
-        console.error('Erro ao buscar documentos Paperless:', e);
-        body.innerHTML =
-          '<div class="doc-empty">' +
-          '<i class="ph ph-warning"></i>' +
-          '<strong>Erro:</strong> ' + (e.message || e) +
-          '</div>';
-      });
+    var campos = ['CPF', 'CPF_2'];
+    var promessas = [];
+    for (var i = 0; i < campos.length; i++) {
+      var query = encodeURIComponent('["' + campos[i] + '","exact","' + cpf + '"]');
+      var url = PAPERLESS_API + '/api/documents/?custom_field_query=' + query + '&page_size=50';
+      promessas.push(
+        fetch(url)
+          .then(function(r) {
+            if (!r.ok) throw new Error('Erro HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function(data) { return data.results || []; })
+          .catch(function(e) {
+            console.error('Erro ao buscar documentos Paperless:', e);
+            return [];
+          })
+      );
+    }
+
+    Promise.all(promessas).then(function(resultados) {
+      var visto = {};
+      var docs = [];
+      for (var r = 0; r < resultados.length; r++) {
+        for (var d = 0; d < resultados[r].length; d++) {
+          var doc = resultados[r][d];
+          if (!visto[doc.id]) {
+            visto[doc.id] = true;
+            docs.push(doc);
+          }
+        }
+      }
+      cacheDocsPaperless[cpf] = docs;
+      renderizarDocumentos(docs);
+      atualizarResumoInline(docs);
+    }).catch(function(e) {
+      console.error('Erro ao buscar documentos Paperless:', e);
+      body.innerHTML =
+        '<div class="doc-empty">' +
+        '<i class="ph ph-warning"></i>' +
+        '<strong>Erro:</strong> ' + (e.message || e) +
+        '</div>';
+    });
   });
 }
 
