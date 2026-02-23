@@ -20,7 +20,8 @@ var CONFIG = {
     substabelecimentoReverso: 'field_7331',
     protocolo: 'field_7377',
     clientes: 'field_7379',
-    imoveis: 'field_7384'
+    imoveis: 'field_7384',
+    pendencias: 'field_7203'
   }
 };
 
@@ -167,10 +168,46 @@ function renderizarResultados(results, livro) {
     html += '<td>' + badgeSimNao(row[CONFIG.fields.imoveis]) + '</td>';
     html += '<td><button type="button" class="btn-action" onclick="abrirControle(\'' + livro + '\', \'' + pagina.replace(/'/g, "\\'") + '\')" title="Editar no Controle"><i class="ph ph-arrow-square-out"></i></button></td>';
     html += '</tr>';
+
+    // Linha extra de pendencias (se houver)
+    var pendenciasRaw = row[CONFIG.fields.pendencias] || '';
+    var pendenciasTexto = stripMarkdown(pendenciasRaw).replace(/^\s+|\s+$/g, '');
+    if (pendenciasTexto) {
+      html += '<tr class="pendencia-row">';
+      html += '<td colspan="12"><div class="pendencia-content"><i class="ph ph-warning-circle"></i>' + pendenciasTexto + '</div></td>';
+      html += '</tr>';
+    }
   }
 
   html += '</tbody></table></div>';
   body.innerHTML = html;
+}
+
+function stripMarkdown(text) {
+  if (!text) return '';
+  // Links [text](url) → text
+  text = text.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+  // Bold **text** or __text__
+  text = text.replace(/(\*\*|__)(.*?)\1/g, '$2');
+  // Italic *text* or _text_
+  text = text.replace(/(\*|_)(.*?)\1/g, '$2');
+  // Strikethrough ~~text~~
+  text = text.replace(/~~(.*?)~~/g, '$1');
+  // Inline code `text`
+  text = text.replace(/`([^`]*)`/g, '$1');
+  // Headers # ## ### etc
+  text = text.replace(/^#{1,6}\s+/gm, '');
+  // Unordered lists - or *
+  text = text.replace(/^[\s]*[-*+]\s+/gm, '');
+  // Ordered lists 1. 2. etc
+  text = text.replace(/^[\s]*\d+\.\s+/gm, '');
+  // Horizontal rules
+  text = text.replace(/^[-*_]{3,}\s*$/gm, '');
+  // Checklist [ ] [x]
+  text = text.replace(/\[[ x]\]\s*/gi, '');
+  // Multiple newlines → single space
+  text = text.replace(/\n+/g, ' ');
+  return text;
 }
 
 function abrirControle(livro, pagina) {
