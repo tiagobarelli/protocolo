@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Novidades do Sistema{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/changelog.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header-changelog">
+        <h1><i class="ph ph-megaphone" style="color: var(--accent);"></i> Novidades do Sistema</h1>
+      </div>
+
+      <div class="card">
+        <div class="changelog-content">
+          {{ changelog_html|safe }}
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

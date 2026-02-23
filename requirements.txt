@@ -4,3 +4,4 @@ bcrypt==4.*
 requests==2.*
 gunicorn==23.*
 python-dotenv==1.*
+markdown==3.*

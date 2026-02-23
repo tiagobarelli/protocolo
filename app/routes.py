@@ -1,6 +1,8 @@
 # app/routes.py — Blueprint: rotas principais (index, cadastrar, consultar)
 from pathlib import Path
 
+import markdown as md
+
 from flask import Blueprint, current_app, render_template
 from flask_login import login_required
 
@@ -80,6 +82,17 @@ def protocolo_detalhe(protocolo_id):
 @perfil_required("master", "administrador", "escrevente")
 def protocolo_imprimir(protocolo_id):
     return render_template("imprimir.html", protocolo_id=protocolo_id)
+
+
+@main_bp.route("/changelog")
+@login_required
+def changelog():
+    changelog_html = ""
+    changelog_path = Path(current_app.root_path).parent / "CHANGELOG.md"
+    if changelog_path.exists():
+        raw = changelog_path.read_text(encoding="utf-8")
+        changelog_html = md.markdown(raw, extensions=["fenced_code", "nl2br"])
+    return render_template("changelog.html", changelog_html=changelog_html)
 
 
 @main_bp.route("/notificacoes")
