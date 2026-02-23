@@ -1087,7 +1087,7 @@ function atualizarVisibilidadeDocumentos() {
       if (cacheDocsPaperless[cpf]) {
         atualizarResumoInline(cacheDocsPaperless[cpf]);
       } else {
-        resumo.innerHTML = 'Clique em "Consultar" para verificar documentos no Paperless.';
+        resumo.innerHTML = 'Clique em "Consultar" para verificar documentos no ODIN.';
         resumo.classList.remove('clickable');
         resumo.onclick = null;
       }
@@ -1096,7 +1096,7 @@ function atualizarVisibilidadeDocumentos() {
     secao.style.display = 'none';
     fecharDrawer();
     if (resumo) {
-      resumo.innerHTML = 'Clique em "Consultar" para verificar documentos no Paperless.';
+      resumo.innerHTML = 'Clique em "Consultar" para verificar documentos no ODIN.';
       resumo.classList.remove('clickable');
       resumo.onclick = null;
     }

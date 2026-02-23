@@ -83,6 +83,8 @@ var imoveisBlocks = [];
 var imoveisCounter = 0;
 var protocoloTimer = null;
 var clienteTimer = null;
+var PAPERLESS_API = '/api/paperless';
+var cacheDocsPaperlessControle = {};
 
 // ═══════════════════════════════════════════════════════
 // HELPERS (copiados de cadastrar.js / clientes.js)
@@ -588,6 +590,9 @@ function resetarEstadoFormulario() {
   esconderMsg('protocoloInfo');
   document.getElementById('retificacaoBannerContainer').innerHTML = '';
   document.getElementById('substabelecimentoBannerContainer').innerHTML = '';
+
+  // Limpar estado Paperless
+  limparEstadoPaperless();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1271,6 +1276,139 @@ function limparFormulario() {
 }
 
 // ═══════════════════════════════════════════════════════
+// PAPERLESS — DOCUMENTOS DIGITALIZADOS
+// ═══════════════════════════════════════════════════════
+
+function abrirDrawerControle() {
+  document.getElementById('paperlessDrawer').classList.add('open');
+  document.getElementById('drawerOverlayControle').classList.add('active');
+}
+
+function fecharDrawerControle() {
+  document.getElementById('paperlessDrawer').classList.remove('open');
+  document.getElementById('drawerOverlayControle').classList.remove('active');
+}
+
+function buscarDocumentosPaperless(identificador) {
+  if (!identificador) return;
+
+  // Cache hit
+  if (cacheDocsPaperlessControle[identificador]) {
+    abrirDrawerControle();
+    renderizarDocumentosControle(cacheDocsPaperlessControle[identificador]);
+    atualizarResumoInlineControle(cacheDocsPaperlessControle[identificador]);
+    return;
+  }
+
+  // Exibir loading e abrir drawer
+  var body = document.getElementById('drawerBodyControle');
+  body.innerHTML = '<div class="doc-loading"><div class="spinner"></div>Consultando Paperless...</div>';
+  abrirDrawerControle();
+
+  var url = PAPERLESS_API + '/api/documents/?query=' + encodeURIComponent(identificador) + '&page_size=50';
+
+  fetch(url)
+    .then(function(r) {
+      if (!r.ok) throw new Error('Erro HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      var resultados = data.results || [];
+      // Filtrar no cliente: manter apenas docs cujo titulo contenha o identificador
+      var idLower = identificador.toLowerCase();
+      var docs = [];
+      for (var i = 0; i < resultados.length; i++) {
+        var titulo = (resultados[i].title || '').toLowerCase();
+        if (titulo.indexOf(idLower) !== -1) {
+          docs.push(resultados[i]);
+        }
+      }
+      cacheDocsPaperlessControle[identificador] = docs;
+      renderizarDocumentosControle(docs);
+      atualizarResumoInlineControle(docs);
+    })
+    .catch(function(e) {
+      console.error('Erro ao buscar documentos Paperless:', e);
+      body.innerHTML = '<div class="doc-empty"><i class="ph ph-warning"></i><strong>Erro:</strong> ' + (e.message || e) + '</div>';
+    });
+}
+
+function renderizarDocumentosControle(docs) {
+  var body = document.getElementById('drawerBodyControle');
+  body.innerHTML = '';
+
+  if (docs.length === 0) {
+    body.innerHTML = '<div class="doc-empty"><i class="ph ph-file-dashed"></i>Nenhum documento encontrado para este identificador.</div>';
+    return;
+  }
+
+  for (var i = 0; i < docs.length; i++) {
+    var doc = docs[i];
+    var card = document.createElement('div');
+    card.className = 'doc-card';
+
+    // Thumbnail
+    var thumb = document.createElement('img');
+    thumb.className = 'doc-thumb';
+    thumb.src = PAPERLESS_API + '/api/documents/' + doc.id + '/thumb/';
+    thumb.alt = doc.title || 'Documento';
+    thumb.title = 'Clique para abrir o PDF';
+    (function(docId) {
+      thumb.addEventListener('click', function() {
+        window.open(PAPERLESS_API + '/api/documents/' + docId + '/preview/', '_blank');
+      });
+    })(doc.id);
+    card.appendChild(thumb);
+
+    // Info
+    var info = document.createElement('div');
+    info.className = 'doc-info';
+
+    var title = document.createElement('div');
+    title.className = 'doc-title';
+    title.textContent = doc.title || 'Sem título';
+    info.appendChild(title);
+
+    card.appendChild(info);
+    body.appendChild(card);
+  }
+}
+
+function atualizarResumoInlineControle(docs) {
+  var resumo = document.getElementById('docsResumoControle');
+  if (!resumo) return;
+
+  if (docs.length > 0) {
+    var texto = docs.length === 1 ? '1 documento encontrado' : docs.length + ' documento(s) encontrado(s)';
+    var nomes = [];
+    for (var i = 0; i < docs.length; i++) {
+      nomes.push(docs[i].title || 'Sem título');
+    }
+    texto += ': ' + nomes.join(', ');
+    resumo.textContent = texto;
+    resumo.classList.add('clickable');
+    resumo.onclick = function() {
+      abrirDrawerControle();
+      renderizarDocumentosControle(docs);
+    };
+  } else {
+    resumo.textContent = 'Nenhum documento encontrado.';
+    resumo.classList.remove('clickable');
+    resumo.onclick = null;
+  }
+}
+
+function limparEstadoPaperless() {
+  var resumo = document.getElementById('docsResumoControle');
+  if (resumo) {
+    resumo.textContent = 'Clique em "Consultar" para verificar documentos no ODIN.';
+    resumo.classList.remove('clickable');
+    resumo.onclick = null;
+  }
+  fecharDrawerControle();
+}
+
+// ═══════════════════════════════════════════════════════
 // INICIALIZACAO
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
@@ -1310,6 +1448,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (!e.target.closest('#clienteInput') && !e.target.closest('#clienteAutoList')) {
       fecharAutoList('clienteAutoList');
+    }
+  });
+
+  // Paperless — drawer de documentos digitalizados
+  document.getElementById('btnConsultarPaperless').addEventListener('click', function() {
+    var livro = document.getElementById('livroInput').value.trim();
+    var pagina = document.getElementById('paginaInput').value.trim();
+    if (!livro || !pagina) return;
+    var identificador = 'L_' + livro + '_P_' + pagina;
+    buscarDocumentosPaperless(identificador);
+  });
+  document.getElementById('btnCloseDrawerControle').addEventListener('click', fecharDrawerControle);
+  document.getElementById('drawerOverlayControle').addEventListener('click', fecharDrawerControle);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      var drawer = document.getElementById('paperlessDrawer');
+      if (drawer && drawer.classList.contains('open')) {
+        fecharDrawerControle();
+      }
     }
   });
 
