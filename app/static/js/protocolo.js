@@ -128,7 +128,7 @@ function preencherDadosProtocolo(proto) {
   setText('infoDataEntrada', formatarData(proto[CONFIG.fields.dataEntrada]));
 
   var agendado = proto[CONFIG.fields.agendadoPara];
-  setText('infoAgendado', agendado ? formatarData(agendado) : '—');
+  setText('infoAgendado', agendado ? formatarDataHora(agendado) : '—');
 
   var deposito = proto[CONFIG.fields.depositoPrevio];
   if (deposito) {
@@ -279,9 +279,24 @@ function classificarStatus(texto) {
 
 function formatarData(dataStr) {
   if (!dataStr) return '—';
+  if (dataStr.indexOf('T') !== -1) dataStr = dataStr.split('T')[0];
   var partes = dataStr.split('-');
   if (partes.length !== 3) return dataStr;
   return partes[2] + '/' + partes[1] + '/' + partes[0];
+}
+
+function formatarDataHora(isoStr) {
+  if (!isoStr) return '—';
+  if (isoStr.indexOf('T') === -1) return formatarData(isoStr);
+  var d = new Date(isoStr);
+  if (isNaN(d.getTime())) return isoStr;
+  var dd = ('0' + d.getDate()).slice(-2);
+  var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+  var yyyy = d.getFullYear();
+  var hh = ('0' + d.getHours()).slice(-2);
+  var min = ('0' + d.getMinutes()).slice(-2);
+  if (hh === '00' && min === '00') return dd + '/' + mm + '/' + yyyy;
+  return dd + '/' + mm + '/' + yyyy + ' às ' + hh + ':' + min;
 }
 
 function formatarMoeda(valor) {
@@ -735,13 +750,27 @@ function iniciarEdicaoAgendado() {
   var display = document.getElementById('infoAgendado');
   var editArea = document.getElementById('infoAgendadoEdit');
   var input = document.getElementById('editAgendadoInput');
+  var inputHora = document.getElementById('editHoraAgendamento');
   var btnEdit = document.getElementById('btnEditAgendado');
   if (display) display.style.display = 'none';
   if (btnEdit) btnEdit.style.display = 'none';
   if (editArea) editArea.style.display = 'flex';
-  // Preencher com valor atual em formato YYYY-MM-DD
   var agendado = protocoloAtual ? (protocoloAtual[CONFIG.fields.agendadoPara] || '') : '';
-  if (input) input.value = agendado;
+  if (agendado && agendado.indexOf('T') !== -1) {
+    var d = new Date(agendado);
+    if (!isNaN(d.getTime())) {
+      var yyyy = d.getFullYear();
+      var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+      var dd = ('0' + d.getDate()).slice(-2);
+      if (input) input.value = yyyy + '-' + mm + '-' + dd;
+      var hh = ('0' + d.getHours()).slice(-2);
+      var min = ('0' + d.getMinutes()).slice(-2);
+      if (inputHora) inputHora.value = (hh === '00' && min === '00') ? '' : hh + ':' + min;
+    }
+  } else {
+    if (input) input.value = agendado;
+    if (inputHora) inputHora.value = '';
+  }
 }
 
 function cancelarEdicaoAgendado() {
@@ -755,7 +784,15 @@ function cancelarEdicaoAgendado() {
 
 function salvarAgendado() {
   var input = document.getElementById('editAgendadoInput');
-  var novoValor = input ? input.value : '';
+  var inputHora = document.getElementById('editHoraAgendamento');
+  var dataVal = input ? input.value : '';
+  var horaVal = inputHora ? inputHora.value : '';
+  var novoValor = '';
+  if (dataVal && horaVal) {
+    novoValor = dataVal + 'T' + horaVal + ':00-03:00';
+  } else if (dataVal) {
+    novoValor = dataVal;
+  }
   var valorAnterior = snapshotProtocolo ? snapshotProtocolo.agendadoPara : '';
 
   // Se não mudou, só fechar
@@ -766,7 +803,7 @@ function salvarAgendado() {
 
   mostrarOverlay(true);
 
-  var valorAnteriorFormatado = valorAnterior ? formatarData(valorAnterior) : '(vazio)';
+  var valorAnteriorFormatado = valorAnterior ? formatarDataHora(valorAnterior) : '(vazio)';
   var logDescricao = 'O campo Agendado para foi alterado. Valor anterior: ' + valorAnteriorFormatado + '.';
   var novaLinhaLog = gerarLinhaLog(logDescricao);
   var logsAtualizados = prependLog(novaLinhaLog);
@@ -789,7 +826,7 @@ function salvarAgendado() {
       protocoloAtual = data;
       snapshotProtocolo = capturarSnapshotProtocolo(data);
       var agendado = data[CONFIG.fields.agendadoPara];
-      setText('infoAgendado', agendado ? formatarData(agendado) : '—');
+      setText('infoAgendado', agendado ? formatarDataHora(agendado) : '—');
       exibirLogsProtocolo(data);
       cancelarEdicaoAgendado();
       mostrarOverlay(false);

@@ -44,7 +44,11 @@ main { background-color: var(--bg-body); background-image: radial-gradient(at to
 .form-group.small { flex: 0 0 200px; }
 label { font-size: 0.9rem; font-weight: 500; color: var(--text-dark); margin-bottom: 6px; }
 label .hint { font-weight: 400; color: var(--text-muted); font-size: 0.85rem; }
-input[type="text"], input[type="date"], select, textarea { font-family: inherit; font-size: 0.95rem; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text-dark); transition: all 0.2s; width: 100%; box-shadow: var(--shadow-sm); }
+input[type="text"], input[type="date"], input[type="time"], select, textarea { font-family: inherit; font-size: 0.95rem; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text-dark); transition: all 0.2s; width: 100%; box-shadow: var(--shadow-sm); }
+input[type="time"] { max-width: 120px; }
+.agendamento-inputs { display: flex; gap: 8px; }
+.agendamento-inputs input[type="date"] { flex: 1; }
+.agendamento-inputs input[type="time"] { flex: 0 0 auto; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-soft); }
 input[readonly] { background: #f1f5f9; color: var(--text-muted); cursor: not-allowed; border-color: var(--border); box-shadow: none; }
 textarea { resize: vertical; min-height: 100px; }
@@ -106,6 +110,8 @@ textarea { resize: vertical; min-height: 100px; }
 @media (max-width: 768px) {
   .form-row { flex-direction: column; gap: 16px; }
   .form-group.small { flex: 1; }
+  .agendamento-inputs { flex-direction: column; }
+  .agendamento-inputs input[type="time"] { max-width: none; }
 }
 @media print {
   .overlay, .topbar, .flash { display: none !important; }

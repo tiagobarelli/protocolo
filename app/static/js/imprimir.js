@@ -17,7 +17,8 @@ var CONFIG = {
     clienteCpf: 'field_7238',
     clienteCnpj: 'field_7239',
     clienteTelefone: 'field_7243',
-    clienteEmail: 'field_7244'
+    clienteEmail: 'field_7244',
+    agendadoPara: 'field_7268'
   }
 };
 
@@ -43,6 +44,24 @@ function formatarDepositoExibicao(v) {
   var partes = num.toFixed(2).split('.');
   var intPart = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   return 'R$ ' + intPart + ',' + partes[1];
+}
+
+function formatarDataHora(isoStr) {
+  if (!isoStr) return '';
+  if (isoStr.indexOf('T') === -1) {
+    var partes = isoStr.split('-');
+    if (partes.length !== 3) return isoStr;
+    return partes[2] + '/' + partes[1] + '/' + partes[0];
+  }
+  var d = new Date(isoStr);
+  if (isNaN(d.getTime())) return isoStr;
+  var dd = ('0' + d.getDate()).slice(-2);
+  var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+  var yyyy = d.getFullYear();
+  var hh = ('0' + d.getHours()).slice(-2);
+  var min = ('0' + d.getMinutes()).slice(-2);
+  if (hh === '00' && min === '00') return dd + '/' + mm + '/' + yyyy;
+  return dd + '/' + mm + '/' + yyyy + ' às ' + hh + ':' + min;
 }
 
 function mostrarOverlay(show) {
@@ -103,6 +122,15 @@ async function carregarComprovante(idProtocolo) {
     var dataRaw = proto[CONFIG.fields.dataEntrada];
     var dataFormatada = dataRaw ? dataRaw.split('-').reverse().join('/') : '—';
     document.getElementById('recData').textContent = dataFormatada;
+
+    var agendadoRaw = proto[CONFIG.fields.agendadoPara];
+    var boxAgendado = document.getElementById('recAgendadoBox');
+    if (agendadoRaw) {
+      document.getElementById('recAgendado').textContent = formatarDataHora(agendadoRaw);
+      boxAgendado.style.display = 'block';
+    } else {
+      boxAgendado.style.display = 'none';
+    }
 
     var servicoList = proto[CONFIG.fields.servico] || [];
     var servico = '';

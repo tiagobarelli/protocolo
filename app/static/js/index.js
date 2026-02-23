@@ -236,6 +236,7 @@ function calcularDiasAberto(dataStr) {
 
 function formatarData(dataStr) {
   if (!dataStr) return '';
+  if (dataStr.indexOf('T') !== -1) dataStr = dataStr.split('T')[0];
   var partes = dataStr.split('-');
   if (partes.length !== 3) return dataStr;
   return partes[2] + '/' + partes[1] + '/' + partes[0];

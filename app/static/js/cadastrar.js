@@ -546,7 +546,14 @@
 
     var numProtocolo = document.getElementById('numProtocolo').value.trim();
     var dataEntrada = document.getElementById('dataEntrada').value;
-    var agendadoPara = document.getElementById('agendadoPara').value;
+    var agendadoParaData = document.getElementById('agendadoPara').value;
+    var agendadoParaHora = document.getElementById('horaAgendamento').value;
+    var agendadoPara = '';
+    if (agendadoParaData && agendadoParaHora) {
+      agendadoPara = agendadoParaData + 'T' + agendadoParaHora + ':00-03:00';
+    } else if (agendadoParaData) {
+      agendadoPara = agendadoParaData;
+    }
     var depositoPrevioRaw = document.getElementById('depositoPrevio').value.trim();
     var servicoId = document.getElementById('servico').value;
     var responsavelId = document.getElementById('responsavel').value;
@@ -702,6 +709,7 @@
     document.getElementById('servico').selectedIndex = 0;
     document.getElementById('responsavel').selectedIndex = 0;
     document.getElementById('agendadoPara').value = '';
+    document.getElementById('horaAgendamento').value = '';
     document.getElementById('depositoPrevio').value = '';
     document.getElementById('detalhamentos').value = '';
     atualizarPreviewDetalhamentos();

@@ -423,6 +423,10 @@ main {
   flex: 1;
   transition: border-color 0.2s;
 }
+.inline-input[type="time"] {
+  max-width: 110px;
+  flex: none;
+}
 .inline-input:focus {
   outline: none;
   border-color: var(--border-focus);
