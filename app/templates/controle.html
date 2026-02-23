@@ -73,7 +73,6 @@
 
     <!-- ===== CARD DO FORMULARIO (oculto ate busca) ===== -->
     <div class="card" id="formCard" style="display:none;">
-      <div id="formMsg" class="msg-box"></div>
       <div id="retificacaoBannerContainer"></div>
       <div id="substabelecimentoBannerContainer"></div>
 
@@ -209,6 +208,9 @@
         <button type="button" class="btn btn-secondary" onclick="limparFormulario()"><i class="ph ph-eraser"></i> Limpar</button>
         <button type="button" class="btn btn-primary" id="btnSalvar" onclick="salvarControle()"><i class="ph ph-check-circle"></i> Salvar</button>
       </div>
+
+      <!-- Mensagem de feedback (após o botão Salvar) -->
+      <div id="formMsg" class="msg-box"></div>
     </div>
 
   </main>

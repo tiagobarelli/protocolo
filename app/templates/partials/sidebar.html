@@ -22,13 +22,13 @@
 
     {% if current_user.perfil in ['master', 'administrador'] %}
     <a href="{{ url_for('main.consultar') }}" class="nav-item {% if consultar_active %}active{% endif %}">
-      <i class="ph ph-magnifying-glass"></i> Consultar
+      <i class="ph ph-magnifying-glass"></i> Consultar Protocolo
     </a>
     {% endif %}
 
     {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
     <a href="{{ url_for('main.clientes') }}" class="nav-item {% if request.endpoint == 'main.clientes' %}active{% endif %}">
-      <i class="ph ph-address-book"></i> Clientes
+      <i class="ph ph-address-book"></i> Consultar Cliente
     </a>
     {% endif %}
 

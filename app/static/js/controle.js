@@ -287,6 +287,11 @@ function carregarTiposEscritura() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var rows = data.results || [];
+      rows.sort(function(a, b) {
+        var tipoA = a['Tipo'] || '';
+        var tipoB = b['Tipo'] || '';
+        return tipoA.localeCompare(tipoB, 'pt-BR');
+      });
       sel.innerHTML = '<option value="">Selecione...</option>';
       for (var i = 0; i < rows.length; i++) {
         var opt = document.createElement('option');
@@ -1172,6 +1177,8 @@ function salvarControle() {
     })
     .then(function() {
       mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
+      var formMsgEl = document.getElementById('formMsg');
+      if (formMsgEl) { formMsgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
       document.getElementById('livroInput').readOnly = true;
       document.getElementById('paginaInput').readOnly = true;
 
@@ -1180,6 +1187,8 @@ function salvarControle() {
     })
     .catch(function(e) {
       mostrarMsg('formMsg', 'error', e.message || 'Erro ao salvar.');
+      var formMsgEl = document.getElementById('formMsg');
+      if (formMsgEl) { formMsgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
       console.error(e);
     })
     .then(function() {

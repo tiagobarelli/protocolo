@@ -70,7 +70,7 @@ function carregarProtocolos() {
   empty.style.display = 'none';
 
   var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo +
-    '/?user_field_names=false&size=200&order_by=-' + CONFIG.fields.dataEntrada;
+    '/?user_field_names=false&size=200&order_by=-' + CONFIG.fields.protocolo;
 
   fetch(url, { headers: apiHeaders() })
     .then(function(resp) { return resp.json(); })

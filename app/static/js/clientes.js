@@ -886,6 +886,35 @@ function verificarDuplicata(cpfLimpo, cnpjLimpo) {
   });
 }
 
+function validarDuplicataOnBlur(campo) {
+  if (!modoNovo) return;
+  var inputId = campo === 'cpf' ? 'cpfInput' : 'cnpjInput';
+  var valorFormatado = document.getElementById(inputId).value.trim();
+  var valorLimpo = valorFormatado.replace(/\D/g, '');
+  if (!valorLimpo) return;
+  if (campo === 'cpf' && valorLimpo.length !== 11) return;
+  if (campo === 'cnpj' && valorLimpo.length !== 14) return;
+  if (campo === 'cpf' && !validarCPF(valorLimpo)) return;
+  if (campo === 'cnpj' && !validarCNPJ(valorLimpo)) return;
+
+  var fieldId = campo === 'cpf' ? FIELDS.cpf : FIELDS.cnpj;
+  var url = API_BASE + '/database/rows/table/' + TABLE_CLIENTES +
+    '/?user_field_names=false&filter__' + fieldId + '__equal=' +
+    encodeURIComponent(valorFormatado) + '&size=1';
+
+  fetch(url, { headers: apiHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.results && d.results.length > 0) {
+        alert('Cliente já consta na base de dados. Utilize a busca para localizar o cadastro.');
+        window.location.href = '/clientes';
+      }
+    })
+    .catch(function(e) {
+      console.error('Erro ao verificar duplicata:', e);
+    });
+}
+
 function construirPayload(incluirDocumentos) {
   var payload = {};
   payload[FIELDS.nome]     = document.getElementById('nomeInput').value.trim();
@@ -1277,6 +1306,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnNovoCliente').addEventListener('click', novoCliente);
   document.getElementById('btnSalvar').addEventListener('click', salvarCliente);
   document.getElementById('btnLimpar').addEventListener('click', limparFormulario);
+  document.getElementById('cpfInput').addEventListener('blur', function() {
+    validarDuplicataOnBlur('cpf');
+  });
+  document.getElementById('cnpjInput').addEventListener('blur', function() {
+    validarDuplicataOnBlur('cnpj');
+  });
   configurarDrawer();
 
   // Fechar dropdowns ao clicar fora
