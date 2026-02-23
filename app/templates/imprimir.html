@@ -6,9 +6,6 @@
 {% block content %}
 <div class="overlay" id="overlay"><div class="spinner"></div></div>
 <div class="imprimir-container">
-  <a href="{{ url_for('main.protocolo_detalhe', protocolo_id=protocolo_id) }}" class="back-link" id="backLink">
-    <i class="ph ph-arrow-left"></i> Voltar ao protocolo
-  </a>
   <div class="receipt-paper">
     <div class="print-header">
       <h2>Tabelião de Notas e de Protesto de Letras e Títulos de Itápolis-SP</h2>
@@ -40,6 +37,7 @@
     <button class="btn btn-primary" onclick="window.print()"><i class="ph ph-printer"></i> Imprimir</button>
     <a href="{{ url_for('main.protocolo_detalhe', protocolo_id=protocolo_id) }}" class="btn btn-secondary"><i class="ph ph-arrow-left"></i> Voltar ao Protocolo</a>
     <a href="{{ url_for('main.cadastrar') }}" class="btn btn-secondary"><i class="ph ph-plus"></i> Novo Protocolo</a>
+    <a href="{{ url_for('main.index') }}" class="btn btn-secondary"><i class="ph ph-house"></i> Voltar ao Painel</a>
   </div>
 </div>
 {% endblock %}

@@ -17,6 +17,9 @@ var CONFIG = {
 
 var todosProtocolos = [];
 var colaboradores = [];
+var protocolosFiltrados = [];
+var paginaAtual = 1;
+var CARDS_POR_PAGINA = 20;
 
 function apiHeaders() {
   return { 'Content-Type': 'application/json' };
@@ -113,8 +116,9 @@ function aplicarFiltros() {
     filtrados.push(p);
   }
 
-  renderizarCards(filtrados);
-  atualizarSumario(filtrados.length);
+  protocolosFiltrados = filtrados;
+  paginaAtual = 1;
+  renderizarPagina();
 }
 
 function renderizarCards(protocolos) {
@@ -245,6 +249,60 @@ function formatarData(dataStr) {
 function escapeHtml(str) {
   if (!str) return '';
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ---------- PAGINAÇÃO ---------- */
+
+function renderizarPagina() {
+  var totalPaginas = Math.ceil(protocolosFiltrados.length / CARDS_POR_PAGINA);
+  var inicio = (paginaAtual - 1) * CARDS_POR_PAGINA;
+  var fim = inicio + CARDS_POR_PAGINA;
+
+  renderizarCards(protocolosFiltrados.slice(inicio, fim));
+  atualizarSumario(protocolosFiltrados.length);
+  renderizarPaginacao(totalPaginas);
+}
+
+function renderizarPaginacao(totalPaginas) {
+  var container = document.getElementById('paginationContainer');
+  if (!container) return;
+
+  if (totalPaginas <= 1) {
+    container.style.display = 'none';
+    return;
+  }
+
+  var html = '';
+  html += '<button class="pagination-btn" id="paginaAnterior"' + (paginaAtual === 1 ? ' disabled' : '') + '>';
+  html += '<i class="ph ph-caret-left"></i>';
+  html += '</button>';
+  html += '<span class="pagination-indicator">P\u00e1gina ' + paginaAtual + ' de ' + totalPaginas + '</span>';
+  html += '<button class="pagination-btn" id="paginaProxima"' + (paginaAtual === totalPaginas ? ' disabled' : '') + '>';
+  html += '<i class="ph ph-caret-right"></i>';
+  html += '</button>';
+
+  container.innerHTML = html;
+  container.style.display = 'flex';
+
+  var btnAnterior = document.getElementById('paginaAnterior');
+  var btnProxima = document.getElementById('paginaProxima');
+
+  btnAnterior.addEventListener('click', function() {
+    if (paginaAtual > 1) {
+      paginaAtual--;
+      renderizarPagina();
+      document.getElementById('protocolGrid').scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  btnProxima.addEventListener('click', function() {
+    var total = Math.ceil(protocolosFiltrados.length / CARDS_POR_PAGINA);
+    if (paginaAtual < total) {
+      paginaAtual++;
+      renderizarPagina();
+      document.getElementById('protocolGrid').scrollIntoView({ behavior: 'smooth' });
+    }
+  });
 }
 
 function atualizarSumario(count) {
