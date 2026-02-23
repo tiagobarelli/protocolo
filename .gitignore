@@ -1,5 +1,6 @@
 # Ambiente virtual
 venv/
+p/
 
 # Python
 __pycache__/
@@ -17,28 +18,6 @@ data/
 Controle_Tiago.txt
 README.md
 CLAUDE.md
-prompt-fluxo-detalhamento-impressao.md
-prompt-ajustes-detalhamento-impressao-index-clientes.md
-prompt-integracao-paperless.md
-prompt-regra-patrimonial.md
-prompt-pagina-controle.md
-prompt-retificacoes.md
-prompt-substabelecimentos.md
-prompt-upload-arquivos-protocolo.md
-prompt-relatorio-controle-atos.md
-prompt-alertas-cliente.md
-prompt-logs-rastreio-escrevente.md
-prompt-status-logs-edicao-protocolo.md
-prompt-comentarios-notificacoes.md
-prompt-producao-docker-pwa.md
-prompt-agendamento-horario.md
-prompt-imprimir-agendamento.md
-prompts-ajustes.md
-Prompt-Documentos-digitalizados
-prompt-Exibir linha de pendências no Relatório de Controle de Atos.md
-prompts-painel-impressão.md
-prompt-página-changelog.md
-Prompt-Documentos-digitalizados.md
 
 # Editores / IDEs
 .cursor/
