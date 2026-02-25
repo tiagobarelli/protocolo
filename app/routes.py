@@ -30,7 +30,7 @@ def cadastrar():
 
 @main_bp.route("/consultar")
 @login_required
-@perfil_required("master", "administrador")
+@perfil_required("master", "administrador", "escrevente")
 def consultar():
     return render_template("consultar.html")
 

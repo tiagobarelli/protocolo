@@ -62,6 +62,15 @@
         </div>
         <div id="clienteInfo" class="msg-box"></div>
       </div>
+      <!-- Documentos Digitalizados (Paperless) — visível somente para CPF válido -->
+      <div class="form-section" id="secaoDocumentosCad" style="display:none;">
+        <div class="section-title">
+          <i class="ph ph-files"></i> Documentos Digitalizados (ODIN)
+        </div>
+        <div id="docsResumoCad" class="docs-resumo">
+          Consultando documentos...
+        </div>
+      </div>
       <div class="form-section">
         <div class="section-title"><i class="ph ph-gavel"></i> Advogado</div>
         <div class="toggle-row">
@@ -161,6 +170,17 @@
       </div>
     </div>
   </div>
+<!-- Drawer lateral — Documentos Paperless -->
+<div id="paperlessDrawerCad" class="paperless-drawer">
+  <div class="drawer-header">
+    <h3><i class="ph ph-files"></i> Documentos Digitalizados</h3>
+    <button type="button" class="drawer-close" id="btnCloseDrawerCad">
+      <i class="ph ph-x"></i>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawerBodyCad"></div>
+</div>
+<div class="drawer-overlay" id="drawerOverlayCad"></div>
 </div>
   </main>
 </div>

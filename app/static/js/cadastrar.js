@@ -35,6 +35,19 @@
   var advogadoEncontrado = null;
   var servicosCache = [];
 
+  // ── PAPERLESS-NGX — Documentos Digitalizados ──
+  var PAPERLESS_API = '/api/paperless';
+  var PAPERLESS_TAGS_DOCS = [
+    'Cartão de assinatura', 'Certidão de casamento', 'Certidão de Interdição',
+    'Certidão de nascimento', 'Certidão de óbito', 'CNH', 'CTPS',
+    'Documento particular de união estável', 'Escritura de união estável',
+    'Funcional (documento de identidade)', 'Passaporte', 'RG',
+    'RNE (Registro Nacional de Estrangeiro)', 'União estável (certidão do RCPN)'
+  ];
+  var paperlessTagsCad = {};
+  var paperlessTagsLoadedCad = false;
+  var cacheDocsPaperlessCad = {};
+
   function apiHeaders() {
     return { 'Content-Type': 'application/json' };
   }
@@ -157,6 +170,213 @@
     atualizarPreviewDetalhamentos();
   }
 
+  // ── PAPERLESS-NGX — Funções ──
+
+  function normalizarNomeTagCad(nome) {
+    return String(nome || '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .replace(/^\s+|\s+$/g, '');
+  }
+
+  function carregarTagsPaperlessCad(callback) {
+    if (paperlessTagsLoadedCad) { callback(); return; }
+    fetch(PAPERLESS_API + '/api/tags/?page_size=100')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var results = data.results || [];
+        for (var i = 0; i < results.length; i++) {
+          paperlessTagsCad[results[i].id] = results[i].name;
+        }
+        paperlessTagsLoadedCad = true;
+        callback();
+      })
+      .catch(function(e) {
+        console.error('Erro ao carregar tags Paperless:', e);
+        callback();
+      });
+  }
+
+  function abrirDrawerCad() {
+    document.getElementById('paperlessDrawerCad').classList.add('open');
+    document.getElementById('drawerOverlayCad').classList.add('active');
+  }
+
+  function fecharDrawerCad() {
+    document.getElementById('paperlessDrawerCad').classList.remove('open');
+    document.getElementById('drawerOverlayCad').classList.remove('active');
+  }
+
+  function renderizarDocumentosCad(docs) {
+    var body = document.getElementById('drawerBodyCad');
+    body.innerHTML = '';
+
+    if (docs.length === 0) {
+      body.innerHTML =
+        '<div class="doc-empty">' +
+        '<i class="ph ph-file-dashed"></i>' +
+        'Nenhum documento encontrado para este CPF.' +
+        '</div>';
+      return;
+    }
+
+    for (var i = 0; i < docs.length; i++) {
+      var doc = docs[i];
+      var card = document.createElement('div');
+      card.className = 'doc-card';
+
+      var thumb = document.createElement('img');
+      thumb.className = 'doc-thumb';
+      thumb.src = PAPERLESS_API + '/api/documents/' + doc.id + '/thumb/';
+      thumb.alt = doc.title || 'Documento';
+      thumb.title = 'Clique para abrir o PDF';
+      (function(docId) {
+        thumb.addEventListener('click', function() {
+          window.open(PAPERLESS_API + '/api/documents/' + docId + '/preview/', '_blank');
+        });
+      })(doc.id);
+      card.appendChild(thumb);
+
+      var info = document.createElement('div');
+      info.className = 'doc-info';
+
+      var title = document.createElement('div');
+      title.className = 'doc-title';
+      title.textContent = doc.title || 'Sem título';
+      info.appendChild(title);
+
+      var tagsContainer = document.createElement('div');
+      tagsContainer.className = 'doc-tags';
+      var tagIds = doc.tags || [];
+      for (var t = 0; t < tagIds.length; t++) {
+        var tagName = paperlessTagsCad[tagIds[t]] || ('Tag ' + tagIds[t]);
+        var badge = document.createElement('span');
+        badge.className = 'doc-tag';
+        badge.textContent = tagName;
+        tagsContainer.appendChild(badge);
+      }
+      info.appendChild(tagsContainer);
+
+      card.appendChild(info);
+      body.appendChild(card);
+    }
+  }
+
+  function atualizarResumoInlineCad(docs) {
+    var resumo = document.getElementById('docsResumoCad');
+    if (!resumo) return;
+
+    var tagsEncontradas = {};
+    for (var i = 0; i < docs.length; i++) {
+      var tagIds = docs[i].tags || [];
+      for (var t = 0; t < tagIds.length; t++) {
+        var nome = paperlessTagsCad[tagIds[t]];
+        if (nome) tagsEncontradas[normalizarNomeTagCad(nome)] = true;
+      }
+    }
+
+    var partes = [];
+    for (var j = 0; j < PAPERLESS_TAGS_DOCS.length; j++) {
+      var tag = PAPERLESS_TAGS_DOCS[j];
+      if (tagsEncontradas[normalizarNomeTagCad(tag)]) {
+        partes.push('<span class="doc-ok">' + tag + ' \u2713</span>');
+      } else {
+        partes.push('<span class="doc-miss">' + tag + ' \u2717</span>');
+      }
+    }
+    resumo.innerHTML = partes.join(' \u00b7 ');
+    resumo.classList.add('clickable');
+    resumo.onclick = function() {
+      abrirDrawerCad();
+    };
+  }
+
+  function buscarDocumentosPaperlessCad(cpf) {
+    if (!cpf) return;
+
+    // Cache hit — não abre drawer, apenas atualiza resumo
+    if (cacheDocsPaperlessCad[cpf]) {
+      renderizarDocumentosCad(cacheDocsPaperlessCad[cpf]);
+      atualizarResumoInlineCad(cacheDocsPaperlessCad[cpf]);
+      return;
+    }
+
+    var body = document.getElementById('drawerBodyCad');
+    body.innerHTML =
+      '<div class="doc-loading">' +
+      '<div class="spinner"></div>' +
+      'Consultando Paperless...' +
+      '</div>';
+
+    carregarTagsPaperlessCad(function() {
+      var campos = ['CPF', 'CPF_2'];
+      var promessas = [];
+      for (var i = 0; i < campos.length; i++) {
+        var query = encodeURIComponent('["' + campos[i] + '","exact","' + cpf + '"]');
+        var url = PAPERLESS_API + '/api/documents/?custom_field_query=' + query + '&page_size=50';
+        promessas.push(
+          fetch(url)
+            .then(function(r) {
+              if (!r.ok) throw new Error('Erro HTTP ' + r.status);
+              return r.json();
+            })
+            .then(function(data) { return data.results || []; })
+            .catch(function(e) {
+              console.error('Erro ao buscar documentos Paperless:', e);
+              return [];
+            })
+        );
+      }
+
+      Promise.all(promessas).then(function(resultados) {
+        var visto = {};
+        var docs = [];
+        for (var r = 0; r < resultados.length; r++) {
+          for (var d = 0; d < resultados[r].length; d++) {
+            var doc = resultados[r][d];
+            if (!visto[doc.id]) {
+              visto[doc.id] = true;
+              docs.push(doc);
+            }
+          }
+        }
+        cacheDocsPaperlessCad[cpf] = docs;
+        renderizarDocumentosCad(docs);
+        atualizarResumoInlineCad(docs);
+      }).catch(function(e) {
+        console.error('Erro ao buscar documentos Paperless:', e);
+        body.innerHTML =
+          '<div class="doc-empty">' +
+          '<i class="ph ph-warning"></i>' +
+          '<strong>Erro:</strong> ' + (e.message || e) +
+          '</div>';
+      });
+    });
+  }
+
+  function dispararConsultaPaperless(cpfFormatado) {
+    var secao = document.getElementById('secaoDocumentosCad');
+    var resumo = document.getElementById('docsResumoCad');
+    secao.style.display = '';
+    resumo.innerHTML = 'Consultando documentos...';
+    resumo.classList.remove('clickable');
+    resumo.onclick = null;
+    buscarDocumentosPaperlessCad(cpfFormatado);
+  }
+
+  function configurarDrawerCad() {
+    document.getElementById('btnCloseDrawerCad').addEventListener('click', fecharDrawerCad);
+    document.getElementById('drawerOverlayCad').addEventListener('click', fecharDrawerCad);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        var drawer = document.getElementById('paperlessDrawerCad');
+        if (drawer && drawer.classList.contains('open')) {
+          fecharDrawerCad();
+        }
+      }
+    });
+  }
+
   // ── INICIALIZAÇÃO ──
   document.addEventListener('DOMContentLoaded', function() {
     carregarServicos();
@@ -167,6 +387,7 @@
     configurarAdvogado();
     configurarMarkdownPreview();
     configurarTemplateServico();
+    configurarDrawerCad();
   });
 
   function definirDataHoje() {
@@ -270,6 +491,8 @@
       document.getElementById('alertaCliente').style.display = 'none';
       document.getElementById('alertaCliente').textContent = '';
       esconderMsg('clienteInfo');
+      document.getElementById('secaoDocumentosCad').style.display = 'none';
+      fecharDrawerCad();
       if (tipoSelect.value === 'cpf') {
         docLabel.textContent = 'CPF';
         docInput.placeholder = '000.000.000-00';
@@ -312,6 +535,11 @@
       var tipo = document.getElementById('tipoPessoa').value;
       if (raw.length === (tipo === 'cpf' ? 11 : 14)) {
         buscarCliente(raw, tipo);
+        // Paperless: disparar consulta se CPF válido
+        if (tipo === 'cpf' && raw.length === 11) {
+          var cpfFormatado = document.getElementById('documento').value.trim();
+          dispararConsultaPaperless(cpfFormatado);
+        }
       }
     });
   }
@@ -728,6 +956,9 @@
     limparAdvogado();
     document.getElementById('alertaCliente').style.display = 'none';
     document.getElementById('alertaCliente').textContent = '';
+    document.getElementById('secaoDocumentosCad').style.display = 'none';
+    fecharDrawerCad();
+    cacheDocsPaperlessCad = {};
   }
 
   function mostrarMsg(id, tipo, texto) {

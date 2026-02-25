@@ -20,7 +20,7 @@
     </a>
     {% endif %}
 
-    {% if current_user.perfil in ['master', 'administrador'] %}
+    {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
     <a href="{{ url_for('main.consultar') }}" class="nav-item {% if consultar_active %}active{% endif %}">
       <i class="ph ph-magnifying-glass"></i> Consultar Protocolo
     </a>

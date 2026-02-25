@@ -2,6 +2,16 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+## [0.9.1] - 2025-02-25
+
+### Corrigido
+- Por um erro de configuração do dockerignore, o modelo pré preenchido do detalhamento do pedido de certidão notarial não estava carregando.
+- Por um erro de configuração de permissões, nem todos os usuário conseguiam visualizar o menu "Consultar Protocolo" e acessar a página.
+- Corrigo um problema no sistema de comentários/notificações, onde a inserção do nome do usuário via "@" acarretava uma junção inconveniente com a mensagem digitada. Agora: o sistema insere o nome do usuário e quebra a linha automaticamente para o usuário digitar a mensagem.
+
+### Adicionado
+- Cadastro de protocolo: ao inserir o CPF no campo do interessado, o sistema verifica junto ao ODIN a existência de documento digitalizado e fornece ao usuário a opção de vê-los.
+
 ## [0.9.0] - 2025-02-23
 
 ### Adicionado

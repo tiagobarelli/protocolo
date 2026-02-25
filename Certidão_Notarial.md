@@ -1,3 +1,3 @@
- - [ ] Certidão física 
- - [ ] Certidão eletrônica
+[ ] Certidão física 
+[ ] Certidão eletrônica
 **Finalidade do Pedido:**

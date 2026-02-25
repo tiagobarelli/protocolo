@@ -1247,7 +1247,7 @@ function selecionarMencao(userId, userName) {
   if (atIndex === -1) return;
 
   // Substituir o @query pelo @Nome
-  var newText = val.substring(0, atIndex) + '@' + userName + ' ' + textAfterCursor;
+  var newText = val.substring(0, atIndex) + '@' + userName + '\n' + textAfterCursor;
   textarea.value = newText;
   var newCursorPos = atIndex + 1 + userName.length + 1;
   textarea.setSelectionRange(newCursorPos, newCursorPos);
