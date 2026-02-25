@@ -15,28 +15,31 @@ var CONFIG = {
   }
 };
 
-var todosProtocolos = [];
 var colaboradores = [];
-var protocolosFiltrados = [];
+var statusOpcoes = {}; // mapa texto → id (ex: {"Em andamento": 123})
 var paginaAtual = 1;
+var totalRegistros = 0;
 var CARDS_POR_PAGINA = 20;
 
 function apiHeaders() {
   return { 'Content-Type': 'application/json' };
 }
 
-/* ---------- COLABORADORES ---------- */
+/* ---------- METADADOS DOS CAMPOS ---------- */
 
-function carregarColaboradores() {
+function carregarMetadados() {
   var url = API_BASE + '/database/fields/table/' + CONFIG.tables.protocolo + '/';
   fetch(url, { headers: apiHeaders() })
     .then(function(resp) { return resp.json(); })
     .then(function(fields) {
       var fieldResp = null;
+      var fieldStatus = null;
       for (var i = 0; i < fields.length; i++) {
         if (fields[i].id === 7249 || fields[i].name === 'Responsável') {
           fieldResp = fields[i];
-          break;
+        }
+        if (fields[i].id === 7252 || fields[i].name === 'Status Atual') {
+          fieldStatus = fields[i];
         }
       }
       if (fieldResp && fieldResp.select_options) {
@@ -45,25 +48,51 @@ function carregarColaboradores() {
         colaboradores = fieldResp.available_collaborators;
       }
       popularFiltroResponsavel();
+
+      if (fieldStatus && fieldStatus.select_options) {
+        for (var j = 0; j < fieldStatus.select_options.length; j++) {
+          var opt = fieldStatus.select_options[j];
+          statusOpcoes[opt.value] = opt.id;
+        }
+        popularFiltroStatus();
+      }
+      carregarProtocolos(1);
     })
     .catch(function(err) {
-      console.error('Erro ao carregar colaboradores:', err);
+      console.error('Erro ao carregar metadados:', err);
+      carregarProtocolos(1);
     });
 }
 
 function popularFiltroResponsavel() {
   var select = document.getElementById('filtroResponsavel');
   for (var i = 0; i < colaboradores.length; i++) {
+    var colab = colaboradores[i];
     var opt = document.createElement('option');
-    opt.value = colaboradores[i].name || colaboradores[i].value || '';
-    opt.textContent = colaboradores[i].name || colaboradores[i].value || '';
+    opt.value = colab.id || '';
+    opt.textContent = colab.name || colab.value || '';
     select.appendChild(opt);
+  }
+}
+
+function popularFiltroStatus() {
+  var select = document.getElementById('filtroStatus');
+  var valorAtual = select.value;
+  var opcoes = select.querySelectorAll('option');
+  for (var i = 0; i < opcoes.length; i++) {
+    var texto = opcoes[i].value;
+    if (texto && statusOpcoes[texto]) {
+      opcoes[i].value = String(statusOpcoes[texto]);
+    }
   }
 }
 
 /* ---------- PROTOCOLOS ---------- */
 
-function carregarProtocolos() {
+function carregarProtocolos(pagina) {
+  if (!pagina) pagina = 1;
+  paginaAtual = pagina;
+
   var grid = document.getElementById('protocolGrid');
   var loading = document.getElementById('loadingState');
   var empty = document.getElementById('emptyState');
@@ -73,14 +102,29 @@ function carregarProtocolos() {
   empty.style.display = 'none';
 
   var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo +
-    '/?user_field_names=false&size=200&order_by=-' + CONFIG.fields.protocolo;
+    '/?user_field_names=false' +
+    '&size=' + CARDS_POR_PAGINA +
+    '&page=' + pagina +
+    '&order_by=-' + CONFIG.fields.protocolo;
+
+  var statusFiltro = document.getElementById('filtroStatus').value;
+  var respFiltro = document.getElementById('filtroResponsavel').value;
+
+  if (statusFiltro) {
+    url += '&filter__' + CONFIG.fields.status + '__single_select_equal=' + encodeURIComponent(statusFiltro);
+  }
+  if (respFiltro) {
+    url += '&filter__' + CONFIG.fields.responsavel + '__multiple_collaborators_has=' + encodeURIComponent(respFiltro);
+  }
 
   fetch(url, { headers: apiHeaders() })
     .then(function(resp) { return resp.json(); })
     .then(function(data) {
-      todosProtocolos = data.results || [];
+      totalRegistros = data.count || 0;
       loading.style.display = 'none';
-      aplicarFiltros();
+      renderizarCards(data.results || []);
+      renderizarPaginacao();
+      atualizarSumario(totalRegistros);
     })
     .catch(function(err) {
       console.error('Erro ao carregar protocolos:', err);
@@ -90,35 +134,8 @@ function carregarProtocolos() {
 }
 
 function aplicarFiltros() {
-  var statusFiltro = document.getElementById('filtroStatus').value;
-  var respFiltro = document.getElementById('filtroResponsavel').value;
-
-  var filtrados = [];
-  for (var i = 0; i < todosProtocolos.length; i++) {
-    var p = todosProtocolos[i];
-    var statusObj = p[CONFIG.fields.status];
-    var statusTexto = statusObj ? (statusObj.value || '') : '';
-
-    if (statusFiltro && statusTexto !== statusFiltro) continue;
-
-    if (respFiltro) {
-      var respArr = p[CONFIG.fields.responsavel] || [];
-      var encontrou = false;
-      for (var j = 0; j < respArr.length; j++) {
-        if (respArr[j].name === respFiltro) {
-          encontrou = true;
-          break;
-        }
-      }
-      if (!encontrou) continue;
-    }
-
-    filtrados.push(p);
-  }
-
-  protocolosFiltrados = filtrados;
   paginaAtual = 1;
-  renderizarPagina();
+  carregarProtocolos(1);
 }
 
 function renderizarCards(protocolos) {
@@ -253,17 +270,8 @@ function escapeHtml(str) {
 
 /* ---------- PAGINAÇÃO ---------- */
 
-function renderizarPagina() {
-  var totalPaginas = Math.ceil(protocolosFiltrados.length / CARDS_POR_PAGINA);
-  var inicio = (paginaAtual - 1) * CARDS_POR_PAGINA;
-  var fim = inicio + CARDS_POR_PAGINA;
-
-  renderizarCards(protocolosFiltrados.slice(inicio, fim));
-  atualizarSumario(protocolosFiltrados.length);
-  renderizarPaginacao(totalPaginas);
-}
-
-function renderizarPaginacao(totalPaginas) {
+function renderizarPaginacao() {
+  var totalPaginas = Math.ceil(totalRegistros / CARDS_POR_PAGINA);
   var container = document.getElementById('paginationContainer');
   if (!container) return;
 
@@ -290,16 +298,15 @@ function renderizarPaginacao(totalPaginas) {
   btnAnterior.addEventListener('click', function() {
     if (paginaAtual > 1) {
       paginaAtual--;
-      renderizarPagina();
+      carregarProtocolos(paginaAtual);
       document.getElementById('protocolGrid').scrollIntoView({ behavior: 'smooth' });
     }
   });
 
   btnProxima.addEventListener('click', function() {
-    var total = Math.ceil(protocolosFiltrados.length / CARDS_POR_PAGINA);
-    if (paginaAtual < total) {
+    if (paginaAtual < totalPaginas) {
       paginaAtual++;
-      renderizarPagina();
+      carregarProtocolos(paginaAtual);
       document.getElementById('protocolGrid').scrollIntoView({ behavior: 'smooth' });
     }
   });
@@ -328,8 +335,7 @@ function toggleSidebar() {
 /* ---------- INIT ---------- */
 
 document.addEventListener('DOMContentLoaded', function() {
-  carregarColaboradores();
-  carregarProtocolos();
+  carregarMetadados();
 
   document.getElementById('filtroStatus').addEventListener('change', aplicarFiltros);
   document.getElementById('filtroResponsavel').addEventListener('change', aplicarFiltros);

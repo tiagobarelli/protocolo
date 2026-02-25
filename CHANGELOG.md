@@ -2,12 +2,18 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+## [0.9.2] - 2025-02-25
+
+### Corrigido
+
+- Painel inicial: refatoramento do index.js para alterar a sistemática de chamada de protocolos. Agora só chama um valor acima de vinte quando altera a página, permitindo que o sistema leia mais do que os duzentos permitidos na documentação do Baserow.
+
 ## [0.9.1] - 2025-02-25
 
 ### Corrigido
-- Por um erro de configuração do dockerignore, o modelo pré preenchido do detalhamento do pedido de certidão notarial não estava carregando.
-- Por um erro de configuração de permissões, nem todos os usuário conseguiam visualizar o menu "Consultar Protocolo" e acessar a página.
-- Corrigo um problema no sistema de comentários/notificações, onde a inserção do nome do usuário via "@" acarretava uma junção inconveniente com a mensagem digitada. Agora: o sistema insere o nome do usuário e quebra a linha automaticamente para o usuário digitar a mensagem.
+- Protocolo: Por um erro de configuração do dockerignore, o modelo pré preenchido do detalhamento do pedido de certidão notarial não estava carregando.
+- Painel inicial: Por um erro de configuração de permissões, nem todos os usuário conseguiam visualizar o menu "Consultar Protocolo" e acessar a página.
+- Sistema de comentários/notificações: corrifigo um problema onde a inserção do nome do usuário via "@" acarretava uma junção inconveniente com a mensagem digitada. Agora: o sistema insere o nome do usuário e quebra a linha automaticamente para o usuário digitar a mensagem.
 
 ### Adicionado
 - Cadastro de protocolo: ao inserir o CPF no campo do interessado, o sistema verifica junto ao ODIN a existência de documento digitalizado e fornece ao usuário a opção de vê-los.
