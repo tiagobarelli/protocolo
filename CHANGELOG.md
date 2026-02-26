@@ -2,6 +2,15 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+## [0.9.3] - 2025-02-26
+
+## Corrigido
+
+- Página de cadastro de retificação: aplicada melhoria na busca, via inserção automática de padPagina() para 00 ou 0, conforme a página, adequando ao padrão L_X_P_YYY; conforme já existente na página de busca de controle de ato.
+- Página de cadastro de substabelecimento: aplicada melhoria na busca, via inserção automática de padPagina() para 00 ou 0, conforme a página, adequando ao padrão L_X_P_YYY; conforme já existente na página de busca de controle de ato.
+- Página de cadastro de cliente: corrigido um bug onde, após não localizar o cliente e permitir o cadastro, o sistema quebrava ao clicar em salvar. Agora foi setado o modoNovo = true.
+- Página de cadastro de cliente: a seção de alerta ficava ao final da página. Na existência de vários protocolo para o cliente, a visualização ficava difícil. Deslocado para o início da página, antes dos dados do cliente, facilitando a visualização. Para os usuários que não têm permissão de cadastro de alerta, este somente é exibido quando existente.
+
 ## [0.9.2] - 2025-02-25
 
 ### Corrigido

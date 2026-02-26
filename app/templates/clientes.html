@@ -44,6 +44,17 @@
     </div>
   </div>
 
+  <!-- ── ALERTA DO CLIENTE (visível conforme regras de permissão) ── -->
+  <div class="card docs-top-card alert-card" id="alertaCard" style="display:none;">
+    <div class="section-title">
+      <i class="ph ph-warning-circle"></i> Alerta do Cliente
+    </div>
+    <div id="alertaReadonly" class="alerta-texto" style="display:none;"></div>
+    <div id="alertaEditavel" style="display:none;">
+      <textarea id="alertaTextarea" placeholder="Descreva o alerta sobre este cliente..." rows="3" autocomplete="off"></textarea>
+    </div>
+  </div>
+
   <!-- ── DOCUMENTOS DIGITALIZADOS (visível somente após busca positiva) ── -->
   <div class="card docs-top-card" id="secaoDocumentos" style="display:none;">
     <div class="section-title">
@@ -182,15 +193,6 @@
       <div class="section-title"><i class="ph ph-stack"></i> Protocolos Vinculados</div>
       <div class="protocols-list" id="protocolosList">
         <div class="protocols-empty">Nenhum protocolo vinculado.</div>
-      </div>
-    </div>
-
-    <!-- Alerta do Cliente -->
-    <div class="card alert-card" id="alertaCard" style="display:none;">
-      <div class="card-title"><i class="ph ph-warning-circle"></i> Alerta</div>
-      <div id="alertaReadonly" class="alerta-texto" style="display:none;"></div>
-      <div id="alertaEditavel" style="display:none;">
-        <textarea id="alertaTextarea" placeholder="Descreva o alerta sobre este cliente..." rows="3" autocomplete="off"></textarea>
       </div>
     </div>
 

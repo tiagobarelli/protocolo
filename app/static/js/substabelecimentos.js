@@ -208,6 +208,13 @@ function carregarEscreventes() {
 // ═══════════════════════════════════════════════════════
 // BUSCA
 // ═══════════════════════════════════════════════════════
+function padPagina(valor) {
+  while (valor.length < 3) {
+    valor = '0' + valor;
+  }
+  return valor;
+}
+
 function buscarPorMascara() {
   var input = document.getElementById('buscaMascara');
   var val = input.value.trim();
@@ -228,6 +235,7 @@ function buscarPorMascara() {
     return;
   }
 
+  pagina = padPagina(pagina);
   executarBusca(livro, pagina);
 }
 
@@ -251,6 +259,8 @@ function buscarPorLivroPagina() {
     return;
   }
 
+  pagina = padPagina(pagina);
+  document.getElementById('buscaPagina').value = pagina;
   executarBusca(livro, pagina);
 }
 

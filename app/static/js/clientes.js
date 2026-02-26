@@ -399,9 +399,34 @@ function buscarExato(soDigitos, valorFormatado, tipo) {
               selecionarDaBusca(data2.results[0]);
             } else {
               esconderOverlay();
+              // Preparar estado para novo cadastro
+              clienteAtual = null;
+              modoNovo = true;
+              clienteCarregadoPorBusca = false;
+              snapshotCliente = null;
+              conjugeId = null;
+              limparCamposFormulario();
+              // Preencher o documento buscado
+              if (tipo === 'cpf') {
+                document.getElementById('cpfInput').value = valorFormatado;
+              } else {
+                document.getElementById('cnpjInput').value = valorFormatado;
+              }
+              atualizarVisibilidadeDocumentos();
+              document.getElementById('cpfInput').readOnly = false;
+              document.getElementById('cnpjInput').readOnly = false;
+              // Alerta: exibir para master/admin, ocultar para escrevente
+              var podeEditarAlerta = window.CURRENT_USER &&
+                (window.CURRENT_USER.perfil === 'master' || window.CURRENT_USER.perfil === 'administrador');
+              if (podeEditarAlerta) {
+                document.getElementById('alertaCard').style.display = '';
+                document.getElementById('alertaEditavel').style.display = '';
+                document.getElementById('alertaReadonly').style.display = 'none';
+              }
               mostrarFormulario();
               mostrarMsg('formMsg', 'warning',
-                'Nenhum cliente encontrado com este ' + (tipo === 'cpf' ? 'CPF' : 'CNPJ') + '.');
+                'Nenhum cliente encontrado com este ' + (tipo === 'cpf' ? 'CPF' : 'CNPJ') + '. Preencha os dados para cadastrar.');
+              document.getElementById('nomeInput').focus();
             }
           });
       }
@@ -494,7 +519,6 @@ function novoCliente() {
 function mostrarFormulario() {
   var card = document.getElementById('formCard');
   card.style.display = 'block';
-  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function esconderFormulario() {
