@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Controle de Certid&otilde;es - Sistema Interno{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/controle_certidoes.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<!-- Hamburger mobile -->
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<!-- Overlay de loading -->
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+    {% include "partials/flash_messages.html" %}
+
+    <!-- ===== CARD DE BUSCA ===== -->
+    <div class="card" id="searchCard">
+      <div class="page-header">
+        <h1><i class="ph ph-seal" style="color:var(--accent);"></i> Controle de Certid&otilde;es</h1>
+        <p>Busque por Livro/P&aacute;gina da escritura vinculada ou por n&uacute;mero de Protocolo.</p>
+      </div>
+
+      <div id="searchMsg" class="msg-box"></div>
+
+      <!-- Secao A: Busca por Livro e Pagina (da escritura) -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-book-open"></i> Busca por Escritura (Livro e P&aacute;gina)</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="buscaLivro">Livro</label>
+            <input type="text" id="buscaLivro" placeholder="Ex: 150" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="buscaPagina">P&aacute;gina <span class="hint">(m&aacute;x 400)</span></label>
+            <input type="text" id="buscaPagina" placeholder="Ex: 25" maxlength="3" autocomplete="off">
+          </div>
+          <div class="form-group small" style="justify-content:flex-end;">
+            <button type="button" class="btn btn-primary" id="btnBuscarLP">
+              <i class="ph ph-magnifying-glass"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="search-divider">ou</div>
+
+      <!-- Secao B: Busca por Protocolo -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-file-dashed"></i> Busca por Protocolo</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="buscaProtocolo">N&uacute;mero do Protocolo</label>
+            <input type="text" id="buscaProtocolo" placeholder="Ex: 2024/001234" autocomplete="off">
+          </div>
+          <div class="form-group small" style="justify-content:flex-end;">
+            <button type="button" class="btn btn-primary" id="btnBuscarProtocolo">
+              <i class="ph ph-magnifying-glass"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CARD DO FORMULARIO (oculto ate busca) ===== -->
+    <div class="card" id="formCard" style="display:none;">
+      <div id="formStatusMsg" class="msg-box"></div>
+
+      <!-- Secao 1: Dados da Certidao -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-file-text"></i> Dados da Certid&atilde;o</div>
+        <div class="form-row">
+          <div class="form-group small">
+            <label for="dataEmissao">Data de Emiss&atilde;o <span class="hint">*</span></label>
+            <input type="date" id="dataEmissao" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="protocoloInput">Protocolo <span class="hint">*</span></label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="protocoloInput" placeholder="Digite o n&uacute;mero do protocolo..." autocomplete="off">
+              <div class="autocomplete-list" id="protocoloAutoList"></div>
+            </div>
+          </div>
+        </div>
+        <div id="protocoloInfo" class="msg-box"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="subtipoSelect">Subtipo <span class="hint">*</span></label>
+            <select id="subtipoSelect"><option value="">Selecione...</option></select>
+          </div>
+          <div class="form-group small">
+            <label for="entregueEm">Data de Entrega <span class="hint">*</span></label>
+            <input type="date" id="entregueEm" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="formaEntregaSelect">Forma de Entrega <span class="hint">*</span></label>
+            <select id="formaEntregaSelect"><option value="">Selecione...</option></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secao 2: Requerente (read-only) -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-user"></i> Requerente</div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label>Requerente (preenchido automaticamente)</label>
+            <div class="requerente-display" id="requerenteDisplay">
+              <span class="requerente-nome" id="requerenteNome">&mdash;</span>
+              <span class="requerente-doc" id="requerenteDoc"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secao 3: Pessoas que constam no ato -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-users"></i> Pessoas que constam no ato</div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label for="clienteInput">Buscar cliente por nome</label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="clienteInput" placeholder="Digite o nome do cliente..." autocomplete="off">
+              <div class="autocomplete-list" id="clienteAutoList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="chips-container" id="requeridosChips"></div>
+      </div>
+
+      <!-- Secao 4: Vinculacao a Escritura -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-link"></i> Vincula&ccedil;&atilde;o &agrave; Escritura</div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label for="escrituraInput">Buscar escritura por identificador</label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="escrituraInput" placeholder="Digite o identificador (ex: L_150)..." autocomplete="off">
+              <div class="autocomplete-list" id="escrituraAutoList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="chips-container" id="escriturasChips"></div>
+      </div>
+
+      <!-- Secao 5: Observacoes -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-note"></i> Observa&ccedil;&otilde;es</div>
+        <div class="form-row single">
+          <div class="form-group">
+            <textarea id="observacaoTextarea" placeholder="Observa&ccedil;&otilde;es livres..." autocomplete="off"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botoes de acao -->
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="limparFormulario()"><i class="ph ph-eraser"></i> Limpar</button>
+        <button type="button" class="btn btn-primary" id="btnSalvar" onclick="salvarCertidao()"><i class="ph ph-check-circle"></i> Salvar</button>
+      </div>
+
+      <!-- Mensagem de feedback (abaixo dos botoes) -->
+      <div id="formMsg" class="msg-box"></div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/controle_certidoes.js') }}"></script>
+{% endblock %}

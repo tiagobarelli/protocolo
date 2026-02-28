@@ -2,7 +2,15 @@
 
 Controle de correções e melhorias do sistema
 
-## [0.9.4] - 2025-02-28
+## [0.9.5] - 2026-02-##
+
+### Adicionado
+
+- Controle de Certidões: adicionado o módulo de controle de certidões, com a finalidade de cadastrar a certidão expedida após a abertura do protocolo e emissão de certidão. Isso encerra o clico de fechamento dos protocolos, ao lado do controle de escritura, retificação e substabecimento. Este controle de certidão também permite saber o requerente e os integrantes da certidão solicitada, deixando de prontidão eventual obrigação deste desenho por interpretação da LPGD. Também aplica relacionamento entre tabelas: Cliente <=> Protocolo <=> Controle & Controle-Certidao. **OBS:** **A funcionalidade está implementada, mas não totalmente testada. Testar com o legado de pedidos**.
+
+
+
+## [0.9.4] - 2026-02-28
 
 ### Corrigido
 
@@ -17,7 +25,7 @@ Controle de correções e melhorias do sistema
 - Adicionada a função de vincular um protocolo na página de susbtabelecimento, igual ao modelo já operado pela página de controle de escrituras. Permite ao usuário vincular o protocolo para fechamento de status e vincular os CPFs e/ou CNPJs do substabelecimento. **OBS:** **A funcionalidade está implementada, mas não totalmente testada. Somente um teste efetuado até o momento**.
 
 
-## [0.9.3] - 2025-02-26
+## [0.9.3] - 2026-02-26
 
 ### Corrigido
 
@@ -26,13 +34,13 @@ Controle de correções e melhorias do sistema
 - Página de cadastro de cliente: corrigido um bug onde, após não localizar o cliente e permitir o cadastro, o sistema quebrava ao clicar em salvar. Agora foi setado o modoNovo = true.
 - Página de cadastro de cliente: a seção de alerta ficava ao final da página. Na existência de vários protocolo para o cliente, a visualização ficava difícil. Deslocado para o início da página, antes dos dados do cliente, facilitando a visualização. Para os usuários que não têm permissão de cadastro de alerta, este somente é exibido quando existente.
 
-## [0.9.2] - 2025-02-25
+## [0.9.2] - 2026-02-25
 
 ### Corrigido
 
 - Painel inicial: refatoramento do index.js para alterar a sistemática de chamada de protocolos. Agora só chama um valor acima de vinte quando altera a página, permitindo que o sistema leia mais do que os duzentos permitidos na documentação do Baserow.
 
-## [0.9.1] - 2025-02-25
+## [0.9.1] - 2026-02-25
 
 ### Corrigido
 - Protocolo: Por um erro de configuração do dockerignore, o modelo pré preenchido do detalhamento do pedido de certidão notarial não estava carregando.
@@ -42,7 +50,7 @@ Controle de correções e melhorias do sistema
 ### Adicionado
 - Cadastro de protocolo: ao inserir o CPF no campo do interessado, o sistema verifica junto ao ODIN a existência de documento digitalizado e fornece ao usuário a opção de vê-los.
 
-## [0.9.0] - 2025-02-23
+## [0.9.0] - 2026-02-23
 
 ### Adicionado
 - Painel inicial: os cards são exibidos em ordem numérica decrescente, facilitando a visualização das novas inserções.

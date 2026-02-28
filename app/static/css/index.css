@@ -164,7 +164,7 @@ main { max-width: none; padding: 0; margin: 0; }
 }
 
 .nav-group.open .nav-group-items {
-  max-height: 200px; /* valor suficiente para 3 sub-itens */
+  max-height: 250px; /* valor suficiente para 4 sub-itens */
 }
 
 /* Sub-itens com recuo */
