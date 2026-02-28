@@ -415,7 +415,6 @@ function executarBusca(livro, pagina) {
         mostrarMsg('formMsg', 'info', 'Novo registro — L_' + livro + '_P_' + pagina);
       }
       document.getElementById('formCard').style.display = 'block';
-      document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
     })
     .catch(function(e) {
       mostrarMsg('searchMsg', 'error', e.message || 'Erro ao buscar registro.');

@@ -7,7 +7,9 @@ var CONFIG = {
   tables: {
     substabelecimentos: 762,
     controle: 745,
-    escreventes: 747
+    escreventes: 747,
+    protocolo: 755,
+    clientes: 754
   },
   fields: {
     // Substabelecimentos (762)
@@ -23,8 +25,20 @@ var CONFIG = {
     // Controle (745) — para busca/filtro no autocomplete
     ctrlLivro: 'field_7189',
     ctrlPagina: 'field_7190',
-    ctrlTipoEscritura: 'field_7194'        // link_row → Servicos (746)
+    ctrlTipoEscritura: 'field_7194',        // link_row → Servicos (746)
+    // Protocolo (755) — vinculação do substabelecimento
+    protocolo: 'field_7409',               // link_row single → Protocolo
+    protoNumero: 'field_7240',             // text (numero do protocolo)
+    protoInteressado: 'field_7241',        // link_row multiple → Clientes
+    protoStatus: 'field_7252',             // single_select (status)
+    // Clientes (754) — vinculação do substabelecimento
+    clientes: 'field_7411',                // link_row multiple → Clientes
+    clienteNome: 'field_7237',             // text (nome)
+    clienteCpf: 'field_7238',              // text (CPF)
+    clienteCnpj: 'field_7239'              // text (CNPJ)
   },
+  statusEmAndamento: 3064,
+  statusFinalizado: 3065,
   // IDs dos tipos de ato permitidos na tabela Servicos (746)
   tiposPermitidos: [6, 30],  // 6 = Procuracao, 30 = Substabelecimento de procuracao
   odinOpts: [
@@ -43,6 +57,11 @@ var CONFIG = {
 var substabelecimentoRowId = null;
 var procuracoesSelecionadas = [];   // [{id, label}]
 var procuracaoTimer = null;
+var protocoloSelecionadoId = null;
+var protocoloStatusId = null;
+var protocoloTimer = null;
+var clientesSelecionados = [];       // [{id, nome}]
+var clienteTimer = null;
 
 // ═══════════════════════════════════════════════════════
 // HELPERS
@@ -349,6 +368,23 @@ function preencherFormularioExistente(row) {
     document.getElementById('anotadoSelect').value = anotadoVal.id;
   }
 
+  // Protocolo (link_row single)
+  var protoArr = row[CONFIG.fields.protocolo];
+  if (protoArr && protoArr.length > 0) {
+    protocoloSelecionadoId = protoArr[0].id;
+    document.getElementById('protocoloInput').value = protoArr[0].value || '';
+    document.getElementById('protocoloInput').readOnly = true;
+    mostrarMsg('protocoloInfo', 'info', 'Protocolo vinculado: ' + (protoArr[0].value || ''));
+  }
+
+  // Clientes (link_row multiple — sempre editaveis)
+  var cliArr = row[CONFIG.fields.clientes];
+  if (cliArr && cliArr.length > 0) {
+    for (var c = 0; c < cliArr.length; c++) {
+      adicionarCliente(cliArr[c].id, cliArr[c].value);
+    }
+  }
+
   // Observacao
   var obs = row[CONFIG.fields.observacao] || '';
   document.getElementById('observacaoTextarea').value = obs;
@@ -376,12 +412,19 @@ function prepararNovoRegistro(livro, pagina) {
 function resetarEstadoFormulario() {
   substabelecimentoRowId = null;
   procuracoesSelecionadas = [];
+  protocoloSelecionadoId = null;
+  protocoloStatusId = null;
+  clientesSelecionados = [];
 
   document.getElementById('livroInput').value = '';
   document.getElementById('paginaInput').value = '';
   document.getElementById('identificadorDisplay').textContent = '-';
   document.getElementById('procuracaoInput').value = '';
   document.getElementById('procuracoesChips').innerHTML = '';
+  document.getElementById('protocoloInput').value = '';
+  document.getElementById('protocoloInput').readOnly = false;
+  document.getElementById('clienteInput').value = '';
+  document.getElementById('clientesChips').innerHTML = '';
   document.getElementById('dataSubstabelecimento').value = '';
   document.getElementById('escreventeSelect').value = '';
   document.getElementById('odinSelect').value = '';
@@ -390,6 +433,7 @@ function resetarEstadoFormulario() {
   atualizarPreviewObservacao();
 
   esconderMsg('formMsg');
+  esconderMsg('protocoloInfo');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -512,6 +556,231 @@ function removerProcuracao(id) {
 }
 
 // ═══════════════════════════════════════════════════════
+// AUTOCOMPLETE — PROTOCOLO (tabela 755)
+// ═══════════════════════════════════════════════════════
+function configurarAutocompleteProtocolo() {
+  var input = document.getElementById('protocoloInput');
+  input.addEventListener('input', function() {
+    var termo = input.value.trim();
+
+    // Se editar apos selecionar, desvincular
+    if (protocoloSelecionadoId) {
+      protocoloSelecionadoId = null;
+      protocoloStatusId = null;
+      esconderMsg('protocoloInfo');
+    }
+
+    if (protocoloTimer) clearTimeout(protocoloTimer);
+    if (termo.length < 2) {
+      fecharAutoList('protocoloAutoList');
+      return;
+    }
+
+    protocoloTimer = setTimeout(function() {
+      buscarProtocolos(termo);
+    }, 400);
+  });
+}
+
+function buscarProtocolos(termo) {
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo +
+    '/?user_field_names=false' +
+    '&filter__' + CONFIG.fields.protoNumero + '__contains=' + encodeURIComponent(termo) +
+    '&size=10';
+
+  fetch(url, { headers: apiHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var resultados = data.results || [];
+      mostrarAutocompleteProtocolo(resultados);
+    })
+    .catch(function(e) {
+      console.error('Erro na busca de protocolos:', e);
+      fecharAutoList('protocoloAutoList');
+    });
+}
+
+function mostrarAutocompleteProtocolo(resultados) {
+  var lista = document.getElementById('protocoloAutoList');
+  lista.innerHTML = '';
+
+  if (resultados.length === 0) {
+    var vazio = document.createElement('div');
+    vazio.className = 'autocomplete-empty';
+    vazio.textContent = 'Nenhum protocolo encontrado';
+    lista.appendChild(vazio);
+    lista.classList.add('open');
+    return;
+  }
+
+  for (var i = 0; i < resultados.length; i++) {
+    (function(row) {
+      var numero = row[CONFIG.fields.protoNumero] || '';
+      var statusObj = row[CONFIG.fields.protoStatus];
+      var statusLabel = '';
+      if (statusObj) {
+        if (statusObj.id === CONFIG.statusEmAndamento) statusLabel = 'Em Andamento';
+        else if (statusObj.id === CONFIG.statusFinalizado) statusLabel = 'Finalizado';
+        else statusLabel = statusObj.value || '';
+      }
+
+      var item = document.createElement('div');
+      item.className = 'autocomplete-item';
+      item.innerHTML =
+        '<div class="ac-name">Protocolo ' + numero + '</div>' +
+        (statusLabel ? '<div class="ac-detail">Status: ' + statusLabel + '</div>' : '');
+
+      item.addEventListener('click', function() {
+        selecionarProtocolo(row);
+      });
+      lista.appendChild(item);
+    })(resultados[i]);
+  }
+
+  lista.classList.add('open');
+}
+
+function selecionarProtocolo(row) {
+  var numero = row[CONFIG.fields.protoNumero] || '';
+  protocoloSelecionadoId = row.id;
+  document.getElementById('protocoloInput').value = numero;
+  fecharAutoList('protocoloAutoList');
+
+  // Verificar status
+  var statusObj = row[CONFIG.fields.protoStatus];
+  protocoloStatusId = statusObj ? statusObj.id : null;
+
+  if (protocoloStatusId === CONFIG.statusEmAndamento) {
+    mostrarMsg('protocoloInfo', 'warning', 'Este protocolo será atualizado para "Finalizado" ao salvar.');
+  } else {
+    esconderMsg('protocoloInfo');
+  }
+
+  // Puxar clientes (interessados) do protocolo
+  var interessados = row[CONFIG.fields.protoInteressado];
+  if (interessados && interessados.length > 0) {
+    var nomes = [];
+    for (var i = 0; i < interessados.length; i++) {
+      adicionarCliente(interessados[i].id, interessados[i].value);
+      nomes.push(interessados[i].value);
+    }
+
+    var msgTexto = 'Cliente(s) vinculado(s) ao protocolo: ' + nomes.join(', ');
+    if (protocoloStatusId === CONFIG.statusEmAndamento) {
+      var infoEl = document.getElementById('protocoloInfo');
+      infoEl.innerHTML = infoEl.innerHTML + '<br>' + msgTexto;
+    } else {
+      mostrarMsg('protocoloInfo', 'info', msgTexto);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTOCOMPLETE — CLIENTES (tabela 754)
+// ═══════════════════════════════════════════════════════
+function configurarAutocompleteClientes() {
+  var input = document.getElementById('clienteInput');
+  input.addEventListener('input', function() {
+    var termo = input.value.trim();
+    if (clienteTimer) clearTimeout(clienteTimer);
+    if (termo.length < 3) {
+      fecharAutoList('clienteAutoList');
+      return;
+    }
+    clienteTimer = setTimeout(function() {
+      buscarClientes(termo);
+    }, 400);
+  });
+}
+
+function buscarClientes(termo) {
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.clientes +
+    '/?user_field_names=false' +
+    '&filter__' + CONFIG.fields.clienteNome + '__contains=' + encodeURIComponent(termo) +
+    '&size=10';
+
+  fetch(url, { headers: apiHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var resultados = data.results || [];
+      mostrarAutocompleteClientes(resultados);
+    })
+    .catch(function(e) {
+      console.error('Erro na busca de clientes:', e);
+      fecharAutoList('clienteAutoList');
+    });
+}
+
+function mostrarAutocompleteClientes(resultados) {
+  var lista = document.getElementById('clienteAutoList');
+  lista.innerHTML = '';
+
+  if (resultados.length === 0) {
+    var vazio = document.createElement('div');
+    vazio.className = 'autocomplete-empty';
+    vazio.textContent = 'Nenhum cliente encontrado';
+    lista.appendChild(vazio);
+    lista.classList.add('open');
+    return;
+  }
+
+  for (var i = 0; i < resultados.length; i++) {
+    (function(row) {
+      var nome = row[CONFIG.fields.clienteNome] || '';
+      var cpf = row[CONFIG.fields.clienteCpf] || '';
+      var cnpj = row[CONFIG.fields.clienteCnpj] || '';
+      var detalhe = cpf ? 'CPF: ' + cpf : (cnpj ? 'CNPJ: ' + cnpj : '');
+
+      var item = document.createElement('div');
+      item.className = 'autocomplete-item';
+      item.innerHTML =
+        '<div class="ac-name">' + nome + '</div>' +
+        (detalhe ? '<div class="ac-detail">' + detalhe + '</div>' : '');
+
+      item.addEventListener('click', function() {
+        adicionarCliente(row.id, nome);
+        document.getElementById('clienteInput').value = '';
+        fecharAutoList('clienteAutoList');
+      });
+      lista.appendChild(item);
+    })(resultados[i]);
+  }
+
+  lista.classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════════
+// CHIPS DE CLIENTES
+// ═══════════════════════════════════════════════════════
+function adicionarCliente(id, nome) {
+  // Verificar duplicata
+  for (var i = 0; i < clientesSelecionados.length; i++) {
+    if (clientesSelecionados[i].id === id) return;
+  }
+  clientesSelecionados.push({ id: id, nome: nome });
+  renderizarChipCliente(id, nome);
+}
+
+function renderizarChipCliente(id, nome) {
+  var container = document.getElementById('clientesChips');
+  var chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.id = 'chip-cliente-' + id;
+  chip.innerHTML = '<span>' + nome + '</span>' +
+    '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>';
+  chip.querySelector('.chip-remove').addEventListener('click', function() {
+    removerCliente(id);
+  });
+  container.appendChild(chip);
+}
+
+function removerCliente(id) {
+  clientesSelecionados = clientesSelecionados.filter(function(c) { return c.id !== id; });
+  var chip = document.getElementById('chip-cliente-' + id);
+  if (chip) chip.parentNode.removeChild(chip);
+}
+
+// ═══════════════════════════════════════════════════════
 // AUTOCOMPLETE — FECHAR
 // ═══════════════════════════════════════════════════════
 function fecharAutoList(listId) {
@@ -563,6 +832,22 @@ function salvarSubstabelecimento() {
       mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
       document.getElementById('livroInput').readOnly = true;
       document.getElementById('paginaInput').readOnly = true;
+
+      // Atualizar status do protocolo se necessario
+      if (protocoloSelecionadoId && protocoloStatusId === CONFIG.statusEmAndamento) {
+        var patchBody = {};
+        patchBody[CONFIG.fields.protoStatus] = CONFIG.statusFinalizado;
+        return fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/' + protocoloSelecionadoId + '/?user_field_names=false', {
+          method: 'PATCH',
+          headers: apiHeaders(),
+          body: JSON.stringify(patchBody)
+        }).then(function(r2) {
+          if (r2.ok) {
+            protocoloStatusId = CONFIG.statusFinalizado;
+            mostrarMsg('protocoloInfo', 'success', 'Protocolo atualizado para "Finalizado".');
+          }
+        });
+      }
     })
     .catch(function(e) {
       mostrarMsg('formMsg', 'error', e.message || 'Erro ao salvar.');
@@ -609,6 +894,16 @@ function construirPayloadSubstabelecimento() {
   // Observacao (long_text)
   payload[CONFIG.fields.observacao] = document.getElementById('observacaoTextarea').value;
 
+  // Protocolo (link_row single)
+  payload[CONFIG.fields.protocolo] = protocoloSelecionadoId ? [protocoloSelecionadoId] : [];
+
+  // Clientes (link_row multiple)
+  var clienteIds = [];
+  for (var j = 0; j < clientesSelecionados.length; j++) {
+    clienteIds.push(clientesSelecionados[j].id);
+  }
+  payload[CONFIG.fields.clientes] = clienteIds;
+
   return payload;
 }
 
@@ -637,6 +932,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Configurar componentes
   configurarMarkdownObservacao();
   configurarAutocompleteProcuracoes();
+  configurarAutocompleteProtocolo();
+  configurarAutocompleteClientes();
 
   // Busca por Enter
   document.getElementById('buscaMascara').addEventListener('keydown', function(e) {
@@ -657,6 +954,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('click', function(e) {
     if (!e.target.closest('#procuracaoInput') && !e.target.closest('#procuracaoAutoList')) {
       fecharAutoList('procuracaoAutoList');
+    }
+    if (!e.target.closest('#protocoloInput') && !e.target.closest('#protocoloAutoList')) {
+      fecharAutoList('protocoloAutoList');
+    }
+    if (!e.target.closest('#clienteInput') && !e.target.closest('#clienteAutoList')) {
+      fecharAutoList('clienteAutoList');
     }
   });
 

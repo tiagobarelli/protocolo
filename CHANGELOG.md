@@ -1,10 +1,25 @@
 # Changelog
 
-Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
+Controle de correções e melhorias do sistema
+
+## [0.9.4] - 2025-02-28
+
+### Corrigido
+
+- Página de cadastro de protocolo: Ao escolher o tipo de serviço como "Certidão notarial", o sistema não carregava o prép preenchimneto do detalhamento, conforme modelo .md referenciado.
+- Página de controle de ato: ao busca uma escritura que já foi cadastrada, o sistema não aplica mais o efeto de deslocar a tela. A mensagem de "Registro encontrado — L_X_P_YYY" agora é exibida antes da identificação do ato, e não no final da página, facilitando a visualização pelo usuário.
+- Tela de edição de clientes: Na tela de clientes (clientes.html), ao fazer a busca e essa ser bem sucedida, podemos editar os elementos do cadastro e clicar em "Salvar Alterações". Feito isso, a mensagem "Alterações salvas com sucesso!" aparecia no topo superior do card "Dados Pessoais", forçando o usuário a rolar a tela até o início para saber se a alteração foi bem sucedida. Agora o sistema exibe essa mensagem abaixo do botão de "Salvar alterações";
+
+### Adicionado
+
+- Adicionada a função de vincular um protocolo na página de retificão. O objetivo primário é permitir dar por concluído de forma automática um protocolo de uma re-ratificação. Porém, não há impedimento de se proceder da mesma forma para eventual protocolo aberto para uma ata retificativa. Optou-se por não vincular cliente neste tipo de ato, pois já está vinculado à escritura retificada. **OBS:** **A funcionalidade está implementada, mas não totalmente testada. Pendentes vinculações de re-ra para confirmar a segurança do sistema**.
+
+- Adicionada a função de vincular um protocolo na página de susbtabelecimento, igual ao modelo já operado pela página de controle de escrituras. Permite ao usuário vincular o protocolo para fechamento de status e vincular os CPFs e/ou CNPJs do substabelecimento. **OBS:** **A funcionalidade está implementada, mas não totalmente testada. Somente um teste efetuado até o momento**.
+
 
 ## [0.9.3] - 2025-02-26
 
-## Corrigido
+### Corrigido
 
 - Página de cadastro de retificação: aplicada melhoria na busca, via inserção automática de padPagina() para 00 ou 0, conforme a página, adequando ao padrão L_X_P_YYY; conforme já existente na página de busca de controle de ato.
 - Página de cadastro de substabelecimento: aplicada melhoria na busca, via inserção automática de padPagina() para 00 ou 0, conforme a página, adequando ao padrão L_X_P_YYY; conforme já existente na página de busca de controle de ato.
