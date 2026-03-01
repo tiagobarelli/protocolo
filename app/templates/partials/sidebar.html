@@ -1,7 +1,7 @@
 <aside class="sidebar">
   <div class="sidebar-header">
-    <div class="sidebar-logo"><i class="ph ph-stack"></i></div>
-    <h1>Protocolos</h1>
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="55" height="55">
+    <h1>Thṓth</h1>
   </div>
 
   {% set gestao_atos_active = request.endpoint in ['main.controle', 'main.controle_certidoes', 'main.retificacoes', 'main.substabelecimentos'] %}

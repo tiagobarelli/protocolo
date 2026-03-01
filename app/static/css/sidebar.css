@@ -26,12 +26,13 @@ main { max-width: none; padding: 0; margin: 0; }
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Antes: border-radius: 10px; */
 .sidebar-logo {
   width: 40px;
   height: 40px;
   background: var(--accent);
   color: #fff;
-  border-radius: 10px;
+  border-radius: var(--radius, 6px); /* Alterado */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -53,12 +54,13 @@ main { max-width: none; padding: 0; margin: 0; }
   gap: 4px;
 }
 
+/* Antes: border-radius: 8px; */
 .nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius, 6px); /* Alterado */
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   font-size: 0.9rem;
@@ -94,7 +96,7 @@ main { max-width: none; padding: 0; margin: 0; }
   width: 100%;
   padding: 10px 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
   font-family: inherit;
@@ -215,14 +217,14 @@ main { max-width: none; padding: 0; margin: 0; }
 
 .notification-badge {
   position: static;
-  background: #ef4444;
+  background: var(--danger); /* Puxa o vermelho fechado do :root */
   color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  border-radius: 8px;
+  border-radius: 4px; /* Mais quadradinho e sério */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -247,7 +249,7 @@ main { max-width: none; padding: 0; margin: 0; }
   background: var(--primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius, 6px);
   font-size: 1.2rem;
   cursor: pointer;
   align-items: center;
