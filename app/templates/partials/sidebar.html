@@ -6,7 +6,7 @@
 
   {% set gestao_atos_active = request.endpoint in ['main.controle', 'main.controle_certidoes', 'main.retificacoes', 'main.substabelecimentos'] %}
   {% set consultar_active = request.endpoint in ['main.consultar', 'main.protocolo_detalhe', 'main.protocolo_imprimir'] %}
-  {% set relatorios_active = request.endpoint in ['main.relatorio_controle_atos'] %}
+  {% set relatorios_active = request.endpoint in ['main.relatorio_controle_atos', 'main.relatorio_controle_certidoes'] %}
   {% set notificacoes_active = request.endpoint == 'main.notificacoes' %}
 
   <nav class="sidebar-nav">
@@ -64,6 +64,9 @@
       <div class="nav-group-items">
         <a href="{{ url_for('main.relatorio_controle_atos') }}" class="nav-item sub {% if request.endpoint == 'main.relatorio_controle_atos' %}active{% endif %}">
           <i class="ph ph-book-open-text"></i> Controle de Atos
+        </a>
+        <a href="{{ url_for('main.relatorio_controle_certidoes') }}" class="nav-item sub {% if request.endpoint == 'main.relatorio_controle_certidoes' %}active{% endif %}">
+          <i class="ph ph-seal-check"></i> Certid&otilde;es
         </a>
       </div>
     </div>

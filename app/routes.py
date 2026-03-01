@@ -63,6 +63,13 @@ def relatorio_controle_atos():
     return render_template("relatorio_controle_atos.html")
 
 
+@main_bp.route("/relatorios/controle-certidoes")
+@login_required
+@perfil_required("master", "administrador")
+def relatorio_controle_certidoes():
+    return render_template("relatorio_controle_certidoes.html")
+
+
 @main_bp.route("/retificacoes")
 @login_required
 @perfil_required("master", "administrador")

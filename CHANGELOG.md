@@ -2,13 +2,11 @@
 
 Controle de correções e melhorias do sistema
 
-## [0.9.5] - 2026-02-##
+## [0.9.5] - 2026-03-01
 
 ### Adicionado
-
 - Controle de Certidões: adicionado o módulo de controle de certidões, com a finalidade de cadastrar a certidão expedida após a abertura do protocolo e emissão de certidão. Isso encerra o clico de fechamento dos protocolos, ao lado do controle de escritura, retificação e substabecimento. Este controle de certidão também permite saber o requerente e os integrantes da certidão solicitada, deixando de prontidão eventual obrigação deste desenho por interpretação da LPGD. Também aplica relacionamento entre tabelas: Cliente <=> Protocolo <=> Controle & Controle-Certidao. **OBS:** **A funcionalidade está implementada, mas não totalmente testada. Testar com o legado de pedidos**.
-
-
+- Relatório de controle de certidão: derivado da implementação anterior, permite visualizar quais protocolos de certidão notarial está em aberto e/ou foi concluído, fornecendo uma visão global dos pedidos, limitada, porém, a seleções anuais. **OBS:** **A funcionalidade está implementada, mas não totalmente testada. Testar com o legado de pedidos**.
 
 ## [0.9.4] - 2026-02-28
 
