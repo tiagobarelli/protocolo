@@ -27,7 +27,11 @@ var CONFIG = {
     clienteOab: 'field_7256',
     clienteAlerta: 'field_7394',
     justificativaCancelamento: 'field_7396',
-    log: 'field_7397'
+    log: 'field_7397',
+    controle: 'field_7378',
+    retificacoes: 'field_7408',
+    substabelecimentos: 'field_7410',
+    controleCertidao: 'field_7416'
   },
   statusIds: {
     emAndamento: 3064,
@@ -84,6 +88,7 @@ function carregarProtocolo(id) {
       snapshotProtocolo = capturarSnapshotProtocolo(proto);
       preencherCabecalho(proto);
       preencherDadosProtocolo(proto);
+      verificarVinculacaoAto(proto);
       preencherAndamento(proto);
       renderizarControleStatus(proto);
       exibirJustificativa(proto);
@@ -161,6 +166,81 @@ function preencherDadosProtocolo(proto) {
     }
     document.getElementById('infoDetalhamentosRow').style.display = '';
   }
+}
+
+/* ---------- VINCULAÇÃO AO ATO ---------- */
+
+function verificarVinculacaoAto(proto) {
+  var cardEl = document.getElementById('cardVinculacao');
+  var contentEl = document.getElementById('vinculacaoContent');
+  if (!cardEl || !contentEl) return;
+
+  // Identificar serviço
+  var servicos = proto[CONFIG.fields.servico] || [];
+  var ehCertidao = false;
+  for (var i = 0; i < servicos.length; i++) {
+    if (servicos[i].id === 11) { ehCertidao = true; break; }
+  }
+
+  if (ehCertidao) {
+    contentEl.innerHTML = '<i class="ph ph-seal-check vinc-icon vinc-icon-info"></i>' +
+      '<span>Protocolo de pedido de certid\u00e3o finalizado. Utilize o controle de certid\u00f5es para outros detalhes.</span>';
+    cardEl.className = 'card card-vinculacao certidao';
+    cardEl.style.display = '';
+    return;
+  }
+
+  // Verificar link rows de atos
+  var controleArr = proto[CONFIG.fields.controle] || [];
+  var retifArr = proto[CONFIG.fields.retificacoes] || [];
+  var substArr = proto[CONFIG.fields.substabelecimentos] || [];
+
+  var atos = [];
+
+  function parseAto(arr, tipo) {
+    for (var j = 0; j < arr.length; j++) {
+      var raw = arr[j].value || '';
+      var partes = raw.split('_');
+      var label = '';
+      if (partes.length >= 4) {
+        label = 'Livro ' + partes[1] + ', P\u00e1gina ' + partes[3];
+      } else {
+        label = raw;
+      }
+      atos.push({ label: label, tipo: tipo });
+    }
+  }
+
+  parseAto(controleArr, 'Escritura');
+  parseAto(retifArr, 'Retifica\u00e7\u00e3o');
+  parseAto(substArr, 'Substabelecimento');
+
+  if (atos.length === 0) {
+    cardEl.style.display = 'none';
+    return;
+  }
+
+  // Verificar se tem tipos mistos
+  var tiposDistintos = {};
+  for (var k = 0; k < atos.length; k++) { tiposDistintos[atos[k].tipo] = true; }
+  var multiTipos = Object.keys(tiposDistintos).length > 1;
+
+  var labels = [];
+  for (var m = 0; m < atos.length; m++) {
+    var txt = atos[m].label;
+    if (multiTipos) { txt += ' (' + atos[m].tipo + ')'; }
+    labels.push(txt);
+  }
+
+  var singular = atos.length === 1;
+  var msg = singular
+    ? 'Protocolo originou o seguinte ato notarial: ' + labels[0]
+    : 'Protocolo originou os seguintes atos notariais: ' + labels.join('; ');
+
+  contentEl.innerHTML = '<i class="ph ph-check-circle vinc-icon vinc-icon-success"></i>' +
+    '<span>' + msg + '</span>';
+  cardEl.className = 'card card-vinculacao';
+  cardEl.style.display = '';
 }
 
 function preencherAndamento(proto) {

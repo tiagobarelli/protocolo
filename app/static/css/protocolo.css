@@ -372,6 +372,44 @@ main {
   font-size: 0.82rem;
 }
 
+/* ==================== CARD DE VINCULAÇÃO AO ATO ==================== */
+.card-vinculacao {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 16px 20px;
+}
+
+.card-vinculacao-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #15803d;
+  line-height: 1.5;
+}
+
+.vinc-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.vinc-icon-success {
+  color: #16a34a;
+}
+
+.vinc-icon-info {
+  color: #2563eb;
+}
+
+.card-vinculacao.certidao {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.card-vinculacao.certidao .card-vinculacao-content {
+  color: #1e40af;
+}
+
 /* ==================== LOGS DE ALTERAÇÕES ==================== */
 .log-card .card-title {
   margin-bottom: 12px;
