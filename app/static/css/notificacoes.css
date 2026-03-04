@@ -17,7 +17,7 @@
 .page-header-notif h1 {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--text-dark, #0f172a);
+  color: var(--text-dark, #2f3e46);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -29,7 +29,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--border, #e2e8f0);
+  border-bottom: 1px solid var(--border, #e7e5e4);
   cursor: pointer;
   transition: background 0.15s;
   border-radius: 8px;
@@ -37,12 +37,12 @@
 }
 
 .notification-item:hover {
-  background: var(--accent-soft, #eff6ff);
+  background: var(--accent-soft, #f5f5f4);
 }
 
 .notification-item.unread {
-  background: var(--accent-soft, #eff6ff);
-  border-left: 3px solid var(--accent, #2563eb);
+  background: var(--accent-soft, #f5f5f4);
+  border-left: 3px solid var(--accent, #84a98c);
 }
 
 .notification-item.read {
@@ -53,8 +53,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--accent-soft, #eff6ff);
-  color: var(--accent, #2563eb);
+  background: var(--accent-soft, #f5f5f4);
+  color: var(--accent, #84a98c);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,29 +69,29 @@
 
 .notification-meta {
   font-size: 0.85rem;
-  color: var(--text-main, #334155);
+  color: var(--text-main, #343A40);
   line-height: 1.5;
 }
 
 .notification-sender {
   font-weight: 700;
-  color: var(--text-dark, #0f172a);
+  color: var(--text-dark, #2f3e46);
 }
 
 .notification-protocol {
   font-weight: 700;
-  color: var(--accent, #2563eb);
+  color: var(--accent, #84a98c);
 }
 
 .notification-date {
   font-size: 0.75rem;
-  color: var(--text-muted, #64748b);
+  color: var(--text-muted, #495057);
   margin-left: 8px;
 }
 
 .notification-preview {
   font-size: 0.8rem;
-  color: var(--text-muted, #64748b);
+  color: var(--text-muted, #495057);
   margin-top: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -102,7 +102,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent, #2563eb);
+  background: var(--accent, #84a98c);
   flex-shrink: 0;
   margin-top: 6px;
 }
@@ -110,7 +110,7 @@
 /* Empty state */
 .notifications-empty {
   text-align: center;
-  color: var(--text-muted, #64748b);
+  color: var(--text-muted, #495057);
   padding: 48px 0;
   font-size: 0.95rem;
 }
@@ -119,15 +119,15 @@
 .loading-state {
   text-align: center;
   padding: 48px 0;
-  color: var(--text-muted, #64748b);
+  color: var(--text-muted, #495057);
   font-size: 0.9rem;
 }
 
 .loading-state .spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid var(--border, #e2e8f0);
-  border-top-color: var(--accent, #2563eb);
+  border: 3px solid var(--border, #e7e5e4);
+  border-top-color: var(--accent, #84a98c);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
   margin: 0 auto 12px;
@@ -147,9 +147,9 @@
 
 .pagination-btn {
   padding: 6px 12px;
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--border, #e7e5e4);
   background: var(--surface, #ffffff);
-  color: var(--text-main, #334155);
+  color: var(--text-main, #343A40);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.8rem;
@@ -157,14 +157,14 @@
 }
 
 .pagination-btn:hover {
-  background: var(--accent-soft, #eff6ff);
-  border-color: var(--accent, #2563eb);
+  background: var(--accent-soft, #f5f5f4);
+  border-color: var(--accent, #84a98c);
 }
 
 .pagination-btn.active {
-  background: var(--accent, #2563eb);
+  background: var(--accent, #84a98c);
   color: #fff;
-  border-color: var(--accent, #2563eb);
+  border-color: var(--accent, #84a98c);
 }
 
 /* Buttons */
@@ -183,14 +183,14 @@
 
 .btn-outline {
   background: transparent;
-  border: 1px solid var(--border, #e2e8f0);
-  color: var(--text-main, #334155);
+  border: 1px solid var(--border, #e7e5e4);
+  color: var(--text-main, #343A40);
 }
 
 .btn-outline:hover {
-  background: var(--accent-soft, #eff6ff);
-  border-color: var(--accent, #2563eb);
-  color: var(--accent, #2563eb);
+  background: var(--accent-soft, #f5f5f4);
+  border-color: var(--accent, #84a98c);
+  color: var(--accent, #84a98c);
 }
 
 .btn-sm {

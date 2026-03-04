@@ -2,10 +2,10 @@
 
 Controle de correções e melhorias do sistema
 
-## [0.9.6] - 2026-03-XX
+## [0.9.6] - 2026-03-04
 
 ### Adicionado
-- Iniciada a consilidação visual do sistema, com alterações profundas nas cores do layout, inserção do logo e indicação do nome oficial do sistema.
+- Iniciada a consilidação visual do sistema, com alterações profundas nas cores do layout, ícones, inserção do logo e indicação do nome oficial do sistema.
 
 ## [0.9.5] - 2026-03-01
 

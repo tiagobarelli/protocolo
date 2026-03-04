@@ -8,16 +8,28 @@
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     :root {
-      --primary: #0f172a;
-      --accent: #2563eb;
-      --accent-soft: #eff6ff;
-      --bg-body: #f8fafc;
+      --primary: #2f3e46;
+      --primary-hover: #52796f;
+      --accent: #84a98c;
+      --accent-hover: #cad2c5;
+      --accent-soft: #f5f5f4;
+      --bg-body: #fafaf9;
       --surface: #ffffff;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
+      --text-main: #343A40;
+      --text-dark: #212529;
+      --text-muted: #495057;
+      --border: #e7e5e4;
+      --border-focus: #84a98c;
       --radius: 12px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
       --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --danger: #b91c1c;
+      --danger-bg: #faf0ed;
+      --success: #15803d;
+      --success-bg: #f0f5f1;
+      --warning: #d97706;
+      --warning-bg: #faf5ed;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -29,7 +41,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
-      background-image: radial-gradient(at top right, #e0f2fe 0%, transparent 40%), radial-gradient(at top left, #f1f5f9 0%, transparent 40%);
+      background-image: radial-gradient(at top right, rgba(245, 245, 244, 0.8) 0%, rgba(245, 245, 244, 0) 55%), radial-gradient(at top left, rgba(250, 250, 249, 0.9) 0%, rgba(250, 250, 249, 0) 55%);
     }
     .container { max-width: 400px; width: 100%; }
     .header { text-align: center; margin-bottom: 24px; }
@@ -49,10 +61,10 @@
       width: 100%; padding: 12px; background: var(--accent); color: white;
       border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
     }
-    button[type="submit"]:hover { background: #1d4ed8; }
+    button[type="submit"]:hover { background: #52796f; }
     .flash { margin-bottom: 16px; padding: 10px; border-radius: 8px; font-size: 0.9rem; }
-    .flash.error { background: #fee2e2; color: #991b1b; }
-    .flash.success { background: #dcfce7; color: #166534; }
+    .flash.error { background: #faf0ed; color: #991b1b; }
+    .flash.success { background: #f0f5f1; color: #15803d; }
   </style>
 </head>
 <body>
