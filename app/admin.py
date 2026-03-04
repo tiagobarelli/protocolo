@@ -13,7 +13,8 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @perfil_required("master")
 def usuarios():
     users = User.get_all()
-    return render_template("admin_usuarios.html", users=users)
+    master_user = User.get_master()
+    return render_template("admin_usuarios.html", users=users, master_user=master_user)
 
 
 @admin_bp.route("/usuarios/criar", methods=["POST"])
@@ -105,4 +106,57 @@ def usuarios_senha(user_id):
 
     user.update_password(nova_senha)
     flash("Senha de " + user.nome + " alterada com sucesso.", "success")
+    return redirect(url_for("admin.usuarios"))
+
+
+@admin_bp.route("/usuarios/master/editar", methods=["POST"])
+@login_required
+@perfil_required("master")
+def usuarios_master_editar():
+    master_user = User.get_master()
+    if master_user is None:
+        flash("Usuário master não encontrado.", "error")
+        return redirect(url_for("admin.usuarios"))
+
+    nome = (request.form.get("nome") or "").strip()
+    email = (request.form.get("email") or "").strip().lower()
+
+    if not nome or not email:
+        flash("Nome e e-mail são obrigatórios.", "error")
+        return redirect(url_for("admin.usuarios"))
+
+    existing = User.get_by_email(email)
+    if existing and existing.id != master_user.id:
+        flash("Já existe outro usuário com este e-mail.", "error")
+        return redirect(url_for("admin.usuarios"))
+
+    if master_user.update(nome, email, perfil="master", ativo=1):
+        flash("Dados do master atualizados com sucesso.", "success")
+    else:
+        flash("Erro ao atualizar dados do master.", "error")
+    return redirect(url_for("admin.usuarios"))
+
+
+@admin_bp.route("/usuarios/master/senha", methods=["POST"])
+@login_required
+@perfil_required("master")
+def usuarios_master_senha():
+    master_user = User.get_master()
+    if master_user is None:
+        flash("Usuário master não encontrado.", "error")
+        return redirect(url_for("admin.usuarios"))
+
+    nova_senha = request.form.get("nova_senha") or ""
+    confirmar = request.form.get("confirmar_senha") or ""
+
+    if len(nova_senha) < 6:
+        flash("A senha deve ter no mínimo 6 caracteres.", "error")
+        return redirect(url_for("admin.usuarios"))
+
+    if nova_senha != confirmar:
+        flash("As senhas não conferem.", "error")
+        return redirect(url_for("admin.usuarios"))
+
+    master_user.update_password(nova_senha)
+    flash("Senha do master alterada com sucesso.", "success")
     return redirect(url_for("admin.usuarios"))

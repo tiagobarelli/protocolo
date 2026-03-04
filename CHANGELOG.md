@@ -2,6 +2,15 @@
 
 Controle de correções e melhorias do sistema
 
+## [0.9.7] - 2026-03-04
+
+### Corrigido
+- Usuários: a tela de usuários não permitia ao usuário master alterar a sua senha.
+- Detalhamento protocolo: um erro distorcia a data ou hora de agendamento, quando esses campos eram editados.
+
+### Adicionado
+- Calendário: inserida a página de calendário ao menu. Esta página exibe graficamente um calendário mensal. Os protocolos que possuem agendamento são exibidos e permite ao usuário clicar e detalhar o protocolo.
+
 ## [0.9.6] - 2026-03-04
 
 ### Adicionado

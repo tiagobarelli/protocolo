@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Calendário de Agendamentos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/calendario.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<!-- Overlay de loading -->
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+    {% include "partials/flash_messages.html" %}
+    <div class="container">
+
+      <!-- Card de cabeçalho e navegação -->
+      <div class="card">
+        <div class="page-title">
+          <i class="ph ph-calendar-blank page-icon"></i>
+          <div>
+            <h1>Calendário de Agendamentos</h1>
+            <p class="page-subtitle">Protocolos em andamento com data de agendamento.</p>
+          </div>
+        </div>
+
+        <div class="cal-nav">
+          <button type="button" class="btn btn-secondary" id="btnMesAnterior">
+            <i class="ph ph-caret-left"></i>
+          </button>
+          <h2 class="cal-mes-titulo" id="calMesTitulo"></h2>
+          <button type="button" class="btn btn-secondary" id="btnProximoMes">
+            <i class="ph ph-caret-right"></i>
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnHoje">Hoje</button>
+        </div>
+      </div>
+
+      <!-- Grade do calendário -->
+      <div class="card cal-card">
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+
+      <!-- Legenda -->
+      <div class="cal-legenda">
+        <span class="cal-legenda-item">
+          <span class="cal-event-dot dot-hora"></span> Com horário definido
+        </span>
+        <span class="cal-legenda-item">
+          <span class="cal-event-dot dot-dia"></span> Dia inteiro
+        </span>
+      </div>
+
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/calendario.js') }}"></script>
+{% endblock %}

@@ -369,17 +369,29 @@ function formatarData(dataStr) {
 }
 
 function formatarDataHora(isoStr) {
-  if (!isoStr) return '—';
-  if (isoStr.indexOf('T') === -1) return formatarData(isoStr);
+  if (!isoStr) return '\u2014';
+
+  if (isoStr.indexOf('T') === -1) {
+    var p = isoStr.split('-');
+    if (p.length < 3) return isoStr;
+    return p[2] + '/' + p[1] + '/' + p[0];
+  }
+
   var d = new Date(isoStr);
   if (isNaN(d.getTime())) return isoStr;
-  var dd = ('0' + d.getDate()).slice(-2);
-  var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+
+  // Meia-noite UTC = Baserow preencheu T00:00:00Z para campo salvo sem hora
+  if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0) {
+    var dp = isoStr.split('T')[0].split('-');
+    return dp[2] + '/' + dp[1] + '/' + dp[0];
+  }
+
+  var dd   = ('0' + d.getDate()).slice(-2);
+  var mm   = ('0' + (d.getMonth() + 1)).slice(-2);
   var yyyy = d.getFullYear();
-  var hh = ('0' + d.getHours()).slice(-2);
-  var min = ('0' + d.getMinutes()).slice(-2);
-  if (hh === '00' && min === '00') return dd + '/' + mm + '/' + yyyy;
-  return dd + '/' + mm + '/' + yyyy + ' às ' + hh + ':' + min;
+  var hh   = ('0' + d.getHours()).slice(-2);
+  var min  = ('0' + d.getMinutes()).slice(-2);
+  return dd + '/' + mm + '/' + yyyy + ' \u00e0s ' + hh + ':' + min;
 }
 
 function formatarMoeda(valor) {
@@ -842,13 +854,16 @@ function iniciarEdicaoAgendado() {
   if (agendado && agendado.indexOf('T') !== -1) {
     var d = new Date(agendado);
     if (!isNaN(d.getTime())) {
-      var yyyy = d.getFullYear();
-      var mm = ('0' + (d.getMonth() + 1)).slice(-2);
-      var dd = ('0' + d.getDate()).slice(-2);
-      if (input) input.value = yyyy + '-' + mm + '-' + dd;
-      var hh = ('0' + d.getHours()).slice(-2);
-      var min = ('0' + d.getMinutes()).slice(-2);
-      if (inputHora) inputHora.value = (hh === '00' && min === '00') ? '' : hh + ':' + min;
+      var dataStr = agendado.split('T')[0];
+      if (input) input.value = dataStr;
+      // Meia-noite UTC = Baserow preencheu T00:00:00Z para campo salvo sem hora
+      if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0) {
+        if (inputHora) inputHora.value = '';
+      } else {
+        var hh  = ('0' + d.getHours()).slice(-2);
+        var min = ('0' + d.getMinutes()).slice(-2);
+        if (inputHora) inputHora.value = hh + ':' + min;
+      }
     }
   } else {
     if (input) input.value = agendado;
@@ -1031,7 +1046,7 @@ function formatarTamanho(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
 }
 
-function formatarDataHora(dataStr) {
+function formatarDataHoraUpload(dataStr) {
   if (!dataStr) return '';
   var d = new Date(dataStr);
   if (isNaN(d.getTime())) return dataStr;
@@ -1081,7 +1096,7 @@ function renderizarListaArquivos(files) {
     html += '  <i class="ph ' + iconClass + ' file-icon"></i>';
     html += '  <div class="file-info">';
     html += '    <a href="/api/uploads/download/' + f.id + '" class="file-name">' + f.nome_original + '</a>';
-    html += '    <span class="file-meta">Enviado por ' + f.usuario_nome + ' em ' + formatarDataHora(f.criado_em) + ' — ' + formatarTamanho(f.tamanho) + '</span>';
+    html += '    <span class="file-meta">Enviado por ' + f.usuario_nome + ' em ' + formatarDataHoraUpload(f.criado_em) + ' — ' + formatarTamanho(f.tamanho) + '</span>';
     html += '  </div>';
     if (podeDeletar) {
       html += '  <button type="button" class="file-delete" onclick="deletarArquivo(' + f.id + ', \'' + f.nome_original.replace(/'/g, "\\'") + '\')" title="Excluir arquivo">';

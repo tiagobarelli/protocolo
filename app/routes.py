@@ -84,6 +84,13 @@ def substabelecimentos():
     return render_template("substabelecimentos.html")
 
 
+@main_bp.route("/calendario")
+@login_required
+@perfil_required("master", "administrador", "escrevente")
+def calendario():
+    return render_template("calendario.html")
+
+
 @main_bp.route("/protocolo/<int:protocolo_id>")
 @login_required
 @perfil_required("master", "administrador", "escrevente")

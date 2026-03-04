@@ -74,6 +74,13 @@ class User(UserMixin):
         )
 
     @staticmethod
+    def get_master():
+        """Retorna o usuário master ou None."""
+        db = get_db()
+        row = db.execute("SELECT * FROM users WHERE perfil = 'master'").fetchone()
+        return User._row_to_user(row) if row else None
+
+    @staticmethod
     def get_all():
         """Retorna lista de todos os usuarios (exceto master), ordenados por nome."""
         db = get_db()

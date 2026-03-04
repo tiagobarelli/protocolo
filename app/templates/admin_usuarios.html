@@ -76,6 +76,65 @@
           </tr>
         </thead>
         <tbody>
+          {% if master_user %}
+          <!-- Linha do master (topo da tabela) -->
+          <tr>
+            <td>{{ master_user.nome }}</td>
+            <td>{{ master_user.email }}</td>
+            <td><span class="badge badge-master">Master</span></td>
+            <td><span class="badge badge-ativo">Ativo</span></td>
+            <td class="actions">
+              <button type="button" class="btn-icon" title="Editar" onclick="toggleEditForm({{ master_user.id }})">
+                <i class="ph ph-pencil-simple"></i>
+              </button>
+              <button type="button" class="btn-icon" title="Alterar senha" onclick="toggleSenhaForm({{ master_user.id }})">
+                <i class="ph ph-key"></i>
+              </button>
+            </td>
+          </tr>
+          <!-- Linha de edição inline do master -->
+          <tr class="edit-row" id="edit-{{ master_user.id }}" style="display: none;">
+            <td colspan="5">
+              <form method="post" action="{{ url_for('admin.usuarios_master_editar') }}">
+                <div class="inline-form">
+                  <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" name="nome" value="{{ master_user.nome }}" required>
+                  </div>
+                  <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" name="email" value="{{ master_user.email }}" required>
+                  </div>
+                  <div class="btn-group">
+                    <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEditForm({{ master_user.id }})">Cancelar</button>
+                  </div>
+                </div>
+              </form>
+            </td>
+          </tr>
+          <!-- Linha de alteração de senha do master -->
+          <tr class="edit-row" id="senha-{{ master_user.id }}" style="display: none;">
+            <td colspan="5">
+              <form method="post" action="{{ url_for('admin.usuarios_master_senha') }}">
+                <div class="inline-form">
+                  <div class="form-group">
+                    <label>Nova senha para {{ master_user.nome }}</label>
+                    <input type="password" name="nova_senha" required minlength="6" placeholder="Mínimo 6 caracteres">
+                  </div>
+                  <div class="form-group">
+                    <label>Confirmar senha</label>
+                    <input type="password" name="confirmar_senha" required minlength="6" placeholder="Repita a senha">
+                  </div>
+                  <div class="btn-group">
+                    <button type="submit" class="btn btn-primary btn-sm">Alterar Senha</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSenhaForm({{ master_user.id }})">Cancelar</button>
+                  </div>
+                </div>
+              </form>
+            </td>
+          </tr>
+          {% endif %}
           {% for u in users %}
           <tr>
             <td>{{ u.nome }}</td>

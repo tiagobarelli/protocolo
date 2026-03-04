@@ -127,6 +127,7 @@ input:focus, select:focus {
   display: inline-block; font-size: 0.75rem; font-weight: 600;
   padding: 3px 10px; border-radius: 99px; text-transform: capitalize;
 }
+.badge-master { background: #fef3c7; color: #92400e; }
 .badge-administrador { background: #f0f5f1; color: #2f3e46; }
 .badge-escrevente { background: #fafaf9; color: #475569; }
 .badge-ativo { background: var(--success-bg); color: #15803d; }

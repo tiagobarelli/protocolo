@@ -27,6 +27,12 @@
     {% endif %}
 
     {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
+    <a href="{{ url_for('main.calendario') }}" class="nav-item {% if request.endpoint == 'main.calendario' %}active{% endif %}">
+      <i class="ph ph-calendar-blank"></i> Calendário
+    </a>
+    {% endif %}
+
+    {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
     <a href="{{ url_for('main.clientes') }}" class="nav-item {% if request.endpoint == 'main.clientes' %}active{% endif %}">
       <i class="ph ph-address-book"></i> Consultar Cliente
     </a>
@@ -86,7 +92,7 @@
     </a>
     <span class="user-info"><i class="ph ph-user"></i> {{ current_user.nome }}</span>
     <a href="{{ url_for('auth.logout') }}"><i class="ph ph-sign-out"></i> Sair</a>
-    <a href="{{ url_for('main.changelog') }}" class="version-link">v 0.9.5</a>
+    <a href="{{ url_for('main.changelog') }}" class="version-link">v 0.9.7</a>
   </div>
 </aside>
 

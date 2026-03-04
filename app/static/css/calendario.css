@@ -1,0 +1,174 @@
+/* ── Calendário de Agendamentos ── */
+
+/* Overlay / Spinner */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+.overlay.active { display: flex; }
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border, #e2e8f0);
+  border-top-color: var(--accent, #2563eb);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Navegação do mês */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cal-mes-titulo {
+  flex: 1;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Card da grade */
+.cal-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Grade 7 colunas */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-top: 1px solid var(--border, #e2e8f0);
+  border-left: 1px solid var(--border, #e2e8f0);
+}
+
+/* Cabeçalho dos dias da semana */
+.cal-header-cell {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+  background: var(--surface, #f8fafc);
+  border-right: 1px solid var(--border, #e2e8f0);
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+/* Células do calendário */
+.cal-cell {
+  min-height: 110px;
+  padding: 6px;
+  border-right: 1px solid var(--border, #e2e8f0);
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  vertical-align: top;
+  background: var(--card-bg, #fff);
+  position: relative;
+}
+
+.cal-cell.cal-vazio {
+  background: var(--surface, #f8fafc);
+}
+
+.cal-cell.cal-hoje .cal-dia-num {
+  background: var(--accent, #2563eb);
+  color: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cal-dia-num {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+  margin-bottom: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Eventos */
+.cal-event {
+  display: block;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  margin-bottom: 2px;
+  text-decoration: none;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.cal-event:hover {
+  opacity: 0.85;
+}
+
+.cal-event-hora {
+  background: var(--accent, #6366f1);
+  color: #fff;
+}
+
+.cal-event-dia {
+  background: #e0e7ff;
+  color: #3730a3;
+  border-left: 3px solid #6366f1;
+}
+
+.cal-event-nome {
+  display: block;
+  font-size: 0.68rem;
+  opacity: 0.85;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cal-mais {
+  font-size: 0.68rem;
+  color: var(--text-secondary, #64748b);
+  padding: 1px 4px;
+  cursor: default;
+}
+
+/* Legenda */
+.cal-legenda {
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #64748b);
+}
+
+.cal-legenda-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cal-event-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.dot-hora { background: var(--accent, #6366f1); }
+.dot-dia  { background: #e0e7ff; border-left: 3px solid #6366f1; }
