@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Controle COAF - Sistema Interno{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coaf.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<!-- Hamburger mobile -->
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<!-- Overlay de loading -->
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+<!-- CONTEUDO PRINCIPAL -->
+  <main class="main-content">
+    {% include "partials/flash_messages.html" %}
+
+    <!-- ===== CARD 1: BUSCA ===== -->
+    <div class="card" id="searchCard">
+      <div class="page-header">
+        <h1><i class="ph ph-money" style="color:var(--accent);"></i> Controle COAF</h1>
+        <p>Busque a escritura pelo identificador para registrar ou consultar a análise de lavagem de dinheiro (COAF).</p>
+      </div>
+
+      <div id="searchMsg" class="msg-box"></div>
+
+      <!-- Busca por mascara -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-magnifying-glass"></i> Busca por Identificador</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="buscaMascara">Identificador</label>
+            <input type="text" id="buscaMascara" placeholder="L_XXX_P_YYY" autocomplete="off">
+          </div>
+          <div class="form-group small" style="justify-content:flex-end;">
+            <button type="button" class="btn btn-primary" id="btnBuscarMascara">
+              <i class="ph ph-magnifying-glass"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="search-divider">ou</div>
+
+      <!-- Busca por Livro + Pagina -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-book-open"></i> Busca por Livro e Página</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="buscaLivro">Livro</label>
+            <input type="text" id="buscaLivro" placeholder="Ex: 150" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="buscaPagina">Página <span class="hint">(máx 400)</span></label>
+            <input type="text" id="buscaPagina" placeholder="Ex: 25" maxlength="3" autocomplete="off">
+          </div>
+          <div class="form-group small" style="justify-content:flex-end;">
+            <button type="button" class="btn btn-primary" id="btnBuscarLP">
+              <i class="ph ph-magnifying-glass"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CARD 2: INFORMACOES DA ESCRITURA (read-only) ===== -->
+    <div class="card" id="infoCard" style="display:none;">
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-info"></i> Informações da Escritura</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Identificador</span>
+            <span class="info-value monospace" id="infoIdentificador">-</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Data da Escritura</span>
+            <span class="info-value" id="infoData">-</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Tipo de Escritura</span>
+            <span class="info-value" id="infoTipo">-</span>
+          </div>
+        </div>
+      </div>
+      <div id="elegibilidadeMsg" class="msg-box"></div>
+    </div>
+
+    <!-- ===== CARD 3: FORMULARIO COAF ===== -->
+    <div class="card" id="formCard" style="display:none;">
+      <div class="page-header">
+        <h1><i class="ph ph-clipboard-text" style="color:var(--accent);"></i> Análise COAF</h1>
+      </div>
+
+      <!-- Secao: Analise -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-scales"></i> Análise</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="analiseSelect">Parecer</label>
+            <select id="analiseSelect">
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label for="detalhamentoTextarea">Detalhamento</label>
+            <div class="md-grid">
+              <div class="md-editor-container">
+                <div class="md-toolbar" id="mdToolbar">
+                  <button type="button" class="md-btn" onclick="inserirMarkdown('bold', 'detalhamentoTextarea')" title="Negrito"><i class="ph ph-text-b"></i></button>
+                  <button type="button" class="md-btn" onclick="inserirMarkdown('italic', 'detalhamentoTextarea')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+                  <button type="button" class="md-btn" onclick="inserirMarkdown('list', 'detalhamentoTextarea')" title="Lista"><i class="ph ph-list-bullets"></i></button>
+                  <button type="button" class="md-btn" onclick="inserirMarkdown('heading', 'detalhamentoTextarea')" title="Título"><i class="ph ph-text-h-two"></i></button>
+                  <button type="button" class="md-btn" onclick="inserirMarkdown('code', 'detalhamentoTextarea')" title="Código"><i class="ph ph-code"></i></button>
+                  <button type="button" class="md-btn" onclick="inserirMarkdown('checklist', 'detalhamentoTextarea')" title="Checklist"><i class="ph ph-check-square"></i></button>
+                  <button type="button" class="md-btn" onclick="inserirMarkdown('hr', 'detalhamentoTextarea')" title="Separador"><i class="ph ph-minus"></i></button>
+                </div>
+                <textarea id="detalhamentoTextarea" placeholder="Registre o detalhamento da análise aqui..." autocomplete="off"></textarea>
+              </div>
+              <div id="detalhamentoPreview" class="md-preview"><div class="md-placeholder">Pré-visualização do Markdown...</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secao: Comunicacao ao SISCOAF (condicional) -->
+      <div class="form-section secao-condicional disabled" id="secaoComunicacao">
+        <div class="section-title"><i class="ph ph-paper-plane-tilt"></i> Comunicação ao SISCOAF</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="numeroComunicacao">Nº da Comunicação SISCOAF</label>
+            <input type="text" id="numeroComunicacao" placeholder="Número da comunicação" autocomplete="off">
+          </div>
+          <div class="form-group small">
+            <label for="dataComunicacao">Data da Comunicação</label>
+            <input type="date" id="dataComunicacao" autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Subseção: Recibo PDF -->
+        <div class="form-row single">
+          <div class="form-group">
+            <label>Recibo PDF</label>
+            <div id="reciboExistente" class="recibo-existente" style="display:none;">
+              <i class="ph ph-file-pdf recibo-icon"></i>
+              <span class="recibo-nome" id="reciboNome"></span>
+              <div class="recibo-acoes">
+                <button type="button" class="btn btn-sm btn-secondary" id="btnSubstituirPdf">
+                  <i class="ph ph-swap"></i> Substituir
+                </button>
+                <button type="button" class="btn btn-sm btn-danger" id="btnRemoverPdf">
+                  <i class="ph ph-trash"></i> Remover
+                </button>
+              </div>
+            </div>
+            <div id="reciboUpload">
+              <button type="button" class="btn btn-secondary" id="btnSelecionarPdf">
+                <i class="ph ph-upload-simple"></i> Selecionar PDF
+              </button>
+              <span id="nomeArquivoSelecionado" style="margin-left:12px; font-size:0.85rem; color:var(--text-muted);"></span>
+            </div>
+            <input type="file" id="fileInputPdf" accept=".pdf" style="display:none;">
+            <div id="uploadMsg" class="msg-box" style="margin-top:8px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botoes de acao -->
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary" id="btnSalvar">
+          <i class="ph ph-floppy-disk"></i> Salvar
+        </button>
+      </div>
+      <div id="formMsg" class="msg-box" style="margin-top:16px;"></div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/coaf.js') }}"></script>
+{% endblock %}

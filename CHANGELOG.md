@@ -7,9 +7,12 @@ Controle de correções e melhorias do sistema
 ### Corrigido
 - Clientes: redução da presença de placeholders, que poluiam a visualização.
 - Cadastro protocolo: redução da presença de placeholders, que poluiam a visualização
+- Clientes: melhoria no posicionamento das mensagens de cliente já cadastrado, cliente não cadastrado e elementos salvos na tela.
 
 ### Adicionado
-- Sidebar: Inseridas seções quebrando os temas Protocolo / Cliente; visando reduzir a confusão entre o botão pesquisar protocolo e pesquisar cliente. A alteração deixa a seção "Clientes" preparada para um futuro relatório discriminatório.
+- Sidebar: inseridas seções quebrando os temas Protocolo / Cliente; visando reduzir a confusão entre o botão pesquisar protocolo e pesquisar cliente. A alteração deixa a seção "Clientes" preparada para um futuro relatório discriminatório.
+- COAF: inserida uma seção dedicada ao cadastro da análise de atos abarcados no risco de lavagem de dinheiro e financiamento ao terrorismo.
+- COAF: inserida uma seção dedicada ao relatório de análise cadastradas ou pendentes. O filtro é por Livro notarial e o sistema apenas retorna aqueles atos cujo tipo estão indicados como true no campo 'Sujeito_COAF' da table específica.
 
 ## [0.9.7] - 2026-03-04
 

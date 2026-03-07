@@ -84,6 +84,20 @@ def substabelecimentos():
     return render_template("substabelecimentos.html")
 
 
+@main_bp.route("/relatorios/coaf")
+@login_required
+@perfil_required("master", "administrador")
+def relatorio_coaf():
+    return render_template("relatorio_coaf.html")
+
+
+@main_bp.route("/coaf")
+@login_required
+@perfil_required("master", "administrador")
+def coaf():
+    return render_template("coaf.html")
+
+
 @main_bp.route("/calendario")
 @login_required
 @perfil_required("master", "administrador", "escrevente")

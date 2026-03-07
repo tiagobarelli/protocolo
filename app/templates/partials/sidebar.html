@@ -4,9 +4,9 @@
     <h1>Thṓth</h1>
   </div>
 
-  {% set gestao_atos_active = request.endpoint in ['main.controle', 'main.controle_certidoes', 'main.retificacoes', 'main.substabelecimentos'] %}
+  {% set gestao_atos_active = request.endpoint in ['main.controle', 'main.controle_certidoes', 'main.retificacoes', 'main.substabelecimentos', 'main.coaf'] %}
   {% set consultar_active = request.endpoint in ['main.consultar', 'main.protocolo_detalhe', 'main.protocolo_imprimir'] %}
-  {% set relatorios_active = request.endpoint in ['main.relatorio_controle_atos', 'main.relatorio_controle_certidoes'] %}
+  {% set relatorios_active = request.endpoint in ['main.relatorio_controle_atos', 'main.relatorio_controle_certidoes', 'main.relatorio_coaf'] %}
   {% set notificacoes_active = request.endpoint == 'main.notificacoes' %}
   {% set clientes_active = request.endpoint == 'main.clientes' %}
 
@@ -59,6 +59,9 @@
         <a href="{{ url_for('main.substabelecimentos') }}" class="nav-item sub {% if request.endpoint == 'main.substabelecimentos' %}active{% endif %}">
           <i class="ph ph-swap"></i> Substabelecimentos
         </a>
+        <a href="{{ url_for('main.coaf') }}" class="nav-item sub {% if request.endpoint == 'main.coaf' %}active{% endif %}">
+          <i class="ph ph-money"></i> Controle COAF
+        </a>
       </div>
     </div>
 
@@ -74,6 +77,9 @@
         </a>
         <a href="{{ url_for('main.relatorio_controle_certidoes') }}" class="nav-item sub {% if request.endpoint == 'main.relatorio_controle_certidoes' %}active{% endif %}">
           <i class="ph ph-seal-check"></i> Certid&otilde;es
+        </a>
+        <a href="{{ url_for('main.relatorio_coaf') }}" class="nav-item sub {% if request.endpoint == 'main.relatorio_coaf' %}active{% endif %}">
+          <i class="ph ph-hand-coins"></i> Lavagem de Dinheiro
         </a>
       </div>
     </div>

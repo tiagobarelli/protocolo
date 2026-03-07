@@ -424,7 +424,7 @@ function buscarExato(soDigitos, valorFormatado, tipo) {
                 document.getElementById('alertaReadonly').style.display = 'none';
               }
               mostrarFormulario();
-              mostrarMsg('formMsg', 'warning',
+              mostrarMsg('buscaMsg', 'warning',
                 'Nenhum cliente encontrado com este ' + (tipo === 'cpf' ? 'CPF' : 'CNPJ') + '. Preencha os dados para cadastrar.');
               document.getElementById('nomeInput').focus();
             }
@@ -482,6 +482,7 @@ function selecionarDaBusca(cli) {
   clienteAtual = cli;
   modoNovo = false;
   clienteCarregadoPorBusca = true;
+  mostrarMsg('buscaMsg', 'success', 'Cliente já cadastrado. Seguem os dados abaixo.');
   preencherFormulario(cli);
   mostrarFormulario();
   fecharDrawer();
@@ -502,6 +503,7 @@ function novoCliente() {
   document.getElementById('cpfInput').readOnly = false;
   document.getElementById('cnpjInput').readOnly = false;
   esconderMsg('formMsg');
+  esconderMsg('buscaMsg');
   var podeEditarAlerta = window.CURRENT_USER &&
     (window.CURRENT_USER.perfil === 'master' || window.CURRENT_USER.perfil === 'administrador');
   if (podeEditarAlerta) {
@@ -750,6 +752,7 @@ function limparCamposFormulario() {
   snapshotCliente = null;
   document.getElementById('logContent').textContent = '';
   document.getElementById('logCard').style.display = 'none';
+  esconderMsg('buscaMsg');
 }
 
 function limparFormulario() {
