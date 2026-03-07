@@ -22,7 +22,11 @@ var FIELDS = {
   regraPatrimonial: 'field_7348',
   protocolos:       'field_7247',
   alerta:           'field_7394',
-  logs:             'field_7395'
+  logs:             'field_7395',
+  empresarioTF:     'field_7429',
+  advogadoTF:       'field_7430',
+  corretorTF:       'field_7431',
+  creci:            'field_7432'
 };
 
 var FIELD_LABELS = {
@@ -39,7 +43,11 @@ var FIELD_LABELS = {
   nascimento:       'Data de Nascimento',
   profissao:        'Profissão',
   regraPatrimonial: 'Regra Patrimonial',
-  alerta:           'Alerta'
+  alerta:           'Alerta',
+  empresarioTF:     'Empresário Individual',
+  advogadoTF:       'Advogado',
+  corretorTF:       'Corretor',
+  creci:            'CRECI'
 };
 
 var ESTADO_CIVIL_OPTS = [
@@ -442,7 +450,9 @@ function buscarExato(soDigitos, valorFormatado, tipo) {
 function buscarPorNome(termo) {
   var url = API_BASE + '/database/rows/table/' + TABLE_CLIENTES +
     '/?user_field_names=false&filter__' + FIELDS.nome + '__contains=' +
-    encodeURIComponent(termo) + '&size=10';
+    encodeURIComponent(termo) +
+    '&filter__' + FIELDS.cpf + '__not_empty' +
+    '&size=10';
   fetch(url, { headers: apiHeaders() })
     .then(function(r) { return r.json(); })
     .then(function(data) { mostrarAutocompleteBusca(data.results || []); })
@@ -544,6 +554,10 @@ function capturarSnapshot(cli) {
   snap.profissao = cli[FIELDS.profissao] || '';
   snap.alerta    = cli[FIELDS.alerta] || '';
   snap.nascimento = cli[FIELDS.nascimento] || '';
+  snap.empresarioTF = cli[FIELDS.empresarioTF] ? true : false;
+  snap.advogadoTF   = cli[FIELDS.advogadoTF]   ? true : false;
+  snap.corretorTF   = cli[FIELDS.corretorTF]   ? true : false;
+  snap.creci        = cli[FIELDS.creci] || '';
   var ecObj = cli[FIELDS.estadoCivil];
   snap.estadoCivil = (ecObj && ecObj.value) ? ecObj.value : '';
   var rpObj = cli[FIELDS.regraPatrimonial];
@@ -565,6 +579,10 @@ function capturarEstadoAtualFormulario() {
   estado.rg        = document.getElementById('rgInput').value.trim();
   estado.profissao = document.getElementById('profissaoInput').value.trim();
   estado.nascimento = document.getElementById('nascimentoInput').value || '';
+  estado.empresarioTF = document.getElementById('switchEmpresario').checked;
+  estado.advogadoTF   = document.getElementById('switchAdvogado').checked;
+  estado.corretorTF   = document.getElementById('switchCorretor').checked;
+  estado.creci        = document.getElementById('creciInput').value.trim();
 
   var alertaEl = document.getElementById('alertaTextarea');
   var podeEditarAlerta = window.CURRENT_USER &&
@@ -646,14 +664,28 @@ function exibirLogs(cli) {
 function preencherFormulario(cli) {
   document.getElementById('nomeInput').value      = cli[FIELDS.nome]      || '';
   document.getElementById('cpfInput').value       = cli[FIELDS.cpf]       || '';
-  document.getElementById('cnpjInput').value      = cli[FIELDS.cnpj]      || '';
   document.getElementById('rgInput').value        = cli[FIELDS.rg]        || '';
   document.getElementById('nascimentoInput').value = cli[FIELDS.nascimento] || '';
   document.getElementById('profissaoInput').value = cli[FIELDS.profissao] || '';
   document.getElementById('telefoneInput').value  = cli[FIELDS.telefone]  || '';
   document.getElementById('emailInput').value     = cli[FIELDS.email]     || '';
   document.getElementById('enderecoTextarea').value = cli[FIELDS.endereco] || '';
-  document.getElementById('oabInput').value       = cli[FIELDS.oab]       || '';
+
+  // Qualificações Especiais — switches
+  var empresario = cli[FIELDS.empresarioTF] ? true : false;
+  document.getElementById('switchEmpresario').checked = empresario;
+  document.getElementById('cnpjEmpresarioGroup').style.display = empresario ? '' : 'none';
+  document.getElementById('cnpjInput').value = cli[FIELDS.cnpj] || '';
+
+  var advogado = cli[FIELDS.advogadoTF] ? true : false;
+  document.getElementById('switchAdvogado').checked = advogado;
+  document.getElementById('oabGroup').style.display = advogado ? '' : 'none';
+  document.getElementById('oabInput').value = cli[FIELDS.oab] || '';
+
+  var corretor = cli[FIELDS.corretorTF] ? true : false;
+  document.getElementById('switchCorretor').checked = corretor;
+  document.getElementById('creciGroup').style.display = corretor ? '' : 'none';
+  document.getElementById('creciInput').value = cli[FIELDS.creci] || '';
 
   var outrosVal = cli[FIELDS.outros] || '';
   document.getElementById('outrosTextarea').value = outrosVal;
@@ -680,7 +712,7 @@ function preencherFormulario(cli) {
 
   // CPF/CNPJ readonly ao editar cliente existente
   var editando = !!cli.id;
-  document.getElementById('cpfInput').readOnly  = editando;
+  document.getElementById('cpfInput').readOnly = editando;
   document.getElementById('cnpjInput').readOnly = editando;
 
   // Alerta
@@ -736,6 +768,13 @@ function limparCamposFormulario() {
   document.getElementById('emailInput').value       = '';
   document.getElementById('enderecoTextarea').value = '';
   document.getElementById('oabInput').value         = '';
+  document.getElementById('switchEmpresario').checked = false;
+  document.getElementById('cnpjEmpresarioGroup').style.display = 'none';
+  document.getElementById('switchAdvogado').checked = false;
+  document.getElementById('oabGroup').style.display = 'none';
+  document.getElementById('switchCorretor').checked = false;
+  document.getElementById('creciGroup').style.display = 'none';
+  document.getElementById('creciInput').value = '';
   document.getElementById('outrosTextarea').value   = '';
   atualizarPreviewOutros();
   document.getElementById('estadoCivilSelect').value = '';
@@ -942,6 +981,21 @@ function validarDuplicataOnBlur(campo) {
     });
 }
 
+function verificarCnpjCruzado(cnpj, callback) {
+  var url = API_BASE + '/database/rows/table/' + TABLE_CLIENTES +
+    '/?user_field_names=false' +
+    '&filter__' + FIELDS.cnpj + '__equal=' + encodeURIComponent(cnpj) +
+    '&filter__' + FIELDS.cpf + '__empty' +
+    '&size=1';
+  fetch(url, { headers: apiHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var encontrado = data.results && data.results.length > 0 ? data.results[0] : null;
+      callback(encontrado);
+    })
+    .catch(function() { callback(null); });
+}
+
 function construirPayload(incluirDocumentos) {
   var payload = {};
   payload[FIELDS.nome]     = document.getElementById('nomeInput').value.trim();
@@ -964,11 +1018,22 @@ function construirPayload(incluirDocumentos) {
 
   payload[FIELDS.conjuge] = conjugeId ? [conjugeId] : [];
 
+  // Qualificações Especiais
+  var isEmpresario = document.getElementById('switchEmpresario').checked;
+  payload[FIELDS.empresarioTF] = isEmpresario;
+  payload[FIELDS.advogadoTF]   = document.getElementById('switchAdvogado').checked;
+  payload[FIELDS.corretorTF]   = document.getElementById('switchCorretor').checked;
+  payload[FIELDS.creci]        = document.getElementById('creciInput').value.trim() || null;
+
   if (incluirDocumentos) {
     var cpfFormatado  = document.getElementById('cpfInput').value.trim();
-    var cnpjFormatado = document.getElementById('cnpjInput').value.trim();
     if (cpfFormatado)  payload[FIELDS.cpf]  = cpfFormatado;
-    if (cnpjFormatado) payload[FIELDS.cnpj] = cnpjFormatado;
+    if (isEmpresario) {
+      var cnpjFormatado = document.getElementById('cnpjInput').value.trim();
+      if (cnpjFormatado) payload[FIELDS.cnpj] = cnpjFormatado;
+    } else {
+      payload[FIELDS.cnpj] = null;
+    }
   }
 
   var podeEditarAlerta = window.CURRENT_USER &&
@@ -983,15 +1048,16 @@ function construirPayload(incluirDocumentos) {
 function salvarCliente() {
   var nome      = document.getElementById('nomeInput').value.trim();
   var cpfRaw    = document.getElementById('cpfInput').value.trim();
-  var cnpjRaw   = document.getElementById('cnpjInput').value.trim();
   var cpfLimpo  = cpfRaw.replace(/\D/g, '');
+  var isEmpresario = document.getElementById('switchEmpresario').checked;
+  var cnpjRaw   = isEmpresario ? document.getElementById('cnpjInput').value.trim() : '';
   var cnpjLimpo = cnpjRaw.replace(/\D/g, '');
 
   if (!nome) {
     return mostrarMsg('formMsg', 'error', 'O nome do cliente é obrigatório.');
   }
-  if (modoNovo && !cpfLimpo && !cnpjLimpo) {
-    return mostrarMsg('formMsg', 'error', 'Informe CPF ou CNPJ para cadastrar um novo cliente.');
+  if (modoNovo && !cpfLimpo) {
+    return mostrarMsg('formMsg', 'error', 'Informe o CPF para cadastrar um novo cliente.');
   }
   if (cpfLimpo && !validarCPF(cpfLimpo)) {
     return mostrarMsg('formMsg', 'error', 'CPF inválido. Verifique os dígitos verificadores.');
@@ -1358,8 +1424,47 @@ document.addEventListener('DOMContentLoaded', function() {
     validarDuplicataOnBlur('cpf');
   });
   document.getElementById('cnpjInput').addEventListener('blur', function() {
-    validarDuplicataOnBlur('cnpj');
+    var empresarioAtivo = document.getElementById('switchEmpresario').checked;
+    if (empresarioAtivo) {
+      var cnpjVal = document.getElementById('cnpjInput').value.trim();
+      var cnpjLimpo = cnpjVal.replace(/\D/g, '');
+      if (cnpjLimpo.length === 14 && validarCNPJ(cnpjLimpo)) {
+        verificarCnpjCruzado(cnpjVal, function(encontrado) {
+          if (encontrado) {
+            var nomePJ = encontrado[FIELDS.nome] || '';
+            mostrarMsg('formMsg', 'warning',
+              'Atenção: este CNPJ já está cadastrado como Pessoa Jurídica (' + nomePJ + '). O cadastro continuará como Empresário Individual.');
+          }
+        });
+      }
+    }
   });
+
+  // Switches de Qualificações Especiais
+  document.getElementById('switchEmpresario').addEventListener('change', function() {
+    var ativo = this.checked;
+    document.getElementById('cnpjEmpresarioGroup').style.display = ativo ? '' : 'none';
+    if (!ativo) {
+      document.getElementById('cnpjInput').value = '';
+    }
+  });
+
+  document.getElementById('switchAdvogado').addEventListener('change', function() {
+    var ativo = this.checked;
+    document.getElementById('oabGroup').style.display = ativo ? '' : 'none';
+    if (!ativo) {
+      document.getElementById('oabInput').value = '';
+    }
+  });
+
+  document.getElementById('switchCorretor').addEventListener('change', function() {
+    var ativo = this.checked;
+    document.getElementById('creciGroup').style.display = ativo ? '' : 'none';
+    if (!ativo) {
+      document.getElementById('creciInput').value = '';
+    }
+  });
+
   configurarDrawer();
 
   // Fechar dropdowns ao clicar fora

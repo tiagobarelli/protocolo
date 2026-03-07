@@ -2,7 +2,14 @@
 
 Controle de correções e melhorias do sistema
 
-## [0.9.8] - 2026-03-XX
+## [0.9.9] - 2026-03-XX
+
+### Adicionado
+- Clientes: a tela de gestão de clientes foi dividida em duas páginas dedicadas — Pessoa Física e Pessoa Jurídica — eliminando ambiguidade jurídica no cadastro. A tela de Pessoa Física exibe apenas registros com CPF; a de Pessoa Jurídica exibe apenas registros com CNPJ e sem CPF.
+- Clientes (Pessoa Física): adicionados os campos booleanos Empresário Individual, Advogado e Corretor de Imóveis, com switches que revelam condicionalmente os campos CNPJ (empresário individual), OAB e CRECI. Ao informar CNPJ de empresário individual, o sistema verifica se o mesmo CNPJ já está cadastrado como Pessoa Jurídica e emite alerta informativo.
+- Sidebar: a seção CLIENTES passa a exibir dois itens — "Pessoa Física" (ícone user-gear) e "Pessoa Jurídica" (ícone building-office).
+
+## [0.9.8] - 2026-03-07
 
 ### Corrigido
 - Clientes: redução da presença de placeholders, que poluiam a visualização.

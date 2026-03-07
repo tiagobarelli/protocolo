@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Gestão de Clientes - Sistema Interno{% endblock %}
+{% block title %}Gestão de Pessoas Jurídicas - Sistema Interno{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
@@ -22,8 +22,8 @@
 
 <div class="container">
   <div class="page-header">
-    <h1><i class="ph ph-address-book" style="color: var(--accent);"></i> Gestão de Pessoas Físicas</h1>
-    <p>Busque, cadastre ou edite clientes por CPF ou nome.</p>
+    <h1><i class="ph ph-buildings" style="color: var(--accent);"></i> Gestão de Pessoas Jurídicas</h1>
+    <p>Busque, cadastre ou edite pessoas jurídicas por CNPJ ou denominação.</p>
   </div>
 
   <!-- ── BUSCA ── -->
@@ -31,7 +31,7 @@
     <div class="search-bar">
       <div class="autocomplete-wrapper" style="flex:1;">
         <input type="text" id="buscaInput"
-               placeholder="Busque por CPF ou nome do cliente"
+               placeholder="Busque por CNPJ ou denominação"
                autocomplete="off">
         <div class="autocomplete-list" id="buscaAutoList"></div>
       </div>
@@ -39,7 +39,7 @@
         <i class="ph ph-magnifying-glass"></i> Buscar
       </button>
       <button type="button" class="btn btn-primary" id="btnNovoCliente">
-        <i class="ph ph-user-plus"></i> Novo Cliente
+        <i class="ph ph-building"></i> Nova Pessoa Jurídica
       </button>
     </div>
   </div>
@@ -58,129 +58,24 @@
     </div>
   </div>
 
-  <!-- ── DOCUMENTOS DIGITALIZADOS (visível somente após busca positiva) ── -->
-  <div class="card docs-top-card" id="secaoDocumentos" style="display:none;">
-    <div class="section-title">
-      <i class="ph ph-files"></i> Documentos Digitalizados
-      <button type="button" class="btn-docs" id="btnConsultarDocs">
-        <i class="ph ph-file-search"></i> Consultar
-      </button>
-    </div>
-    <div id="docsResumo" class="docs-resumo">
-      Clique em "Consultar" para verificar documentos no ODIN.
-    </div>
-  </div>
-
   <!-- ── FORMULÁRIO ── -->
   <div class="card" id="formCard" style="display:none;">
 
-    <!-- Dados Pessoais -->
+    <!-- Identificação -->
     <div class="form-section">
-      <div class="section-title"><i class="ph ph-user"></i> Dados Pessoais</div>
+      <div class="section-title"><i class="ph ph-buildings"></i> Identificação</div>
       <div class="form-row single">
         <div class="form-group">
-          <label for="nomeInput">Nome Completo <span class="hint">*</span></label>
-          <input type="text" id="nomeInput" autocomplete="off">
+          <label for="denominacaoInput">Denominação <span class="hint">*</span></label>
+          <input type="text" id="denominacaoInput" autocomplete="off">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label for="cpfInput">CPF</label>
-          <input type="text" id="cpfInput" placeholder="000.000.000-00" maxlength="14" autocomplete="off">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="rgInput">RG <span class="hint">(Opcional)</span></label>
-          <input type="text" id="rgInput" autocomplete="off">
-        </div>
-        <div class="form-group small">
-          <label for="nascimentoInput">Data de Nascimento</label>
-          <input type="date" id="nascimentoInput">
-        </div>
-        <div class="form-group">
-          <label for="profissaoInput">Profissão <span class="hint">(Opcional)</span></label>
-          <input type="text" id="profissaoInput" autocomplete="off">
-        </div>
-      </div>
-    </div>
-
-    <!-- Estado Civil -->
-    <div class="form-section">
-      <div class="section-title"><i class="ph ph-heart"></i> Estado Civil</div>
-      <div class="form-row">
-        <div class="form-group small">
-          <label for="estadoCivilSelect">Estado Civil</label>
-          <select id="estadoCivilSelect">
-            <option value="">Selecione...</option>
-          </select>
-        </div>
-        <div class="form-group small" id="regraPatrimonialGroup" style="display:none;">
-          <label for="regraPatrimonialSelect">Regra Patrimonial</label>
-          <select id="regraPatrimonialSelect">
-            <option value="">Selecione...</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="conjugeInput">Cônjuge <span class="hint">— buscar na base</span></label>
-          <div class="autocomplete-wrapper">
-            <input type="text" id="conjugeInput"
-                   placeholder="Comece a digitar o nome..." autocomplete="off">
-            <div class="autocomplete-list" id="conjugeAutoList"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Qualificações Especiais -->
-    <div class="form-section">
-      <div class="section-title"><i class="ph ph-identification-badge"></i> Qualificações Especiais</div>
-
-      <!-- Switch: Empresário Individual -->
-      <div class="toggle-row">
-        <label class="switch-label">
-          <input type="checkbox" id="switchEmpresario">
-          <span class="switch-track"></span>
-          <span class="switch-text">Empresário Individual</span>
-        </label>
-      </div>
-      <div id="cnpjEmpresarioGroup" style="display:none;" class="form-row">
-        <div class="form-group">
-          <label for="cnpjInput">CNPJ <span class="hint">(Empresário Individual)</span></label>
+          <label for="cnpjInput">CNPJ</label>
           <input type="text" id="cnpjInput" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off">
         </div>
       </div>
-
-      <!-- Switch: Advogado -->
-      <div class="toggle-row">
-        <label class="switch-label">
-          <input type="checkbox" id="switchAdvogado">
-          <span class="switch-track"></span>
-          <span class="switch-text">Advogado</span>
-        </label>
-      </div>
-      <div id="oabGroup" style="display:none;" class="form-row">
-        <div class="form-group">
-          <label for="oabInput">OAB</label>
-          <input type="text" id="oabInput" autocomplete="off">
-        </div>
-      </div>
-
-      <!-- Switch: Corretor -->
-      <div class="toggle-row">
-        <label class="switch-label">
-          <input type="checkbox" id="switchCorretor">
-          <span class="switch-track"></span>
-          <span class="switch-text">Corretor de Imóveis</span>
-        </label>
-      </div>
-      <div id="creciGroup" style="display:none;" class="form-row">
-        <div class="form-group">
-          <label for="creciInput">CRECI</label>
-          <input type="text" id="creciInput" autocomplete="off">
-        </div>
-      </div>
-
     </div>
 
     <!-- Contato -->
@@ -188,25 +83,30 @@
       <div class="section-title"><i class="ph ph-phone"></i> Contato</div>
       <div class="form-row">
         <div class="form-group">
-          <label for="telefoneInput">Telefone <span class="hint">(Opcional)</span></label>
+          <label for="telefoneInput">Telefone</label>
           <input type="text" id="telefoneInput" placeholder="(00) 00000-0000" maxlength="15" autocomplete="tel">
         </div>
         <div class="form-group">
-          <label for="emailInput">E-mail <span class="hint">(Opcional)</span></label>
+          <label for="emailInput">E-mail</label>
           <input type="text" id="emailInput" autocomplete="email">
         </div>
       </div>
+    </div>
+
+    <!-- Endereço -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-map-pin"></i> Sede</div>
       <div class="form-row single">
         <div class="form-group">
-          <label for="enderecoTextarea">Endereço <span class="hint">(Opcional)</span></label>
+          <label for="enderecoTextarea">Endereço</label>
           <textarea id="enderecoTextarea" rows="3"></textarea>
         </div>
       </div>
     </div>
 
-    <!-- Informações Complementares -->
+    <!-- Outros / Anotações -->
     <div class="form-section">
-      <div class="section-title"><i class="ph ph-note-pencil"></i> Informações Complementares</div>
+      <div class="section-title"><i class="ph ph-note"></i> Outros / Anotações</div>
       <div class="form-row single">
         <div class="form-group">
           <label>Outros / Anotações <span class="hint">(Markdown)</span></label>
@@ -251,23 +151,11 @@
         <i class="ph ph-eraser"></i> Limpar
       </button>
       <button type="button" class="btn btn-primary" id="btnSalvar">
-        <i class="ph ph-floppy-disk"></i> Salvar Alterações
+        <i class="ph ph-floppy-disk"></i> Salvar
       </button>
     </div>
     <div id="formMsg" class="msg-box"></div>
   </div><!-- /#formCard -->
-
-  <!-- Drawer lateral — Documentos Paperless -->
-  <div id="paperlessDrawer" class="paperless-drawer">
-    <div class="drawer-header">
-      <h3><i class="ph ph-files"></i> Documentos Digitalizados</h3>
-      <button type="button" class="drawer-close" id="btnCloseDrawer">
-        <i class="ph ph-x"></i>
-      </button>
-    </div>
-    <div class="drawer-body" id="drawerBody"></div>
-  </div>
-  <div class="drawer-overlay" id="drawerOverlay"></div>
 
 </div><!-- /.container -->
   </main>
@@ -283,5 +171,5 @@
   };
 </script>
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
-<script src="{{ url_for('static', filename='js/clientes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/clientes_pj.js') }}"></script>
 {% endblock %}
