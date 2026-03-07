@@ -110,6 +110,28 @@
           <div id="advogadoInfo" class="msg-box"></div>
         </div>
       </div>
+      <!-- Seção Corretor -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-house-line"></i> Corretor(es)</div>
+        <div class="toggle-row">
+          <input type="checkbox" id="toggleCorretor" autocomplete="off">
+          <label for="toggleCorretor">Este protocolo possui corretor(es)?</label>
+        </div>
+        <div class="collapsible" id="corretorSection">
+          <div class="form-row single">
+            <div class="form-group">
+              <label for="nomeCorretor">Buscar Corretor <span class="hint">— Busque na base de dados</span></label>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="nomeCorretor" placeholder="Comece a digitar o nome..." autocomplete="off">
+                <div class="autocomplete-list" id="corrAutoList"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Chips dos corretores selecionados -->
+          <div id="corretoresChips" class="chips-container"></div>
+          <div id="corretorInfo" class="msg-box"></div>
+        </div>
+      </div>
       <div class="form-section">
         <div class="section-title"><i class="ph ph-file-text"></i> Dados do Protocolo</div>
         <div class="form-row">

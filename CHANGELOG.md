@@ -8,6 +8,8 @@ Controle de correções e melhorias do sistema
 - Clientes: a tela de gestão de clientes foi dividida em duas páginas dedicadas — Pessoa Física e Pessoa Jurídica — eliminando ambiguidade jurídica no cadastro. A tela de Pessoa Física exibe apenas registros com CPF; a de Pessoa Jurídica exibe apenas registros com CNPJ e sem CPF.
 - Clientes (Pessoa Física): adicionados os campos booleanos Empresário Individual, Advogado e Corretor de Imóveis, com switches que revelam condicionalmente os campos CNPJ (empresário individual), OAB e CRECI. Ao informar CNPJ de empresário individual, o sistema verifica se o mesmo CNPJ já está cadastrado como Pessoa Jurídica e emite alerta informativo.
 - Sidebar: a seção CLIENTES passa a exibir dois itens — "Pessoa Física" (ícone user-gear) e "Pessoa Jurídica" (ícone building-office).
+- Cadastro de Protocolo: adicionada seção "Corretor(es)" com seleção múltipla via chips. Permite vincular um ou mais corretores ao protocolo, buscando qualquer cliente da base. Ao salvar, o sistema verifica e atualiza automaticamente os flags `Corretor_T_F` (field_7431) e `Advogado_T_F` (field_7430) na tabela de clientes, quando estes ainda não estiverem marcados como `true`.
+- Detalhamento de Protocolo: exibe os corretores vinculados ao protocolo com nome, CPF e CRECI (quando preenchido). A informação não consta no relatório impresso.
 
 ## [0.9.8] - 2026-03-07
 

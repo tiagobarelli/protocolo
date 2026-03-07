@@ -31,7 +31,9 @@ var CONFIG = {
     controle: 'field_7378',
     retificacoes: 'field_7408',
     substabelecimentos: 'field_7410',
-    controleCertidao: 'field_7416'
+    controleCertidao: 'field_7416',
+    corretor: 'field_7433',
+    clienteCreci: 'field_7432'
   },
   statusIds: {
     emAndamento: 3064,
@@ -280,22 +282,67 @@ function carregarCliente(proto) {
         alertaEl.style.display = 'none';
       }
 
+      var promessas = [];
+
       if (advArr.length > 0) {
         var advId = advArr[0].id;
         setText('infoAdvogado', advArr[0].value || '');
         document.getElementById('infoAdvogadoRow').style.display = '';
 
         var advUrl = API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' + advId + '/?user_field_names=false';
-        return fetch(advUrl, { headers: apiHeaders() })
-          .then(function(resp) { return resp.json(); })
-          .then(function(adv) {
-            var oab = adv[CONFIG.fields.clienteOab] || '';
-            if (oab) {
-              setText('infoOab', oab);
-              document.getElementById('infoOabRow').style.display = '';
-            }
-          });
+        promessas.push(
+          fetch(advUrl, { headers: apiHeaders() })
+            .then(function(resp) { return resp.json(); })
+            .then(function(adv) {
+              var oab = adv[CONFIG.fields.clienteOab] || '';
+              if (oab) {
+                setText('infoOab', oab);
+                document.getElementById('infoOabRow').style.display = '';
+              }
+            })
+        );
       }
+
+      // Corretores (link_row multiple)
+      var corrArr = proto[CONFIG.fields.corretor] || [];
+      if (corrArr.length > 0) {
+        document.getElementById('infoCorretoresRow').style.display = '';
+
+        var corrPromessas = [];
+        for (var i = 0; i < corrArr.length; i++) {
+          corrPromessas.push(
+            fetch(
+              API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' +
+              corrArr[i].id + '/?user_field_names=false',
+              { headers: apiHeaders() }
+            ).then(function(r) { return r.json(); })
+          );
+        }
+
+        promessas.push(
+          Promise.all(corrPromessas)
+            .then(function(corretores) {
+              var linhas = [];
+              for (var j = 0; j < corretores.length; j++) {
+                var c = corretores[j];
+                var nome  = c[CONFIG.fields.clienteNome] || '';
+                var cpf   = c[CONFIG.fields.clienteCpf]  || '';
+                var creci = c[CONFIG.fields.clienteCreci] || '';
+                var linha = nome;
+                if (cpf)   linha += ' — CPF: ' + cpf;
+                if (creci) linha += ' — CRECI: ' + creci;
+                linhas.push(linha);
+              }
+              setText('infoCorretores', linhas.join(' / '));
+            })
+            .catch(function(err) {
+              console.error('Erro ao carregar corretores:', err);
+              setText('infoCorretores', corrArr.map(function(c) { return c.value || ''; }).join(', '));
+            })
+        );
+      }
+
+      if (promessas.length > 0) return Promise.all(promessas);
     })
     .catch(function(err) {
       console.error('Erro ao carregar cliente:', err);

@@ -21,7 +21,10 @@
       depositoPrevio: 'field_7340',
       clienteAlerta: 'field_7394',
       clienteLogs: 'field_7395',
-      criadoPorSistema: 'field_7398'
+      criadoPorSistema: 'field_7398',
+      corretor:          'field_7433',
+      clienteAdvTF:      'field_7430',
+      clienteCorretorTF: 'field_7431'
     },
     statusDefault: 3064,
     collaborators: [
@@ -33,6 +36,7 @@
 
   var clienteEncontrado = null;
   var advogadoEncontrado = null;
+  var corretoresSelecionados = [];
   var servicosCache = [];
 
   // ── PAPERLESS-NGX — Documentos Digitalizados ──
@@ -385,6 +389,7 @@
     configurarBuscaDocumento();
     configurarMascaras();
     configurarAdvogado();
+    configurarCorretor();
     configurarMarkdownPreview();
     configurarTemplateServico();
     configurarDrawerCad();
@@ -749,8 +754,9 @@
     esconderMsg('advogadoInfo');
   }
 
-  function fecharAutoList() {
-    document.getElementById('advAutoList').classList.remove('open');
+  function fecharAutoList(listId) {
+    var id = listId || 'advAutoList';
+    document.getElementById(id).classList.remove('open');
   }
 
   function limparAdvogado() {
@@ -766,6 +772,152 @@
     document.getElementById('emailAdvogado').readOnly = false;
     fecharAutoList();
     esconderMsg('advogadoInfo');
+  }
+
+  // ── CORRETOR ──
+  var corrBuscaTimer = null;
+
+  function configurarCorretor() {
+    var toggle = document.getElementById('toggleCorretor');
+    var section = document.getElementById('corretorSection');
+
+    toggle.addEventListener('change', function() {
+      if (toggle.checked) {
+        section.classList.add('open');
+        document.getElementById('nomeCorretor').focus();
+      } else {
+        section.classList.remove('open');
+        limparCorretores();
+      }
+    });
+
+    var nomeCorr = document.getElementById('nomeCorretor');
+    nomeCorr.addEventListener('input', function() {
+      var termo = nomeCorr.value.trim();
+      if (corrBuscaTimer) clearTimeout(corrBuscaTimer);
+      if (termo.length < 3) {
+        fecharAutoList('corrAutoList');
+        return;
+      }
+      corrBuscaTimer = setTimeout(function() {
+        buscarCorretorPorNome(termo);
+      }, 300);
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#corrAutoList') && !e.target.closest('#nomeCorretor')) {
+        fecharAutoList('corrAutoList');
+      }
+    });
+  }
+
+  function buscarCorretorPorNome(termo) {
+    var lista = document.getElementById('corrAutoList');
+    var url = API_BASE + '/database/rows/table/' + CONFIG.tables.clientes +
+      '/?user_field_names=false' +
+      '&filter__' + CONFIG.fields.clienteNome + '__contains=' + encodeURIComponent(termo) +
+      '&size=10';
+
+    fetch(url, { headers: apiHeaders() })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var resultados = data.results || [];
+        lista.innerHTML = '';
+
+        if (resultados.length === 0) {
+          var vazio = document.createElement('div');
+          vazio.className = 'autocomplete-empty';
+          vazio.textContent = 'Nenhum cliente encontrado';
+          lista.appendChild(vazio);
+          lista.classList.add('open');
+          return;
+        }
+
+        for (var i = 0; i < resultados.length; i++) {
+          (function(cli) {
+            var nome = cli[CONFIG.fields.clienteNome] || '';
+            var cpf  = cli[CONFIG.fields.clienteCpf]  || '';
+            var creci = cli['field_7432'] || '';
+            var detalhe = cpf ? ('CPF: ' + cpf) : '';
+            if (creci) detalhe += (detalhe ? ' | ' : '') + 'CRECI: ' + creci;
+
+            var item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.innerHTML = '<div class="ac-name">' + nome + '</div>' +
+              (detalhe ? '<div class="ac-detail">' + detalhe + '</div>' : '');
+
+            item.addEventListener('click', function() {
+              adicionarCorretor(cli.id, nome);
+              document.getElementById('nomeCorretor').value = '';
+              fecharAutoList('corrAutoList');
+            });
+            lista.appendChild(item);
+          })(resultados[i]);
+        }
+        lista.classList.add('open');
+      })
+      .catch(function(e) {
+        console.error('Erro na busca de corretor:', e);
+        fecharAutoList('corrAutoList');
+      });
+  }
+
+  function adicionarCorretor(id, nome) {
+    for (var i = 0; i < corretoresSelecionados.length; i++) {
+      if (corretoresSelecionados[i].id === id) return;
+    }
+    corretoresSelecionados.push({ id: id, nome: nome });
+    renderizarChipCorretor(id, nome);
+  }
+
+  function renderizarChipCorretor(id, nome) {
+    var container = document.getElementById('corretoresChips');
+    var chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.id = 'chip-corretor-' + id;
+    chip.innerHTML = '<span>' + nome + '</span>' +
+      '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>';
+    chip.querySelector('.chip-remove').addEventListener('click', function() {
+      removerCorretor(id);
+    });
+    container.appendChild(chip);
+  }
+
+  function removerCorretor(id) {
+    corretoresSelecionados = corretoresSelecionados.filter(function(c) { return c.id !== id; });
+    var chip = document.getElementById('chip-corretor-' + id);
+    if (chip) chip.parentNode.removeChild(chip);
+  }
+
+  function limparCorretores() {
+    corretoresSelecionados = [];
+    document.getElementById('corretoresChips').innerHTML = '';
+    document.getElementById('nomeCorretor').value = '';
+  }
+
+  async function autoFlagCorretores() {
+    for (var i = 0; i < corretoresSelecionados.length; i++) {
+      var corrId = corretoresSelecionados[i].id;
+      try {
+        var resp = await fetch(
+          API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' +
+          corrId + '/?user_field_names=false',
+          { headers: apiHeaders() }
+        );
+        var cli = await resp.json();
+        if (!cli[CONFIG.fields.clienteCorretorTF]) {
+          var patch = {};
+          patch[CONFIG.fields.clienteCorretorTF] = true;
+          await fetch(
+            API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' +
+            corrId + '/?user_field_names=false',
+            { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(patch) }
+          );
+        }
+      } catch (e) {
+        console.warn('Erro ao atualizar flag Corretor_T_F para id ' + corrId + ':', e);
+      }
+    }
   }
 
   // ── CADASTRAR PROTOCOLO ──
@@ -899,6 +1051,13 @@
       payload[CONFIG.fields.status] = CONFIG.statusDefault;
       payload[CONFIG.fields.criadoPorSistema] = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
       if (advogadoId) payload[CONFIG.fields.advogado] = [advogadoId];
+      if (corretoresSelecionados.length > 0) {
+        var corrIds = [];
+        for (var ci = 0; ci < corretoresSelecionados.length; ci++) {
+          corrIds.push(corretoresSelecionados[ci].id);
+        }
+        payload[CONFIG.fields.corretor] = corrIds;
+      }
       if (agendadoPara) payload[CONFIG.fields.agendadoPara] = agendadoPara;
       var depositoValorAPI = moedaParaAPI(depositoPrevioRaw);
       if (depositoValorAPI !== null) payload[CONFIG.fields.depositoPrevio] = depositoValorAPI;
@@ -913,7 +1072,22 @@
       }
       var rpData = await rp.json();
 
-      // 4. Redirecionar para pagina de impressao
+      // 4. Auto-flag Advogado_T_F e Corretor_T_F
+      if (advogadoEncontrado && !advogadoEncontrado[CONFIG.fields.clienteAdvTF]) {
+        var patchAdv = {};
+        patchAdv[CONFIG.fields.clienteAdvTF] = true;
+        fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' +
+          advogadoEncontrado.id + '/?user_field_names=false', {
+          method: 'PATCH',
+          headers: apiHeaders(),
+          body: JSON.stringify(patchAdv)
+        }).catch(function(e) {
+          console.warn('Erro ao atualizar flag Advogado_T_F:', e);
+        });
+      }
+      await autoFlagCorretores();
+
+      // 5. Redirecionar para pagina de impressao
       window.location.href = '/protocolo/' + rpData.id + '/imprimir';
 
     } catch (e) {
@@ -954,6 +1128,9 @@
     document.getElementById('toggleAdvogado').checked = false;
     document.getElementById('advogadoSection').classList.remove('open');
     limparAdvogado();
+    document.getElementById('toggleCorretor').checked = false;
+    document.getElementById('corretorSection').classList.remove('open');
+    limparCorretores();
     document.getElementById('alertaCliente').style.display = 'none';
     document.getElementById('alertaCliente').textContent = '';
     document.getElementById('secaoDocumentosCad').style.display = 'none';
