@@ -2,6 +2,15 @@
 
 Controle de correções e melhorias do sistema
 
+## [0.9.8] - 2026-03-XX
+
+### Corrigido
+- Clientes: redução da presença de placeholders, que poluiam a visualização.
+- Cadastro protocolo: redução da presença de placeholders, que poluiam a visualização
+
+### Adicionado
+- Sidebar: Inseridas seções quebrando os temas Protocolo / Cliente; visando reduzir a confusão entre o botão pesquisar protocolo e pesquisar cliente. A alteração deixa a seção "Clientes" preparada para um futuro relatório discriminatório.
+
 ## [0.9.7] - 2026-03-04
 
 ### Corrigido

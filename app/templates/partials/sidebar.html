@@ -8,6 +8,7 @@
   {% set consultar_active = request.endpoint in ['main.consultar', 'main.protocolo_detalhe', 'main.protocolo_imprimir'] %}
   {% set relatorios_active = request.endpoint in ['main.relatorio_controle_atos', 'main.relatorio_controle_certidoes'] %}
   {% set notificacoes_active = request.endpoint == 'main.notificacoes' %}
+  {% set clientes_active = request.endpoint == 'main.clientes' %}
 
   <nav class="sidebar-nav">
     <a href="{{ url_for('main.index') }}" class="nav-item {% if request.endpoint == 'main.index' %}active{% endif %}">
@@ -15,27 +16,27 @@
     </a>
 
     {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
-    <a href="{{ url_for('main.cadastrar') }}" class="nav-item {% if request.endpoint == 'main.cadastrar' %}active{% endif %}">
-      <i class="ph ph-plus-circle"></i> Novo Protocolo
-    </a>
+    <div class="nav-section-block">
+      <div class="nav-section-label">PROTOCOLOS</div>
+      <a href="{{ url_for('main.cadastrar') }}" class="nav-item {% if request.endpoint == 'main.cadastrar' %}active{% endif %}">
+        <i class="ph ph-plus-circle"></i> Novo Protocolo
+      </a>
+      <a href="{{ url_for('main.consultar') }}" class="nav-item {% if consultar_active %}active{% endif %}">
+        <i class="ph ph-magnifying-glass"></i> Consultar Protocolo
+      </a>
+      <a href="{{ url_for('main.calendario') }}" class="nav-item {% if request.endpoint == 'main.calendario' %}active{% endif %}">
+        <i class="ph ph-calendar-blank"></i> Calendário
+      </a>
+    </div>
     {% endif %}
 
     {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
-    <a href="{{ url_for('main.consultar') }}" class="nav-item {% if consultar_active %}active{% endif %}">
-      <i class="ph ph-magnifying-glass"></i> Consultar Protocolo
-    </a>
-    {% endif %}
-
-    {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
-    <a href="{{ url_for('main.calendario') }}" class="nav-item {% if request.endpoint == 'main.calendario' %}active{% endif %}">
-      <i class="ph ph-calendar-blank"></i> Calendário
-    </a>
-    {% endif %}
-
-    {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
-    <a href="{{ url_for('main.clientes') }}" class="nav-item {% if request.endpoint == 'main.clientes' %}active{% endif %}">
-      <i class="ph ph-address-book"></i> Consultar Cliente
-    </a>
+    <div class="nav-section-block">
+      <div class="nav-section-label">CLIENTES</div>
+      <a href="{{ url_for('main.clientes') }}" class="nav-item {% if clientes_active %}active{% endif %}">
+        <i class="ph ph-address-book"></i> Consultar Cliente
+      </a>
+    </div>
     {% endif %}
 
     {% if current_user.perfil in ['master', 'administrador'] %}
