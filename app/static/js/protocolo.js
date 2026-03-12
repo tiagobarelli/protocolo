@@ -31,6 +31,7 @@ var CONFIG = {
     controle: 'field_7378',
     retificacoes: 'field_7408',
     substabelecimentos: 'field_7410',
+    revogacoes: 'field_7447',
     controleCertidao: 'field_7416',
     corretor: 'field_7433',
     clienteCreci: 'field_7432'
@@ -196,6 +197,7 @@ function verificarVinculacaoAto(proto) {
   var controleArr = proto[CONFIG.fields.controle] || [];
   var retifArr = proto[CONFIG.fields.retificacoes] || [];
   var substArr = proto[CONFIG.fields.substabelecimentos] || [];
+  var revogArr = proto[CONFIG.fields.revogacoes] || [];
 
   var atos = [];
 
@@ -216,6 +218,7 @@ function verificarVinculacaoAto(proto) {
   parseAto(controleArr, 'Escritura');
   parseAto(retifArr, 'Retifica\u00e7\u00e3o');
   parseAto(substArr, 'Substabelecimento');
+  parseAto(revogArr, 'Revogação');
 
   if (atos.length === 0) {
     cardEl.style.display = 'none';

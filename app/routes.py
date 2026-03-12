@@ -91,6 +91,13 @@ def substabelecimentos():
     return render_template("substabelecimentos.html")
 
 
+@main_bp.route("/revogacao-procuracao")
+@login_required
+@perfil_required("master", "administrador")
+def revogacao_procuracao():
+    return render_template("revogacao_procuracao.html")
+
+
 @main_bp.route("/relatorios/coaf")
 @login_required
 @perfil_required("master", "administrador")

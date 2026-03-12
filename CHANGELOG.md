@@ -10,6 +10,7 @@ Controle de correções e melhorias do sistema
 - Sidebar: a seção CLIENTES passa a exibir dois itens — "Pessoa Física" (ícone user-gear) e "Pessoa Jurídica" (ícone building-office).
 - Cadastro de Protocolo: adicionada seção "Corretor(es)" com seleção múltipla via chips. Permite vincular um ou mais corretores ao protocolo, buscando qualquer cliente da base. Ao salvar, o sistema verifica e atualiza automaticamente os flags `Corretor_T_F` (field_7431) e `Advogado_T_F` (field_7430) na tabela de clientes, quando estes ainda não estiverem marcados como `true`.
 - Detalhamento de Protocolo: exibe os corretores vinculados ao protocolo com nome, CPF e CRECI (quando preenchido). A informação não consta no relatório impresso.
+- Revogação de Procuração: módulo dedicado ao cadastro de escrituras de revogação de procuração. Permite vincular a procuração revogada e o protocolo da revogadora.
 
 ## [0.9.8] - 2026-03-07
 

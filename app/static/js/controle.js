@@ -12,7 +12,8 @@ var CONFIG = {
     protocolo: 755,
     imoveis: 773,
     retificacoes: 753,
-    substabelecimentos: 762
+    substabelecimentos: 762,
+    revogacao: 777
   },
   fields: {
     // Controle (745)
@@ -50,7 +51,11 @@ var CONFIG = {
     // Substabelecimentos (campo reverso no Controle + campos da tabela 762)
     substabelecimentoReverso: 'field_7331',
     substLivro: 'field_7322',
-    substPagina: 'field_7323'
+    substPagina: 'field_7323',
+    // Revogação (campo reverso no Controle + campos da tabela 777)
+    revogacaoReverso: 'field_7439',
+    revogLivro: 'field_7436',
+    revogPagina: 'field_7437'
   },
   statusEmAndamento: 3064,
   statusFinalizado: 3065,
@@ -505,6 +510,9 @@ function preencherFormularioExistente(row) {
 
   // Verificar se escritura foi retificada
   verificarRetificacoes(row);
+
+  // Verificar se procuração foi revogada
+  verificarRevogacoes(row);
 
   // Verificar se escritura possui substabelecimentos
   verificarSubstabelecimentos(row);
@@ -1032,6 +1040,45 @@ function verificarRetificacoes(row) {
     })
     .catch(function(e) {
       console.error('Erro ao verificar retificações:', e);
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+// REVOGAÇÕES — Banner informativo (severo)
+// ═══════════════════════════════════════════════════════
+function verificarRevogacoes(row) {
+  var container = document.getElementById('revogacaoBannerContainer');
+  container.innerHTML = '';
+
+  var revogArr = row[CONFIG.fields.revogacaoReverso];
+  if (!revogArr || revogArr.length === 0) return;
+
+  var promises = [];
+  for (var i = 0; i < revogArr.length; i++) {
+    (function(revogId) {
+      promises.push(
+        fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.revogacao + '/' + revogId + '/?user_field_names=false', {
+          headers: apiHeaders()
+        }).then(function(r) { return r.json(); })
+      );
+    })(revogArr[i].id);
+  }
+
+  Promise.all(promises)
+    .then(function(rows) {
+      for (var j = 0; j < rows.length; j++) {
+        var livro = rows[j][CONFIG.fields.revogLivro] || '';
+        var pagina = rows[j][CONFIG.fields.revogPagina] || '';
+        var banner = document.createElement('div');
+        banner.className = 'revogacao-banner';
+        banner.innerHTML =
+          '<i class="ph ph-warning-circle"></i>' +
+          '<span>Esta procuração foi <strong>REVOGADA</strong> pela revogadora: <strong>Livro ' + livro + ', Página ' + pagina + '</strong></span>';
+        container.appendChild(banner);
+      }
+    })
+    .catch(function(e) {
+      console.error('Erro ao verificar revogações:', e);
     });
 }
 

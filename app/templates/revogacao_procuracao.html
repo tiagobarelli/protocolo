@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Revogação de Procuração - Sistema Interno{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/revogacao_procuracao.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<!-- Hamburger mobile -->
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<!-- Overlay de loading -->
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+<!-- CONTEUDO PRINCIPAL -->
+  <main class="main-content">
+    {% include "partials/flash_messages.html" %}
+
+    <!-- ===== CARD DE BUSCA ===== -->
+    <div class="card" id="searchCard">
+      <div class="page-header">
+        <h1><i class="ph ph-exclude-square" style="color:var(--accent);"></i> Revogação de Procuração</h1>
+        <p>Busque por identificador ou por Livro + Página da Revogação para consultar ou criar um registro.</p>
+      </div>
+
+      <div id="searchMsg" class="msg-box"></div>
+
+      <!-- Busca por mascara -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-magnifying-glass"></i> Busca por Identificador</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="buscaMascara">Identificador</label>
+            <input type="text" id="buscaMascara" placeholder="L_XXX_P_YYY" autocomplete="off">
+          </div>
+          <div class="form-group small" style="justify-content:flex-end;">
+            <button type="button" class="btn btn-primary" id="btnBuscarMascara">
+              <i class="ph ph-magnifying-glass"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="search-divider">ou</div>
+
+      <!-- Busca por Livro + Pagina -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-book-open"></i> Busca por Livro e Página</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="buscaLivro">Livro Revogação</label>
+            <input type="text" id="buscaLivro" placeholder="Ex: 150" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="buscaPagina">Página Revogação <span class="hint">(máx 400)</span></label>
+            <input type="text" id="buscaPagina" placeholder="Ex: 25" maxlength="3" autocomplete="off">
+          </div>
+          <div class="form-group small" style="justify-content:flex-end;">
+            <button type="button" class="btn btn-primary" id="btnBuscarLP">
+              <i class="ph ph-magnifying-glass"></i> Buscar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CARD DO FORMULARIO (oculto ate busca) ===== -->
+    <div class="card" id="formCard" style="display:none;">
+      <div id="formMsg" class="msg-box"></div>
+
+      <!-- Secao 1: Identificacao -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-identification-card"></i> Identificação</div>
+        <div class="form-row">
+          <div class="form-group small">
+            <label for="livroInput">Livro Revogação</label>
+            <input type="text" id="livroInput" readonly>
+          </div>
+          <div class="form-group small">
+            <label for="paginaInput">Página Revogação</label>
+            <input type="text" id="paginaInput" readonly>
+          </div>
+          <div class="form-group">
+            <label>Identificador</label>
+            <span class="identificador-display" id="identificadorDisplay">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secao 2: Procuracao(oes) Revogada(s) -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-link"></i> Procuração(ões) Revogada(s)</div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label for="procuracaoInput">Buscar procuração por identificador</label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="procuracaoInput" placeholder="Digite o identificador da procuração (L_XXX_P_YYY)..." autocomplete="off">
+              <div class="autocomplete-list" id="procuracaoAutoList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="chips-container" id="procuracoesChips"></div>
+      </div>
+
+      <!-- Secao: Protocolo (facultativo) -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-file-dashed"></i> Protocolo</div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label for="protocoloInput">Buscar protocolo por número</label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="protocoloInput" placeholder="Digite o número do protocolo..." autocomplete="off">
+              <div class="autocomplete-list" id="protocoloAutoList"></div>
+            </div>
+          </div>
+        </div>
+        <div id="protocoloInfo" class="msg-box"></div>
+      </div>
+
+      <!-- Secao: Clientes -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-users"></i> Clientes</div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label for="clienteInput">Buscar cliente por nome</label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="clienteInput" placeholder="Digite o nome do cliente..." autocomplete="off">
+              <div class="autocomplete-list" id="clienteAutoList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="chips-container" id="clientesChips"></div>
+      </div>
+
+      <!-- Secao 3: Dados da Revogação -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-file-text"></i> Dados da Revogação</div>
+        <div class="form-row">
+          <div class="form-group small">
+            <label for="dataSubstabelecimento">Data</label>
+            <input type="date" id="dataSubstabelecimento" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="escreventeSelect">Escrevente</label>
+            <select id="escreventeSelect"><option value="">Carregando...</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="odinSelect">ODIN</label>
+            <select id="odinSelect"><option value="">Selecione...</option></select>
+          </div>
+          <div class="form-group">
+            <label for="anotadoSelect">Anotado?</label>
+            <select id="anotadoSelect"><option value="">Selecione...</option></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secao 4: Observacao -->
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-note-pencil"></i> Observação</div>
+        <div class="form-row single">
+          <div class="form-group">
+            <div class="md-grid">
+              <div class="md-editor-container">
+                <div class="md-toolbar">
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('list')" title="Lista"><i class="ph ph-list-bullets"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('heading')" title="Título"><i class="ph ph-text-h-two"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('code')" title="Código"><i class="ph ph-code"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('checklist')" title="Checklist"><i class="ph ph-check-square"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownObservacao('hr')" title="Separador"><i class="ph ph-minus"></i></button>
+                </div>
+                <textarea id="observacaoTextarea" placeholder="Registre observações aqui..." autocomplete="off"></textarea>
+              </div>
+              <div id="observacaoPreview" class="md-preview"><div class="md-placeholder">Pré-visualização do Markdown...</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botoes de acao -->
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="limparFormulario()"><i class="ph ph-eraser"></i> Limpar</button>
+        <button type="button" class="btn btn-primary" id="btnSalvar" onclick="salvarRevogacao()"><i class="ph ph-check-circle"></i> Salvar</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/revogacao_procuracao.js') }}"></script>
+{% endblock %}

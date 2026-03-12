@@ -1,10 +1,11 @@
 <aside class="sidebar">
   <div class="sidebar-header">
-    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="55" height="55">
+    <!-- <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" width="55" height="55"> -->
     <h1>Thṓth</h1>
+    <h6>Gestão Notarial</h6>
   </div>
 
-  {% set gestao_atos_active = request.endpoint in ['main.controle', 'main.controle_certidoes', 'main.retificacoes', 'main.substabelecimentos', 'main.coaf'] %}
+  {% set gestao_atos_active = request.endpoint in ['main.controle', 'main.controle_certidoes', 'main.retificacoes', 'main.substabelecimentos', 'main.revogacao_procuracao', 'main.coaf'] %}
   {% set consultar_active = request.endpoint in ['main.consultar', 'main.protocolo_detalhe', 'main.protocolo_imprimir'] %}
   {% set relatorios_active = request.endpoint in ['main.relatorio_controle_atos', 'main.relatorio_controle_certidoes', 'main.relatorio_coaf'] %}
   {% set notificacoes_active = request.endpoint == 'main.notificacoes' %}
@@ -62,6 +63,9 @@
         </a>
         <a href="{{ url_for('main.substabelecimentos') }}" class="nav-item sub {% if request.endpoint == 'main.substabelecimentos' %}active{% endif %}">
           <i class="ph ph-swap"></i> Substabelecimentos
+        </a>
+        <a href="{{ url_for('main.revogacao_procuracao') }}" class="nav-item sub {% if request.endpoint == 'main.revogacao_procuracao' %}active{% endif %}">
+          <i class="ph ph-exclude-square"></i> Revoga&ccedil;&atilde;o Procura&ccedil;&atilde;o
         </a>
         <a href="{{ url_for('main.coaf') }}" class="nav-item sub {% if request.endpoint == 'main.coaf' %}active{% endif %}">
           <i class="ph ph-money"></i> Controle COAF

@@ -1,4 +1,4 @@
-/* Pagina Controle — Livros de Notas */
+/* Pagina Revogacao de Procuracao — ES5 only */
 :root {
   --primary: #2f3e46;
   --primary-hover: #52796f;
@@ -61,13 +61,6 @@ textarea { resize: vertical; min-height: 100px; }
 .msg-box.error { background: var(--danger-bg); border: 1px solid var(--danger); color: #b91c1c; display: flex; }
 .msg-box.info { background: var(--accent-soft); border: 1px solid var(--accent); color: #2f3e46; display: flex; }
 
-/* ==================== TOGGLE / COLLAPSIBLE ==================== */
-.toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: var(--accent-soft); padding: 12px; border-radius: var(--radius); border: 1px dashed var(--accent); }
-.toggle-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
-.toggle-row label { margin-bottom: 0; cursor: pointer; color: var(--accent); font-weight: 600; }
-.collapsible { display: none; animation: slideDown 0.3s ease-out; }
-.collapsible.open { display: block; }
-
 /* ==================== AUTOCOMPLETE ==================== */
 .autocomplete-wrapper { position: relative; }
 .autocomplete-list { position: absolute; top: 105%; left: 0; right: 0; z-index: 50; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); max-height: 220px; overflow-y: auto; box-shadow: var(--shadow-md); display: none; }
@@ -105,7 +98,7 @@ textarea { resize: vertical; min-height: 100px; }
 .overlay.active { display: flex; }
 .spinner { width: 48px; height: 48px; border: 4px solid #d6d3d1; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 
-/* ==================== CHIPS (Clientes) ==================== */
+/* ==================== CHIPS (Procuracoes) ==================== */
 .chips-container {
   display: flex;
   flex-wrap: wrap;
@@ -142,158 +135,6 @@ textarea { resize: vertical; min-height: 100px; }
 }
 
 .chip-remove:hover { color: var(--danger); }
-
-/* ==================== BANNER RETIFICACAO ==================== */
-.retificacao-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: #faf0ed;
-  border: 1px solid #fca5a5;
-  border-left: 4px solid #ef4444;
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-  font-size: 0.9rem;
-  color: #991b1b;
-  animation: slideDown 0.3s ease;
-}
-
-.retificacao-banner i {
-  font-size: 1.2rem;
-  color: #ef4444;
-  flex-shrink: 0;
-}
-
-.retificacao-banner span {
-  flex: 1;
-}
-
-/* ==================== BANNER REVOGACAO (severo) ==================== */
-.revogacao-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: #fef2f2;
-  border: 1px solid #f87171;
-  border-left: 4px solid #dc2626;
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-  font-size: 0.9rem;
-  color: #7f1d1d;
-  font-weight: 600;
-  animation: slideDown 0.3s ease;
-}
-
-.revogacao-banner i {
-  font-size: 1.2rem;
-  color: #dc2626;
-  flex-shrink: 0;
-}
-
-.revogacao-banner span {
-  flex: 1;
-}
-
-/* ==================== BANNER SUBSTABELECIMENTO ==================== */
-.substabelecimento-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: #faf0ed;
-  border: 1px solid #fca5a5;
-  border-left: 4px solid #ef4444;
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-  font-size: 0.9rem;
-  color: #991b1b;
-  animation: slideDown 0.3s ease;
-}
-
-.substabelecimento-banner i {
-  font-size: 1.2rem;
-  color: #ef4444;
-  flex-shrink: 0;
-}
-
-.substabelecimento-banner span {
-  flex: 1;
-}
-
-/* ==================== IMOVEL BLOCKS ==================== */
-.imovel-block {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-  overflow: hidden;
-  animation: slideDown 0.3s ease-out;
-}
-
-.imovel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: #fafaf9;
-  border-bottom: 1px solid var(--border);
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-dark);
-}
-
-.imovel-header .btn-remove-imovel {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 1.1rem;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-}
-
-.imovel-header .btn-remove-imovel:hover {
-  color: var(--danger);
-  background: var(--danger-bg);
-}
-
-.imovel-body { padding: 16px; }
-
-.imovel-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.imovel-grid .form-group { flex: none; }
-
-.btn-add-imovel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 16px;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-add-imovel:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
-}
 
 /* ==================== IDENTIFICADOR ==================== */
 .identificador-display {
@@ -332,154 +173,9 @@ textarea { resize: vertical; min-height: 100px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ==================== BOTAO CONSULTAR DOCS ==================== */
-.btn-docs {
-  margin-left: auto;
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: white;
-  color: var(--text-main);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.2s;
-  text-transform: none;
-  letter-spacing: 0;
-}
-.btn-docs:hover { background: #fafaf9; border-color: #d6d3d1; color: var(--accent); }
-
-/* ==================== RESUMO INLINE DOCS ==================== */
-.docs-resumo {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
-.docs-resumo.clickable { cursor: pointer; }
-.docs-resumo.clickable:hover { color: var(--accent); }
-
-/* ==================== DRAWER LATERAL (Paperless) ==================== */
-.paperless-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  width: 420px;
-  background: var(--surface);
-  z-index: 200;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-  display: flex;
-  flex-direction: column;
-}
-.paperless-drawer.open { transform: translateX(0); }
-
-.drawer-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 199;
-  display: none;
-}
-.drawer-overlay.active { display: block; }
-
-.drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.drawer-header h3 {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-dark);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-}
-.drawer-close {
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.drawer-close:hover { color: var(--accent); background: var(--accent-soft); }
-
-.drawer-body {
-  overflow-y: auto;
-  padding: 20px;
-  flex: 1;
-}
-
-/* ==================== CARDS DE DOCUMENTO ==================== */
-.doc-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-  overflow: hidden;
-  background: var(--surface);
-  transition: box-shadow 0.2s;
-}
-.doc-card:hover { box-shadow: var(--shadow-md); }
-
-.doc-thumb {
-  width: 100%;
-  display: block;
-  cursor: pointer;
-  border-bottom: 1px solid var(--border);
-  background: #fafaf9;
-}
-
-.doc-info {
-  padding: 12px;
-}
-.doc-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-dark);
-  word-break: break-word;
-}
-
-.doc-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-.doc-empty i { font-size: 2rem; display: block; margin-bottom: 12px; opacity: 0.5; }
-
-.doc-loading {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-.doc-loading .spinner {
-  width: 32px;
-  height: 32px;
-  margin: 0 auto 12px;
-}
-
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .form-row { flex-direction: column; gap: 16px; }
   .form-group.small { flex: 1; }
-  .imovel-grid { grid-template-columns: 1fr; }
   .card { padding: 20px; }
-  .paperless-drawer { width: 100%; }
 }

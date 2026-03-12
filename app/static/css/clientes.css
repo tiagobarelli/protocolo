@@ -364,3 +364,11 @@ textarea { resize: vertical; min-height: 80px; }
   max-height: 300px;
   overflow-y: auto;
 }
+
+.search-hint {
+  margin-top: 16px;          /* Aumenta o afastamento da barra de busca */
+  font-size: 0.8rem;         /* Reduz o tamanho da fonte */
+  color: var(--text-muted);  /* Deixa a cor mais suave/discreta */
+  font-style: italic;        /* Opcional: dá um ar de "instrução" ao texto */
+  opacity: 0.8;              /* Deixa um pouco mais elegante */
+}
