@@ -372,3 +372,22 @@ textarea { resize: vertical; min-height: 80px; }
   font-style: italic;        /* Opcional: dá um ar de "instrução" ao texto */
   opacity: 0.8;              /* Deixa um pouco mais elegante */
 }
+
+/* ── Mensagens inline (avisos em campos) ── */
+.msg-inline {
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  margin-top: 4px;
+  border-radius: 6px;
+  line-height: 1.4;
+}
+.msg-inline.aviso-falecido {
+  background: var(--status-warning-bg, #fff3cd);
+  color: var(--status-warning-text, #856404);
+  border: 1px solid var(--status-warning-border, #ffc107);
+}
+.msg-inline.aviso-conflito {
+  background: var(--status-info-bg, #d1ecf1);
+  color: var(--status-info-text, #0c5460);
+  border: 1px solid var(--status-info-border, #bee5eb);
+}

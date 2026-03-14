@@ -5,7 +5,11 @@ Controle de correções e melhorias do sistema
 ## [0.9.10] - 2026-03-14
 
 ### Reformulado
-- Clientes: a tela de clientes foi reformulada para trabalhar a distinção possível entre casamento e união estável: o cliente pode ser divorciado e conviver em união estável. Agora o DB trabalha com campos distintos para isso, permitindo um detalahamento maior.
+- Clientes: a tela de clientes foi reformulada para trabalhar a distinção possível entre casamento e união estável: o cliente pode ser divorciado e conviver em união estável. Agora o DB trabalha com campos distintos para isso, permitindo um detalahamento maior. **Pendente:** Melhorias bidirecionais de alterações de estado civil foram criadas, mas é necessário o uso mais intenso do sistema para a detectação de eventual bug nos relacionamentos.
+
+### Corrigido
+- Clientes: limpar elimita o resíduo dos campos de busca em PF e PJ.
+- Retificações: mensagem de sucessão do cadastro realocada. 
 
 ## [0.9.9] - 2026-03-13
 

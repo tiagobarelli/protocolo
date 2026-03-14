@@ -131,6 +131,7 @@
                    placeholder="Comece a digitar o nome..." autocomplete="off">
             <div class="autocomplete-list" id="conjugeAutoList"></div>
           </div>
+          <div id="conjugeAviso" class="msg-inline" style="display:none;"></div>
         </div>
       </div>
 
@@ -158,6 +159,7 @@
                        placeholder="Comece a digitar o nome..." autocomplete="off">
                 <div class="autocomplete-list" id="companheiroAutoList"></div>
               </div>
+              <div id="companheiroAviso" class="msg-inline" style="display:none;"></div>
             </div>
           </div>
         </div>
@@ -210,6 +212,21 @@
         <div class="form-group">
           <label for="creciInput">CRECI</label>
           <input type="text" id="creciInput" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Switch: Falecido -->
+      <div class="toggle-row">
+        <label class="switch-label">
+          <input type="checkbox" id="switchFalecido">
+          <span class="switch-track"></span>
+          <span class="switch-text">Falecido(a)</span>
+        </label>
+      </div>
+      <div id="falecidoGroup" style="display:none;" class="form-row">
+        <div class="form-group small">
+          <label for="dataFalecimentoInput">Data de Falecimento <span class="hint">(Opcional)</span></label>
+          <input type="date" id="dataFalecimentoInput">
         </div>
       </div>
 

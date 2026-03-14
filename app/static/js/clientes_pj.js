@@ -557,6 +557,7 @@ function limparFormulario() {
   modoNovo = false;
   clienteCarregadoPorBusca = false;
   limparCamposFormulario();
+  document.getElementById('buscaInput').value = '';
   esconderMsg('formMsg');
   esconderFormulario();
 }

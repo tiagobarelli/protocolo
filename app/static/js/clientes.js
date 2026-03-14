@@ -29,7 +29,9 @@ var FIELDS = {
   creci:            'field_7432',
   uniaoEstavelTF:     'field_7450',
   regraPatrimonialUE: 'field_7451',
-  companheiro:        'field_7452'
+  companheiro:        'field_7452',
+  falecidoTF:         'field_7453',
+  dataFalecimento:    'field_7454'
 };
 
 var FIELD_LABELS = {
@@ -53,7 +55,9 @@ var FIELD_LABELS = {
   creci:            'CRECI',
   uniaoEstavelTF:     'União Estável',
   regraPatrimonialUE: 'Regra Patrimonial (UE)',
-  companheiro:        'Companheiro(a)'
+  companheiro:        'Companheiro(a)',
+  falecidoTF:         'Falecido',
+  dataFalecimento:    'Data de Falecimento'
 };
 
 var ESTADO_CIVIL_OPTS = [
@@ -340,6 +344,11 @@ function popularRegraPatrimonialUE() {
 }
 
 function atualizarVisibilidadeEstadoCivil() {
+  var conjugeAviso = document.getElementById('conjugeAviso');
+  if (conjugeAviso) { conjugeAviso.style.display = 'none'; }
+  var companheiroAviso = document.getElementById('companheiroAviso');
+  if (companheiroAviso) { companheiroAviso.style.display = 'none'; }
+
   var ecVal = document.getElementById('estadoCivilSelect').value;
 
   var regraPatrimonialGroup  = document.getElementById('regraPatrimonialGroup');
@@ -640,6 +649,15 @@ function capturarSnapshot(cli) {
   snap.regraPatrimonialUE = (rpUEObj && rpUEObj.value) ? rpUEObj.value : '';
   var compArr = cli[FIELDS.companheiro];
   snap.companheiro = (compArr && compArr.length > 0 && compArr[0].value) ? compArr[0].value : '';
+  snap.falecidoTF = cli[FIELDS.falecidoTF] ? true : false;
+  snap.dataFalecimento = cli[FIELDS.dataFalecimento] || '';
+
+  // IDs auxiliares para sincronização bidirecional (não auditados)
+  snap._conjugeId = (conjArr && conjArr.length > 0) ? conjArr[0].id : null;
+  snap._companheiroId = (compArr && compArr.length > 0) ? compArr[0].id : null;
+  snap._estadoCivilId = (ecObj && ecObj.id) ? String(ecObj.id) : '';
+  snap._uniaoEstavelTF = cli[FIELDS.uniaoEstavelTF] ? true : false;
+
   return snap;
 }
 
@@ -707,6 +725,8 @@ function capturarEstadoAtualFormulario() {
   }
 
   estado.companheiro = companheiroId ? document.getElementById('companheiroInput').value.trim() : '';
+  estado.falecidoTF = document.getElementById('switchFalecido').checked;
+  estado.dataFalecimento = document.getElementById('dataFalecimentoInput').value || '';
 
   return estado;
 }
@@ -777,6 +797,11 @@ function preencherFormulario(cli) {
   document.getElementById('switchCorretor').checked = corretor;
   document.getElementById('creciGroup').style.display = corretor ? '' : 'none';
   document.getElementById('creciInput').value = cli[FIELDS.creci] || '';
+
+  var falecido = cli[FIELDS.falecidoTF] ? true : false;
+  document.getElementById('switchFalecido').checked = falecido;
+  document.getElementById('falecidoGroup').style.display = falecido ? '' : 'none';
+  document.getElementById('dataFalecimentoInput').value = cli[FIELDS.dataFalecimento] || '';
 
   var outrosVal = cli[FIELDS.outros] || '';
   document.getElementById('outrosTextarea').value = outrosVal;
@@ -885,6 +910,9 @@ function limparCamposFormulario() {
   document.getElementById('switchCorretor').checked = false;
   document.getElementById('creciGroup').style.display = 'none';
   document.getElementById('creciInput').value = '';
+  document.getElementById('switchFalecido').checked = false;
+  document.getElementById('falecidoGroup').style.display = 'none';
+  document.getElementById('dataFalecimentoInput').value = '';
   document.getElementById('outrosTextarea').value   = '';
   atualizarPreviewOutros();
   document.getElementById('estadoCivilSelect').value = '';
@@ -897,6 +925,10 @@ function limparCamposFormulario() {
   document.getElementById('regraPatrimonialUESelect').value = '';
   document.getElementById('companheiroInput').value = '';
   companheiroId = null;
+  var conjugeAvisoEl = document.getElementById('conjugeAviso');
+  if (conjugeAvisoEl) { conjugeAvisoEl.style.display = 'none'; conjugeAvisoEl.innerHTML = ''; }
+  var companheiroAvisoEl = document.getElementById('companheiroAviso');
+  if (companheiroAvisoEl) { companheiroAvisoEl.style.display = 'none'; companheiroAvisoEl.innerHTML = ''; }
   atualizarVisibilidadeEstadoCivil();
   document.getElementById('protocolosList').innerHTML =
     '<div class="protocols-empty">Nenhum protocolo vinculado.</div>';
@@ -916,6 +948,7 @@ function limparFormulario() {
   clienteCarregadoPorBusca = false;
   conjugeId = null;
   limparCamposFormulario();
+  document.getElementById('buscaInput').value = '';
   esconderMsg('formMsg');
   esconderFormulario();
   fecharDrawer();
@@ -979,6 +1012,48 @@ function fecharAutocompleteConjuge() {
 }
 
 function selecionarConjuge(cli) {
+  // Limpar aviso anterior
+  var avisoEl = document.getElementById('conjugeAviso');
+  avisoEl.style.display = 'none';
+  avisoEl.innerHTML = '';
+  avisoEl.className = 'msg-inline';
+
+  // Verificar se a pessoa selecionada é o próprio cliente sendo editado
+  if (clienteAtual && cli.id === clienteAtual.id) {
+    avisoEl.className = 'msg-inline aviso-conflito';
+    avisoEl.textContent = 'Não é possível vincular o cliente a si mesmo.';
+    avisoEl.style.display = '';
+    return;
+  }
+
+  // Verificar falecido
+  if (cli[FIELDS.falecidoTF]) {
+    avisoEl.className = 'msg-inline aviso-falecido';
+    avisoEl.textContent = 'Atenção: ' + (cli[FIELDS.nome] || 'esta pessoa') + ' está indicado(a) como falecido(a).';
+    avisoEl.style.display = '';
+  }
+
+  // Verificar conflito de cônjuge existente
+  var conjExistente = cli[FIELDS.conjuge];
+  if (conjExistente && conjExistente.length > 0) {
+    var conjAtualId = conjExistente[0].id;
+    var conjAtualNome = conjExistente[0].value || '';
+    // Se o cônjuge existente NÃO é o cliente atual, há conflito
+    if (!clienteAtual || conjAtualId !== clienteAtual.id) {
+      var confirmar = window.confirm(
+        (cli[FIELDS.nome] || 'Esta pessoa') + ' já possui cônjuge cadastrado: ' +
+        conjAtualNome + '.\nDeseja sobrescrever o vínculo?'
+      );
+      if (!confirmar) {
+        document.getElementById('conjugeInput').value = '';
+        conjugeId = null;
+        fecharAutocompleteConjuge();
+        return;
+      }
+    }
+  }
+
+  // Seleção confirmada
   conjugeId = cli.id;
   document.getElementById('conjugeInput').value = cli[FIELDS.nome] || '';
   fecharAutocompleteConjuge();
@@ -1040,6 +1115,47 @@ function fecharAutocompleteCompanheiro() {
 }
 
 function selecionarCompanheiro(cli) {
+  // Limpar aviso anterior
+  var avisoEl = document.getElementById('companheiroAviso');
+  avisoEl.style.display = 'none';
+  avisoEl.innerHTML = '';
+  avisoEl.className = 'msg-inline';
+
+  // Verificar auto-referência
+  if (clienteAtual && cli.id === clienteAtual.id) {
+    avisoEl.className = 'msg-inline aviso-conflito';
+    avisoEl.textContent = 'Não é possível vincular o cliente a si mesmo.';
+    avisoEl.style.display = '';
+    return;
+  }
+
+  // Verificar falecido
+  if (cli[FIELDS.falecidoTF]) {
+    avisoEl.className = 'msg-inline aviso-falecido';
+    avisoEl.textContent = 'Atenção: ' + (cli[FIELDS.nome] || 'esta pessoa') + ' está indicado(a) como falecido(a).';
+    avisoEl.style.display = '';
+  }
+
+  // Verificar conflito de companheiro existente
+  var compExistente = cli[FIELDS.companheiro];
+  if (compExistente && compExistente.length > 0) {
+    var compAtualId = compExistente[0].id;
+    var compAtualNome = compExistente[0].value || '';
+    if (!clienteAtual || compAtualId !== clienteAtual.id) {
+      var confirmar = window.confirm(
+        (cli[FIELDS.nome] || 'Esta pessoa') + ' já possui companheiro(a) cadastrado(a): ' +
+        compAtualNome + '.\nDeseja sobrescrever o vínculo?'
+      );
+      if (!confirmar) {
+        document.getElementById('companheiroInput').value = '';
+        companheiroId = null;
+        fecharAutocompleteCompanheiro();
+        return;
+      }
+    }
+  }
+
+  // Seleção confirmada
   companheiroId = cli.id;
   document.getElementById('companheiroInput').value = cli[FIELDS.nome] || '';
   fecharAutocompleteCompanheiro();
@@ -1210,6 +1326,10 @@ function construirPayload(incluirDocumentos) {
   payload[FIELDS.corretorTF]   = document.getElementById('switchCorretor').checked;
   payload[FIELDS.creci]        = document.getElementById('creciInput').value.trim() || null;
 
+  payload[FIELDS.falecidoTF] = document.getElementById('switchFalecido').checked;
+  var dataFal = document.getElementById('dataFalecimentoInput').value;
+  payload[FIELDS.dataFalecimento] = dataFal || null;
+
   if (incluirDocumentos) {
     var cpfFormatado  = document.getElementById('cpfInput').value.trim();
     if (cpfFormatado)  payload[FIELDS.cpf]  = cpfFormatado;
@@ -1249,6 +1369,14 @@ function salvarCliente() {
   }
   if (cnpjLimpo && !validarCNPJ(cnpjLimpo)) {
     return mostrarMsg('formMsg', 'error', 'CNPJ inválido. Verifique os dígitos verificadores.');
+  }
+
+  // Validação de transição de estado civil: não é juridicamente possível voltar a Solteiro
+  var ecAtual = document.getElementById('estadoCivilSelect').value;
+  if (ecAtual === '3107' && snapshotCliente && snapshotCliente._estadoCivilId &&
+      snapshotCliente._estadoCivilId !== '3107' && snapshotCliente._estadoCivilId !== '') {
+    mostrarMsg('formMsg', 'warning',
+      'Atenção: juridicamente não é possível retornar ao estado civil de Solteiro após outro estado civil ter sido registrado. O cadastro será salvo, mas verifique se a alteração está correta.');
   }
 
   var btnSalvar = document.getElementById('btnSalvar');
@@ -1299,6 +1427,8 @@ function executarPost(btnSalvar) {
       esconderOverlay();
       btnSalvar.disabled = false;
       mostrarMsg('formMsg', 'success', 'Cliente cadastrado com sucesso!');
+      // Sincronização bidirecional (no POST, snapshot é null — usa estado atual)
+      sincronizarParceiros(null, data.id, document.getElementById('nomeInput').value.trim());
     })
     .catch(function(e) {
       esconderOverlay();
@@ -1312,6 +1442,7 @@ function executarPatch(btnSalvar) {
   // Gerar logs de alteração antes do PATCH
   var estadoAtual = capturarEstadoAtualFormulario();
   var linhasLog = gerarLinhasLog(snapshotCliente, estadoAtual);
+  var snapshotParaSync = snapshotCliente; // Preservar referência antes de atualizar
 
   var payload = construirPayload(false);
 
@@ -1338,6 +1469,8 @@ function executarPatch(btnSalvar) {
       esconderOverlay();
       btnSalvar.disabled = false;
       mostrarMsg('formMsg', 'success', 'Alterações salvas com sucesso!');
+      // Sincronização bidirecional
+      sincronizarParceiros(snapshotParaSync, clienteAtual.id, document.getElementById('nomeInput').value.trim());
     })
     .catch(function(e) {
       esconderOverlay();
@@ -1345,6 +1478,263 @@ function executarPatch(btnSalvar) {
       mostrarMsg('formMsg', 'error', e.message || 'Erro ao salvar cliente.');
       console.error(e);
     });
+}
+
+// ═══════════════════════════════════════════════════════
+// SINCRONIZAÇÃO BIDIRECIONAL DE PARCEIROS
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Faz PATCH bidirecional no parceiro.
+ * @param {number} parceiroId — row ID do parceiro na Table 754
+ * @param {object} camposParaPatch — ex: { field_7343: 3098, field_7344: [], field_7348: null }
+ * @param {object} labelsParaLog — ex: { 'field_7343': 'Estado Civil', 'field_7344': 'Cônjuge' }
+ *   Mapa dos fields que estão sendo alterados para seus rótulos legíveis.
+ *   Usado para gerar as linhas de log no registro do parceiro.
+ * @returns {Promise} — resolve com { ok: true } ou { ok: false, erro: string }
+ */
+function patchParceiro(parceiroId, camposParaPatch, labelsParaLog) {
+  var urlGet = API_BASE + '/database/rows/table/' + TABLE_CLIENTES + '/' +
+    parceiroId + '/?user_field_names=false';
+
+  return fetch(urlGet, { headers: apiHeaders() })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Erro ao buscar parceiro.');
+      return r.json();
+    })
+    .then(function(parceiro) {
+      // Gerar linhas de log para o parceiro
+      var agora = new Date();
+      var dia = ('0' + agora.getDate()).slice(-2);
+      var mes = ('0' + (agora.getMonth() + 1)).slice(-2);
+      var ano = agora.getFullYear();
+      var hora = ('0' + agora.getHours()).slice(-2);
+      var min = ('0' + agora.getMinutes()).slice(-2);
+      var dataHora = dia + '/' + mes + '/' + ano + ' ' + hora + ':' + min;
+      var nomeUsuario = (window.CURRENT_USER && window.CURRENT_USER.nome)
+        ? window.CURRENT_USER.nome : 'Usuário';
+
+      var linhasLog = [];
+      var chaves = Object.keys(camposParaPatch);
+      for (var i = 0; i < chaves.length; i++) {
+        var fieldKey = chaves[i];
+        var labelCampo = labelsParaLog[fieldKey] || fieldKey;
+
+        // Determinar valor anterior legível
+        var valorAnteriorRaw = parceiro[fieldKey];
+        var valorAnterior = '';
+        if (valorAnteriorRaw === null || valorAnteriorRaw === undefined || valorAnteriorRaw === '') {
+          valorAnterior = '(vazio)';
+        } else if (typeof valorAnteriorRaw === 'object' && valorAnteriorRaw !== null) {
+          // single_select → { id, value }
+          if (valorAnteriorRaw.value) {
+            valorAnterior = valorAnteriorRaw.value;
+          }
+          // link_row → [{ id, value }]
+          else if (Array.isArray(valorAnteriorRaw) && valorAnteriorRaw.length > 0) {
+            valorAnterior = valorAnteriorRaw[0].value || String(valorAnteriorRaw[0].id);
+          } else if (Array.isArray(valorAnteriorRaw) && valorAnteriorRaw.length === 0) {
+            valorAnterior = '(vazio)';
+          } else {
+            valorAnterior = JSON.stringify(valorAnteriorRaw);
+          }
+        } else if (typeof valorAnteriorRaw === 'boolean') {
+          valorAnterior = valorAnteriorRaw ? 'Sim' : 'Não';
+        } else {
+          valorAnterior = String(valorAnteriorRaw);
+        }
+
+        linhasLog.push(nomeUsuario + '. ' + dataHora +
+          ': O campo ' + labelCampo + ' foi alterado (sinc. automática). Valor anterior: ' + valorAnterior + '.');
+      }
+
+      // Montar payload
+      var payload = {};
+      for (var j = 0; j < chaves.length; j++) {
+        payload[chaves[j]] = camposParaPatch[chaves[j]];
+      }
+
+      // Adicionar log
+      if (linhasLog.length > 0) {
+        var logsExistentes = parceiro[FIELDS.logs] || '';
+        var novasLinhas = linhasLog.join('\n');
+        payload[FIELDS.logs] = logsExistentes
+          ? (novasLinhas + '\n' + logsExistentes)
+          : novasLinhas;
+      }
+
+      // PATCH
+      var urlPatch = API_BASE + '/database/rows/table/' + TABLE_CLIENTES + '/' +
+        parceiroId + '/?user_field_names=false';
+      return fetch(urlPatch, {
+        method: 'PATCH',
+        headers: apiHeaders(),
+        body: JSON.stringify(payload)
+      });
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Erro no PATCH do parceiro.');
+      return { ok: true };
+    })
+    .catch(function(e) {
+      console.error('Falha na sincronização bidirecional:', e);
+      return { ok: false, erro: e.message };
+    });
+}
+
+/**
+ * Após o save do cliente principal, verifica o que mudou e sincroniza
+ * o cadastro do(a) cônjuge/companheiro(a) automaticamente.
+ * @param {object|null} snapshot — snapshot capturado antes da edição
+ * @param {number} clienteId — ID do cliente que acabou de ser salvo
+ * @param {string} clienteNome — Nome do cliente salvo (para logs no parceiro)
+ */
+function sincronizarParceiros(snapshot, clienteId, clienteNome) {
+  var ecAtual = document.getElementById('estadoCivilSelect').value;
+  var ecAnterior = snapshot ? snapshot._estadoCivilId : '';
+
+  var conjugeIdAtual = conjugeId;
+  var conjugeIdAnterior = snapshot ? snapshot._conjugeId : null;
+
+  var ueAtual = document.getElementById('switchUniaoEstavel').checked;
+  var ueAnterior = snapshot ? snapshot._uniaoEstavelTF : false;
+
+  var companheiroIdAtual = companheiroId;
+  var companheiroIdAnterior = snapshot ? snapshot._companheiroId : null;
+
+  var rpVal = document.getElementById('regraPatrimonialSelect').value;
+  var rpUEVal = document.getElementById('regraPatrimonialUESelect').value;
+
+  var promessas = [];
+
+  // ────────────────────────────────────────
+  // CASO 1: Novo vínculo de cônjuge (Casado)
+  // ────────────────────────────────────────
+  // Condição: há um conjugeId atual E (é novo OU mudou de parceiro)
+  if (conjugeIdAtual && conjugeIdAtual !== conjugeIdAnterior && ecAtual === '3092') {
+    var camposCasamento = {};
+    camposCasamento[FIELDS.estadoCivil] = 3092; // Casado
+    camposCasamento[FIELDS.conjuge] = [clienteId];
+    camposCasamento[FIELDS.regraPatrimonial] = rpVal ? parseInt(rpVal, 10) : null;
+
+    var labelsCasamento = {};
+    labelsCasamento[FIELDS.estadoCivil] = 'Estado Civil';
+    labelsCasamento[FIELDS.conjuge] = 'Cônjuge';
+    labelsCasamento[FIELDS.regraPatrimonial] = 'Regra Patrimonial';
+
+    promessas.push(patchParceiro(conjugeIdAtual, camposCasamento, labelsCasamento));
+  }
+
+  // ────────────────────────────────────────
+  // CASO 2: Dissolução de casamento (Casado → Divorciado ou Separado)
+  // ────────────────────────────────────────
+  // Condição: havia cônjuge anterior, não há cônjuge atual, EC mudou para Divorciado ou Separado
+  if (conjugeIdAnterior && !conjugeIdAtual &&
+      (ecAtual === '3097' || ecAtual === '3098') && ecAnterior === '3092') {
+    var camposDissol = {};
+    camposDissol[FIELDS.estadoCivil] = parseInt(ecAtual, 10); // Mesmo estado que o principal
+    camposDissol[FIELDS.conjuge] = [];
+    camposDissol[FIELDS.regraPatrimonial] = null;
+
+    var labelsDissol = {};
+    labelsDissol[FIELDS.estadoCivil] = 'Estado Civil';
+    labelsDissol[FIELDS.conjuge] = 'Cônjuge';
+    labelsDissol[FIELDS.regraPatrimonial] = 'Regra Patrimonial';
+
+    promessas.push(patchParceiro(conjugeIdAnterior, camposDissol, labelsDissol));
+  }
+
+  // ────────────────────────────────────────
+  // CASO 3: Viuvez (proveniente de casamento)
+  // ────────────────────────────────────────
+  // Condição: havia cônjuge anterior, EC mudou para Viúvo, EC anterior era Casado
+  // Ação: marcar cônjuge anterior como Falecido(a) APENAS — manter todos os demais dados intactos
+  if (conjugeIdAnterior && ecAtual === '3099' && ecAnterior === '3092') {
+    var camposViuvez = {};
+    camposViuvez[FIELDS.falecidoTF] = true;
+
+    var labelsViuvez = {};
+    labelsViuvez[FIELDS.falecidoTF] = 'Falecido';
+
+    promessas.push(patchParceiro(conjugeIdAnterior, camposViuvez, labelsViuvez));
+  }
+
+  // ────────────────────────────────────────
+  // CASO 4: Novo vínculo de companheiro (União Estável)
+  // ────────────────────────────────────────
+  // Condição: há companheiroId atual E (é novo OU mudou) E UE está ativa
+  if (companheiroIdAtual && companheiroIdAtual !== companheiroIdAnterior && ueAtual) {
+    var camposUE = {};
+    camposUE[FIELDS.uniaoEstavelTF] = true;
+    camposUE[FIELDS.companheiro] = [clienteId];
+    camposUE[FIELDS.regraPatrimonialUE] = rpUEVal ? parseInt(rpUEVal, 10) : null;
+
+    var labelsUE = {};
+    labelsUE[FIELDS.uniaoEstavelTF] = 'União Estável';
+    labelsUE[FIELDS.companheiro] = 'Companheiro(a)';
+    labelsUE[FIELDS.regraPatrimonialUE] = 'Regra Patrimonial (UE)';
+
+    promessas.push(patchParceiro(companheiroIdAtual, camposUE, labelsUE));
+  }
+
+  // ────────────────────────────────────────
+  // CASO 5: Dissolução de UE (sem viuvez)
+  // ────────────────────────────────────────
+  // Condição: havia companheiro anterior E (UE desmarcada OU companheiro removido) E NÃO é viuvez
+  if (companheiroIdAnterior && ueAnterior &&
+      (!ueAtual || !companheiroIdAtual) && ecAtual !== '3099') {
+    var camposDissolUE = {};
+    camposDissolUE[FIELDS.uniaoEstavelTF] = false;
+    camposDissolUE[FIELDS.companheiro] = [];
+    camposDissolUE[FIELDS.regraPatrimonialUE] = null;
+
+    var labelsDissolUE = {};
+    labelsDissolUE[FIELDS.uniaoEstavelTF] = 'União Estável';
+    labelsDissolUE[FIELDS.companheiro] = 'Companheiro(a)';
+    labelsDissolUE[FIELDS.regraPatrimonialUE] = 'Regra Patrimonial (UE)';
+
+    promessas.push(patchParceiro(companheiroIdAnterior, camposDissolUE, labelsDissolUE));
+  }
+
+  // ────────────────────────────────────────
+  // CASO 6: Viuvez com UE ativa
+  // ────────────────────────────────────────
+  // Condição: havia companheiro anterior com UE ativa E EC mudou para Viúvo
+  // Ação: marcar companheiro como Falecido + limpar UE bidirecional + manter estado civil intocado
+  if (companheiroIdAnterior && ueAnterior && ecAtual === '3099') {
+    var camposViuvezUE = {};
+    camposViuvezUE[FIELDS.falecidoTF] = true;
+    camposViuvezUE[FIELDS.uniaoEstavelTF] = false;
+    camposViuvezUE[FIELDS.companheiro] = [];
+    camposViuvezUE[FIELDS.regraPatrimonialUE] = null;
+    // NÃO alterar estadoCivil do parceiro
+
+    var labelsViuvezUE = {};
+    labelsViuvezUE[FIELDS.falecidoTF] = 'Falecido';
+    labelsViuvezUE[FIELDS.uniaoEstavelTF] = 'União Estável';
+    labelsViuvezUE[FIELDS.companheiro] = 'Companheiro(a)';
+    labelsViuvezUE[FIELDS.regraPatrimonialUE] = 'Regra Patrimonial (UE)';
+
+    promessas.push(patchParceiro(companheiroIdAnterior, camposViuvezUE, labelsViuvezUE));
+  }
+
+  // ────────────────────────────────────────
+  // Executar todas as sincronizações
+  // ────────────────────────────────────────
+  if (promessas.length === 0) return;
+
+  Promise.all(promessas).then(function(resultados) {
+    var falhas = [];
+    for (var i = 0; i < resultados.length; i++) {
+      if (!resultados[i].ok) {
+        falhas.push(resultados[i].erro || 'Erro desconhecido');
+      }
+    }
+    if (falhas.length > 0) {
+      mostrarMsg('formMsg', 'warning',
+        'O cliente foi salvo, mas houve falha ao atualizar o cadastro do parceiro(a). Verifique manualmente.');
+    }
+  });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1649,6 +2039,16 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('creciGroup').style.display = ativo ? '' : 'none';
     if (!ativo) {
       document.getElementById('creciInput').value = '';
+    }
+  });
+
+  document.getElementById('switchFalecido').addEventListener('change', function() {
+    var grupo = document.getElementById('falecidoGroup');
+    if (this.checked) {
+      grupo.style.display = '';
+    } else {
+      grupo.style.display = 'none';
+      document.getElementById('dataFalecimentoInput').value = '';
     }
   });
 
