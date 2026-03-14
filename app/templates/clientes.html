@@ -109,6 +109,8 @@
     <!-- Estado Civil -->
     <div class="form-section">
       <div class="section-title"><i class="ph ph-heart"></i> Estado Civil</div>
+
+      <!-- Linha 1: Estado Civil + Regra Patrimonial (casado) + Cônjuge (casado) -->
       <div class="form-row">
         <div class="form-group small">
           <label for="estadoCivilSelect">Estado Civil</label>
@@ -122,12 +124,41 @@
             <option value="">Selecione...</option>
           </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="conjugeGroup" style="display:none;">
           <label for="conjugeInput">Cônjuge <span class="hint">— buscar na base</span></label>
           <div class="autocomplete-wrapper">
             <input type="text" id="conjugeInput"
                    placeholder="Comece a digitar o nome..." autocomplete="off">
             <div class="autocomplete-list" id="conjugeAutoList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloco: União Estável (oculto por padrão) -->
+      <div id="uniaoEstavelGroup" style="display:none;">
+        <div class="toggle-row">
+          <label class="switch-label">
+            <input type="checkbox" id="switchUniaoEstavel">
+            <span class="switch-track"></span>
+            <span class="switch-text">União Estável</span>
+          </label>
+        </div>
+        <div id="uniaoEstavelCampos" style="display:none;">
+          <div class="form-row">
+            <div class="form-group small">
+              <label for="regraPatrimonialUESelect">Regra Patrimonial (UE)</label>
+              <select id="regraPatrimonialUESelect">
+                <option value="">Selecione...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="companheiroInput">Companheiro(a) <span class="hint">— buscar na base</span></label>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="companheiroInput"
+                       placeholder="Comece a digitar o nome..." autocomplete="off">
+                <div class="autocomplete-list" id="companheiroAutoList"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

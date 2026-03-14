@@ -2,7 +2,12 @@
 
 Controle de correções e melhorias do sistema
 
-## [0.9.9] - 2026-03-XX
+## [0.9.10] - 2026-03-14
+
+### Reformulado
+- Clientes: a tela de clientes foi reformulada para trabalhar a distinção possível entre casamento e união estável: o cliente pode ser divorciado e conviver em união estável. Agora o DB trabalha com campos distintos para isso, permitindo um detalahamento maior.
+
+## [0.9.9] - 2026-03-13
 
 ### Adicionado
 - Clientes: a tela de gestão de clientes foi dividida em duas páginas dedicadas — Pessoa Física e Pessoa Jurídica — eliminando ambiguidade jurídica no cadastro. A tela de Pessoa Física exibe apenas registros com CPF; a de Pessoa Jurídica exibe apenas registros com CNPJ e sem CPF.

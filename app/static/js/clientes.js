@@ -26,7 +26,10 @@ var FIELDS = {
   empresarioTF:     'field_7429',
   advogadoTF:       'field_7430',
   corretorTF:       'field_7431',
-  creci:            'field_7432'
+  creci:            'field_7432',
+  uniaoEstavelTF:     'field_7450',
+  regraPatrimonialUE: 'field_7451',
+  companheiro:        'field_7452'
 };
 
 var FIELD_LABELS = {
@@ -47,7 +50,10 @@ var FIELD_LABELS = {
   empresarioTF:     'Empresário Individual',
   advogadoTF:       'Advogado',
   corretorTF:       'Corretor',
-  creci:            'CRECI'
+  creci:            'CRECI',
+  uniaoEstavelTF:     'União Estável',
+  regraPatrimonialUE: 'Regra Patrimonial (UE)',
+  companheiro:        'Companheiro(a)'
 };
 
 var ESTADO_CIVIL_OPTS = [
@@ -55,8 +61,7 @@ var ESTADO_CIVIL_OPTS = [
   { id: 3092, label: 'Casado' },
   { id: 3097, label: 'Separado' },
   { id: 3098, label: 'Divorciado' },
-  { id: 3099, label: 'Viúvo' },
-  { id: 3101, label: 'União estável' }
+  { id: 3099, label: 'Viúvo' }
 ];
 
 var REGRA_PATRIMONIAL_OPTS = [
@@ -67,13 +72,23 @@ var REGRA_PATRIMONIAL_OPTS = [
   { id: 3106, label: 'Participação final nos aquestos' }
 ];
 
+var REGRA_PATRIMONIAL_UE_OPTS = [
+  { id: 3121, label: 'Comunhão parcial' },
+  { id: 3122, label: 'Comunhão universal' },
+  { id: 3123, label: 'Separação convencional' },
+  { id: 3124, label: 'Separação obrigatória' },
+  { id: 3125, label: 'Participação final nos aquestos' }
+];
+
 // ── Estado global ──
 var clienteAtual  = null;   // linha do Baserow carregada no formulário
 var modoNovo      = false;  // true = criando novo cliente
 var clienteCarregadoPorBusca = false; // true quando veio de busca positiva
 var conjugeId     = null;   // ID do cônjuge selecionado no autocomplete
+var companheiroId = null;   // ID do companheiro(a) selecionado no autocomplete
 var buscaTimer    = null;   // debounce da busca por nome
 var conjugeTimer  = null;   // debounce do autocomplete de cônjuge
+var companheiroTimer = null; // debounce do autocomplete de companheiro
 var snapshotCliente = null;  // snapshot dos dados originais para detecção de alterações
 
 // ── Paperless-ngx ──
@@ -314,14 +329,70 @@ function popularRegraPatrimonial() {
   }
 }
 
-function atualizarVisibilidadeRegraPatrimonial() {
+function popularRegraPatrimonialUE() {
+  var select = document.getElementById('regraPatrimonialUESelect');
+  for (var i = 0; i < REGRA_PATRIMONIAL_UE_OPTS.length; i++) {
+    var opt = document.createElement('option');
+    opt.value = REGRA_PATRIMONIAL_UE_OPTS[i].id;
+    opt.textContent = REGRA_PATRIMONIAL_UE_OPTS[i].label;
+    select.appendChild(opt);
+  }
+}
+
+function atualizarVisibilidadeEstadoCivil() {
   var ecVal = document.getElementById('estadoCivilSelect').value;
-  var grupo = document.getElementById('regraPatrimonialGroup');
-  if (ecVal === '3092' || ecVal === '3101') {
-    grupo.style.display = '';
-  } else {
-    grupo.style.display = 'none';
+
+  var regraPatrimonialGroup  = document.getElementById('regraPatrimonialGroup');
+  var conjugeGroup           = document.getElementById('conjugeGroup');
+  var uniaoEstavelGroup      = document.getElementById('uniaoEstavelGroup');
+  var uniaoEstavelCampos     = document.getElementById('uniaoEstavelCampos');
+  var switchUE               = document.getElementById('switchUniaoEstavel');
+
+  if (ecVal === '3092') {
+    // CASADO: mostrar regra patrimonial + cônjuge; ocultar UE
+    regraPatrimonialGroup.style.display = '';
+    conjugeGroup.style.display = '';
+    uniaoEstavelGroup.style.display = 'none';
+    // Limpar campos de UE
+    switchUE.checked = false;
+    uniaoEstavelCampos.style.display = 'none';
+    document.getElementById('regraPatrimonialUESelect').value = '';
+    document.getElementById('companheiroInput').value = '';
+    companheiroId = null;
+
+  } else if (ecVal === '3097' || ecVal === '3098' || ecVal === '3099' || ecVal === '3107') {
+    // SEPARADO / DIVORCIADO / VIÚVO / SOLTEIRO:
+    // ocultar regra patrimonial (casado) + cônjuge; mostrar switch UE
+    regraPatrimonialGroup.style.display = 'none';
     document.getElementById('regraPatrimonialSelect').value = '';
+    conjugeGroup.style.display = 'none';
+    document.getElementById('conjugeInput').value = '';
+    conjugeId = null;
+    // Exibir bloco UE
+    uniaoEstavelGroup.style.display = '';
+    // Campos dependentes: seguem o estado do switch
+    if (switchUE.checked) {
+      uniaoEstavelCampos.style.display = '';
+    } else {
+      uniaoEstavelCampos.style.display = 'none';
+      document.getElementById('regraPatrimonialUESelect').value = '';
+      document.getElementById('companheiroInput').value = '';
+      companheiroId = null;
+    }
+
+  } else {
+    // NENHUM SELECIONADO (ou valor vazio): ocultar tudo e limpar
+    regraPatrimonialGroup.style.display = 'none';
+    document.getElementById('regraPatrimonialSelect').value = '';
+    conjugeGroup.style.display = 'none';
+    document.getElementById('conjugeInput').value = '';
+    conjugeId = null;
+    uniaoEstavelGroup.style.display = 'none';
+    switchUE.checked = false;
+    uniaoEstavelCampos.style.display = 'none';
+    document.getElementById('regraPatrimonialUESelect').value = '';
+    document.getElementById('companheiroInput').value = '';
+    companheiroId = null;
   }
 }
 
@@ -564,6 +635,11 @@ function capturarSnapshot(cli) {
   snap.regraPatrimonial = (rpObj && rpObj.value) ? rpObj.value : '';
   var conjArr = cli[FIELDS.conjuge];
   snap.conjuge = (conjArr && conjArr.length > 0 && conjArr[0].value) ? conjArr[0].value : '';
+  snap.uniaoEstavelTF = cli[FIELDS.uniaoEstavelTF] ? true : false;
+  var rpUEObj = cli[FIELDS.regraPatrimonialUE];
+  snap.regraPatrimonialUE = (rpUEObj && rpUEObj.value) ? rpUEObj.value : '';
+  var compArr = cli[FIELDS.companheiro];
+  snap.companheiro = (compArr && compArr.length > 0 && compArr[0].value) ? compArr[0].value : '';
   return snap;
 }
 
@@ -616,6 +692,21 @@ function capturarEstadoAtualFormulario() {
   }
 
   estado.conjuge = conjugeId ? document.getElementById('conjugeInput').value.trim() : '';
+
+  estado.uniaoEstavelTF = document.getElementById('switchUniaoEstavel').checked;
+
+  var rpUEVal = document.getElementById('regraPatrimonialUESelect').value;
+  estado.regraPatrimonialUE = '';
+  if (rpUEVal) {
+    for (var k = 0; k < REGRA_PATRIMONIAL_UE_OPTS.length; k++) {
+      if (String(REGRA_PATRIMONIAL_UE_OPTS[k].id) === String(rpUEVal)) {
+        estado.regraPatrimonialUE = REGRA_PATRIMONIAL_UE_OPTS[k].label;
+        break;
+      }
+    }
+  }
+
+  estado.companheiro = companheiroId ? document.getElementById('companheiroInput').value.trim() : '';
 
   return estado;
 }
@@ -698,7 +789,6 @@ function preencherFormulario(cli) {
   // Regra patrimonial
   var rpObj = cli[FIELDS.regraPatrimonial];
   document.getElementById('regraPatrimonialSelect').value = (rpObj && rpObj.id) ? rpObj.id : '';
-  atualizarVisibilidadeRegraPatrimonial();
 
   // Cônjuge — link_row retorna [{ id: X, value: "Nome" }]
   var conjArr = cli[FIELDS.conjuge];
@@ -709,6 +799,26 @@ function preencherFormulario(cli) {
     conjugeId = null;
     document.getElementById('conjugeInput').value = '';
   }
+
+  // União Estável
+  var ueVal = cli[FIELDS.uniaoEstavelTF] ? true : false;
+  document.getElementById('switchUniaoEstavel').checked = ueVal;
+
+  // Regra patrimonial UE
+  var rpUEObj = cli[FIELDS.regraPatrimonialUE];
+  document.getElementById('regraPatrimonialUESelect').value = (rpUEObj && rpUEObj.id) ? rpUEObj.id : '';
+
+  // Companheiro — link_row retorna [{ id: X, value: "Nome" }]
+  var compArr = cli[FIELDS.companheiro];
+  if (compArr && compArr.length > 0) {
+    companheiroId = compArr[0].id;
+    document.getElementById('companheiroInput').value = compArr[0].value || '';
+  } else {
+    companheiroId = null;
+    document.getElementById('companheiroInput').value = '';
+  }
+
+  atualizarVisibilidadeEstadoCivil();
 
   // CPF/CNPJ readonly ao editar cliente existente
   var editando = !!cli.id;
@@ -779,11 +889,17 @@ function limparCamposFormulario() {
   atualizarPreviewOutros();
   document.getElementById('estadoCivilSelect').value = '';
   document.getElementById('regraPatrimonialSelect').value = '';
-  atualizarVisibilidadeRegraPatrimonial();
   document.getElementById('conjugeInput').value      = '';
+  conjugeId = null;
+  document.getElementById('switchUniaoEstavel').checked = false;
+  document.getElementById('uniaoEstavelGroup').style.display = 'none';
+  document.getElementById('uniaoEstavelCampos').style.display = 'none';
+  document.getElementById('regraPatrimonialUESelect').value = '';
+  document.getElementById('companheiroInput').value = '';
+  companheiroId = null;
+  atualizarVisibilidadeEstadoCivil();
   document.getElementById('protocolosList').innerHTML =
     '<div class="protocols-empty">Nenhum protocolo vinculado.</div>';
-  conjugeId = null;
   document.getElementById('alertaTextarea').value = '';
   document.getElementById('alertaReadonly').textContent = '';
   document.getElementById('alertaCard').style.display = 'none';
@@ -866,6 +982,67 @@ function selecionarConjuge(cli) {
   conjugeId = cli.id;
   document.getElementById('conjugeInput').value = cli[FIELDS.nome] || '';
   fecharAutocompleteConjuge();
+}
+
+// ═══════════════════════════════════════════════════════
+// COMPANHEIRO(A) — autocomplete
+// ═══════════════════════════════════════════════════════
+function configurarCompanheiro() {
+  var input = document.getElementById('companheiroInput');
+  input.addEventListener('input', function() {
+    var termo = input.value.trim();
+    if (!termo) {
+      companheiroId = null;
+      fecharAutocompleteCompanheiro();
+      return;
+    }
+    if (companheiroId) { companheiroId = null; }
+    if (companheiroTimer) clearTimeout(companheiroTimer);
+    if (termo.length < 3) { fecharAutocompleteCompanheiro(); return; }
+    companheiroTimer = setTimeout(function() { buscarCompanheiro(termo); }, 300);
+  });
+}
+
+function buscarCompanheiro(termo) {
+  var url = API_BASE + '/database/rows/table/' + TABLE_CLIENTES +
+    '/?user_field_names=false&filter__' + FIELDS.nome + '__contains=' +
+    encodeURIComponent(termo) + '&size=8';
+  fetch(url, { headers: apiHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) { mostrarAutocompleteCompanheiro(data.results || []); })
+    .catch(function(e) { console.error('Erro na busca de companheiro:', e); });
+}
+
+function mostrarAutocompleteCompanheiro(resultados) {
+  var lista = document.getElementById('companheiroAutoList');
+  lista.innerHTML = '';
+  if (resultados.length === 0) { lista.classList.remove('open'); return; }
+  for (var i = 0; i < resultados.length; i++) {
+    (function(cli) {
+      var nome    = cli[FIELDS.nome] || '';
+      var cpfVal  = cli[FIELDS.cpf]  || '';
+      var cnpjVal = cli[FIELDS.cnpj] || '';
+      var detalhe = cpfVal ? ('CPF: ' + cpfVal) : (cnpjVal ? ('CNPJ: ' + cnpjVal) : '');
+      var item = document.createElement('div');
+      item.className = 'autocomplete-item';
+      item.innerHTML =
+        '<div class="ac-name">' + nome + '</div>' +
+        (detalhe ? '<div class="ac-detail">' + detalhe + '</div>' : '');
+      item.addEventListener('click', function() { selecionarCompanheiro(cli); });
+      lista.appendChild(item);
+    })(resultados[i]);
+  }
+  lista.classList.add('open');
+}
+
+function fecharAutocompleteCompanheiro() {
+  document.getElementById('companheiroAutoList').classList.remove('open');
+}
+
+function selecionarCompanheiro(cli) {
+  companheiroId = cli.id;
+  document.getElementById('companheiroInput').value = cli[FIELDS.nome] || '';
+  fecharAutocompleteCompanheiro();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1017,6 +1194,14 @@ function construirPayload(incluirDocumentos) {
   payload[FIELDS.regraPatrimonial] = rpVal ? parseInt(rpVal, 10) : null;
 
   payload[FIELDS.conjuge] = conjugeId ? [conjugeId] : [];
+
+  // União Estável
+  payload[FIELDS.uniaoEstavelTF] = document.getElementById('switchUniaoEstavel').checked;
+
+  var rpUEVal = document.getElementById('regraPatrimonialUESelect').value;
+  payload[FIELDS.regraPatrimonialUE] = rpUEVal ? parseInt(rpUEVal, 10) : null;
+
+  payload[FIELDS.companheiro] = companheiroId ? [companheiroId] : [];
 
   // Qualificações Especiais
   var isEmpresario = document.getElementById('switchEmpresario').checked;
@@ -1411,9 +1596,11 @@ function configurarDrawer() {
 document.addEventListener('DOMContentLoaded', function() {
   popularEstadoCivil();
   popularRegraPatrimonial();
-  document.getElementById('estadoCivilSelect').addEventListener('change', atualizarVisibilidadeRegraPatrimonial);
+  popularRegraPatrimonialUE();
+  document.getElementById('estadoCivilSelect').addEventListener('change', atualizarVisibilidadeEstadoCivil);
   configurarBusca();
   configurarConjuge();
+  configurarCompanheiro();
   configurarMascaras();
   configurarMarkdownOutros();
 
@@ -1465,6 +1652,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // Switch de União Estável
+  document.getElementById('switchUniaoEstavel').addEventListener('change', function() {
+    var campos = document.getElementById('uniaoEstavelCampos');
+    if (this.checked) {
+      campos.style.display = '';
+    } else {
+      campos.style.display = 'none';
+      document.getElementById('regraPatrimonialUESelect').value = '';
+      document.getElementById('companheiroInput').value = '';
+      companheiroId = null;
+    }
+  });
+
   configurarDrawer();
 
   // Fechar dropdowns ao clicar fora
@@ -1473,8 +1673,12 @@ document.addEventListener('DOMContentLoaded', function() {
       fecharAutocompleteBusca();
     }
     var conjugeWrapper = document.getElementById('conjugeInput');
-    if (conjugeWrapper && !e.target.closest('.autocomplete-wrapper')) {
+    if (conjugeWrapper && !e.target.closest('#conjugeInput') && !e.target.closest('#conjugeAutoList')) {
       fecharAutocompleteConjuge();
+    }
+    var companheiroWrapper = document.getElementById('companheiroInput');
+    if (companheiroWrapper && !e.target.closest('#companheiroInput') && !e.target.closest('#companheiroAutoList')) {
+      fecharAutocompleteCompanheiro();
     }
   });
 });
