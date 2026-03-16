@@ -2,6 +2,11 @@
 
 Controle de correções e melhorias do sistema
 
+## [0.9.11] 2026-03-XX
+
+### Adicionado
+- Detalhamento de clientes: inaugurada uma seção destinada ao detalhamento de um cliente, onde o sistema exibe a participação dele em escrituras, protocolos e certidões.
+
 ## [0.9.10] - 2026-03-14
 
 ### Reformulado

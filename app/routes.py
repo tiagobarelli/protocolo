@@ -49,6 +49,13 @@ def clientes_pj():
     return render_template("clientes_pj.html")
 
 
+@main_bp.route("/clientes/detalhamento")
+@login_required
+@perfil_required("master", "administrador", "escrevente")
+def clientes_detalhamento():
+    return render_template("clientes_detalhamento.html")
+
+
 @main_bp.route("/controle")
 @login_required
 @perfil_required("master", "administrador")
