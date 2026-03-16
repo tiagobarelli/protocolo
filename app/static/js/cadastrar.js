@@ -8,6 +8,7 @@
       clienteCnpj: 'field_7239',
       clienteTelefone: 'field_7243',
       clienteEmail: 'field_7244',
+      clienteOutros: 'field_7246',
       clienteOab: 'field_7256',
       protocolo: 'field_7240',
       interessado: 'field_7241',
@@ -492,6 +493,7 @@
       document.getElementById('telefone').readOnly = false;
       document.getElementById('email').value = '';
       document.getElementById('email').readOnly = false;
+      document.getElementById('outrosInteressado').value = '';
       document.getElementById('searchStatus').className = 'search-status';
       document.getElementById('alertaCliente').style.display = 'none';
       document.getElementById('alertaCliente').textContent = '';
@@ -579,6 +581,8 @@
         var emailVal = clienteEncontrado[CONFIG.fields.clienteEmail] || '';
         document.getElementById('email').value = emailVal;
         document.getElementById('email').readOnly = false;
+        var outrosVal = clienteEncontrado[CONFIG.fields.clienteOutros] || '';
+        document.getElementById('outrosInteressado').value = outrosVal;
         // Exibir alerta do cliente, se existir
         var alertaCliente = clienteEncontrado[CONFIG.fields.clienteAlerta] || '';
         var alertaEl = document.getElementById('alertaCliente');
@@ -599,6 +603,7 @@
         document.getElementById('telefone').readOnly = false;
         document.getElementById('email').value = '';
         document.getElementById('email').readOnly = false;
+        document.getElementById('outrosInteressado').value = '';
         document.getElementById('alertaCliente').style.display = 'none';
         document.getElementById('alertaCliente').textContent = '';
         nomeInput.focus();
@@ -990,6 +995,12 @@
           atualiza[CONFIG.fields.clienteEmail] = email;
           linhasLogCad.push(nomeUsuario + '. ' + dataHora + ': O campo E-mail foi alterado. Valor anterior: ' + (emailOriginal || '(vazio)') + '.');
         }
+        var outrosOriginal = clienteEncontrado[CONFIG.fields.clienteOutros] || '';
+        var outrosAtual = document.getElementById('outrosInteressado').value;
+        if (outrosAtual !== outrosOriginal) {
+          atualiza[CONFIG.fields.clienteOutros] = outrosAtual;
+          linhasLogCad.push(nomeUsuario + '. ' + dataHora + ': O campo Anotações foi alterado. Valor anterior: ' + (outrosOriginal || '(vazio)') + '.');
+        }
 
         if (linhasLogCad.length > 0) {
           var logsExistentes = clienteEncontrado[CONFIG.fields.clienteLogs] || '';
@@ -1008,6 +1019,8 @@
         novo[tipo === 'cpf' ? CONFIG.fields.clienteCpf : CONFIG.fields.clienteCnpj] = documento;
         if (telefone) novo[CONFIG.fields.clienteTelefone] = telefone;
         if (email) novo[CONFIG.fields.clienteEmail] = email;
+        var outrosNovo = document.getElementById('outrosInteressado').value;
+        if (outrosNovo) novo[CONFIG.fields.clienteOutros] = outrosNovo;
         var rc = await fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/?user_field_names=false',
           { method: 'POST', headers: apiHeaders(), body: JSON.stringify(novo) });
         if (!rc.ok) throw new Error((await rc.json()).detail || 'Erro ao cadastrar cliente.');
@@ -1110,6 +1123,7 @@
     document.getElementById('telefone').readOnly = false;
     document.getElementById('email').value = '';
     document.getElementById('email').readOnly = false;
+    document.getElementById('outrosInteressado').value = '';
     document.getElementById('servico').selectedIndex = 0;
     document.getElementById('responsavel').selectedIndex = 0;
     document.getElementById('agendadoPara').value = '';
