@@ -2,9 +2,13 @@
 
 Controle de correções e melhorias do sistema
 
-## [1.0.0] 2026-03-18
+## [1.0.2] 2026-03-18
 
 A numeração dos protocolos agora é automática. Sistema na versão inicial colocado em produção.
+
+### Corrigido
+
+- Envio de email - A alteração para numeração automática exigiu converter o campo *Protocolo* em inteiro, mas o script python para o e-mail exige str para a formação do html do e-mail.
 
 ## [0.9.11] 2026-03-17
 

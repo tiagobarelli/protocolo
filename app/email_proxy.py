@@ -25,7 +25,7 @@ def enviar_email_protocolo():
     dados = request.get_json(silent=True) or {}
 
     destinatario_email = (dados.get("destinatario_email") or "").strip()
-    numero_protocolo = (dados.get("numero_protocolo") or "").strip()
+    numero_protocolo = str(dados.get("numero_protocolo") or "").strip()
 
     if not destinatario_email or not numero_protocolo:
         return jsonify(ok=False, erro="Dados insuficientes."), 400
@@ -100,7 +100,7 @@ def enviar_email_protocolo():
         '    </div>\n'
         '    <div class="body">\n'
         '      <p>Olá, <strong>{dest_nome}</strong>. Seu protocolo foi registrado\n'
-        '         com sucesso. Você responder a este e-mail em caso de dúvida ou complementação de documentação.</p>\n'
+        '         com sucesso. Você pode responder a este e-mail em caso de dúvida ou para complementar a documentação, se necessário.</p>\n'
         '\n'
         '      <div class="field-label">Número do Protocolo</div>\n'
         '      <div class="field-value">{num_proto}</div>\n'

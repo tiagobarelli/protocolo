@@ -1132,12 +1132,12 @@
           });
           if (!re.ok) {
             emailEnviado = false;
-            mostrarMsg('formMsg', 'warning', 'Protocolo cadastrado com sucesso, mas o e-mail de confirmação não pôde ser enviado.');
+            mostrarMsg('emailMsg', 'warning', 'Protocolo cadastrado com sucesso, mas o e-mail de confirmação não pôde ser enviado.');
           }
         } catch (emailErr) {
           emailEnviado = false;
           console.warn('Falha ao enviar e-mail:', emailErr);
-          mostrarMsg('formMsg', 'warning', 'Protocolo cadastrado com sucesso, mas o e-mail de confirmação não pôde ser enviado.');
+          mostrarMsg('emailMsg', 'warning', 'Protocolo cadastrado com sucesso, mas o e-mail de confirmação não pôde ser enviado.');
         }
       }
 
@@ -1177,7 +1177,7 @@
       if (!emailEnviado) {
         setTimeout(function() {
           window.location.href = '/protocolo/' + rpData.id + '/imprimir';
-        }, 2500);
+        }, 4000);
       } else {
         window.location.href = '/protocolo/' + rpData.id + '/imprimir';
       }
