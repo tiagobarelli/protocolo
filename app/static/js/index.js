@@ -73,6 +73,21 @@ function popularFiltroResponsavel() {
     opt.textContent = colab.name || colab.value || '';
     select.appendChild(opt);
   }
+
+  // Pré-selecionar o usuário logado como responsável
+  if (window.CURRENT_USER && window.CURRENT_USER.nome) {
+    var nomeUsuario = window.CURRENT_USER.nome;
+    var selectResp = document.getElementById('filtroResponsavel');
+    var opcoes = selectResp.options;
+    var encontrou = false;
+    for (var k = 0; k < opcoes.length; k++) {
+      if (opcoes[k].text === nomeUsuario) {
+        selectResp.value = opcoes[k].value;
+        encontrou = true;
+        break;
+      }
+    }
+  }
 }
 
 function popularFiltroStatus() {

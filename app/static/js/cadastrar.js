@@ -1100,8 +1100,55 @@
       }
       await autoFlagCorretores();
 
-      // 5. Redirecionar para pagina de impressao
-      window.location.href = '/protocolo/' + rpData.id + '/imprimir';
+      // 5. Envio de e-mail de confirmação (somente se o interessado tiver e-mail)
+      var emailEnviado = true;
+      if (email) {
+        var servicoSelect = document.getElementById('servico');
+        var servicoTexto = servicoSelect.options[servicoSelect.selectedIndex].text;
+
+        var responsavelSelect = document.getElementById('responsavel');
+        var responsavelTexto = responsavelSelect.options[responsavelSelect.selectedIndex].text;
+
+        var horaAgendamentoEmail = document.getElementById('horaAgendamento').value.trim();
+
+        var emailPayload = {
+          destinatario_email: email,
+          destinatario_nome: nomeInteressado,
+          numero_protocolo: numProtocolo,
+          servico: servicoTexto,
+          data_entrada: dataEntrada,
+          agendado_para: agendadoParaData || null,
+          hora_agendamento: horaAgendamentoEmail || null,
+          responsavel: responsavelTexto,
+          detalhamentos: detalhamentosTemConteudo ? detalhamentos : null
+        };
+
+        try {
+          var re = await fetch('/api/email/protocolo-cadastrado', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emailPayload)
+          });
+          if (!re.ok) {
+            emailEnviado = false;
+            mostrarMsg('formMsg', 'warning', 'Protocolo cadastrado com sucesso, mas o e-mail de confirmação não pôde ser enviado.');
+          }
+        } catch (emailErr) {
+          emailEnviado = false;
+          console.warn('Falha ao enviar e-mail:', emailErr);
+          mostrarMsg('formMsg', 'warning', 'Protocolo cadastrado com sucesso, mas o e-mail de confirmação não pôde ser enviado.');
+        }
+      }
+
+      // 6. Redirecionar para página de impressão
+      // Se houve falha de e-mail, aguardar 2500ms para o usuário ler o aviso
+      if (!emailEnviado) {
+        setTimeout(function() {
+          window.location.href = '/protocolo/' + rpData.id + '/imprimir';
+        }, 2500);
+      } else {
+        window.location.href = '/protocolo/' + rpData.id + '/imprimir';
+      }
 
     } catch (e) {
       mostrarMsg('formMsg', 'error', e.message);

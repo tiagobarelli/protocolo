@@ -7,6 +7,7 @@ Controle de correções e melhorias do sistema
 ### Adicionado
 - Detalhamento de clientes: inaugurada uma seção destinada ao detalhamento de um cliente, onde o sistema exibe a participação dele em escrituras, protocolos e certidões.
 - Criação de Protocolo: agora permite que o usuário cadastre alguma anotação referente ao interessando no protocolo, que não seja o telefone e email. Essa anotação ingressa no cadastro do cliente, mas não no relatório impresso.
+- Criação de Protocolo: se o interessado por e-mail cadastrado, o sistema envia uma e-mail com um resumo do protocolo solicitado.
 
 ## [0.9.10] - 2026-03-14
 

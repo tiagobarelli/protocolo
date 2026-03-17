@@ -176,11 +176,14 @@ async function carregarComprovante(idProtocolo) {
     }
 
     var boxEmail = document.getElementById('recEmailBox');
+    var boxEmailAviso = document.getElementById('recEmailAvisoBox');
     if (emailCliente) {
       document.getElementById('recEmail').textContent = emailCliente;
       boxEmail.style.display = 'block';
+      if (boxEmailAviso) boxEmailAviso.style.display = 'block';
     } else {
       boxEmail.style.display = 'none';
+      if (boxEmailAviso) boxEmailAviso.style.display = 'none';
     }
   } catch (e) {
     console.error(e);

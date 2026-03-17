@@ -36,6 +36,13 @@ class BaseConfig:
     PAPERLESS_URL = os.environ.get("PAPERLESS_URL", "http://192.168.0.31:8094").rstrip("/")
     PAPERLESS_TOKEN = os.environ.get("PAPERLESS_TOKEN", "")
 
+    # E-mail (SMTP)
+    MAIL_SMTP_HOST = os.environ.get("MAIL_SMTP_HOST", "smtp.gmail.com")
+    MAIL_SMTP_PORT = int(os.environ.get("MAIL_SMTP_PORT", "587"))
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+    MAIL_SENDER_NAME = os.environ.get("MAIL_SENDER_NAME", "Cartório")
+
 
 class DevConfig(BaseConfig):
     """Configuração de desenvolvimento."""
