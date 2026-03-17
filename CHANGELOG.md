@@ -2,7 +2,11 @@
 
 Controle de correções e melhorias do sistema
 
-## [0.9.11] 2026-03-XX
+## [1.0.0] 2026-03-18
+
+A numeração dos protocolos agora é automática. Sistema na versão inicial colocado em produção.
+
+## [0.9.11] 2026-03-17
 
 ### Adicionado
 - Detalhamento de clientes: inaugurada uma seção destinada ao detalhamento de um cliente, onde o sistema exibe a participação dele em escrituras, protocolos e certidões.

@@ -32,6 +32,7 @@ def create_app(config=None):
     from app.comments import comments_bp, users_bp
     from app.notifications import notifications_bp
     from app.email_proxy import email_bp
+    from app.protocolo_api import protocolo_api_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -43,5 +44,6 @@ def create_app(config=None):
     app.register_blueprint(users_bp)
     app.register_blueprint(notifications_bp)
     app.register_blueprint(email_bp)
+    app.register_blueprint(protocolo_api_bp)
 
     return app

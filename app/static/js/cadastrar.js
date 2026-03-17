@@ -930,7 +930,6 @@
     var btn = document.getElementById('btnCadastrar');
     var overlay = document.getElementById('overlay');
 
-    var numProtocolo = document.getElementById('numProtocolo').value.trim();
     var dataEntrada = document.getElementById('dataEntrada').value;
     var agendadoParaData = document.getElementById('agendadoPara').value;
     var agendadoParaHora = document.getElementById('horaAgendamento').value;
@@ -956,7 +955,6 @@
     var telefoneAdvogado = document.getElementById('telefoneAdvogado').value.trim();
     var emailAdvogado = document.getElementById('emailAdvogado').value.trim();
 
-    if (!numProtocolo) return mostrarMsg('formMsg', 'error', 'Informe o número do protocolo.');
     if (!documento) return mostrarMsg('formMsg', 'error', 'Informe o CPF ou CNPJ.');
     if (!nomeInteressado) return mostrarMsg('formMsg', 'error', 'Informe o nome do interessado.');
     if (!servicoId) return mostrarMsg('formMsg', 'error', 'Selecione o serviço.');
@@ -968,6 +966,7 @@
     btn.disabled = true;
     overlay.classList.add('active');
     esconderMsg('formMsg');
+    var numProtocolo = null;
 
     try {
       // 1. Cliente
@@ -1054,9 +1053,8 @@
         }
       }
 
-      // 3. Protocolo
+      // 3. Protocolo (autonumeração via backend)
       var payload = {};
-      payload[CONFIG.fields.protocolo] = numProtocolo;
       payload[CONFIG.fields.interessado] = [clienteId];
       payload[CONFIG.fields.servico] = [parseInt(servicoId)];
       payload[CONFIG.fields.responsavel] = [{ id: parseInt(responsavelId) }];
@@ -1076,14 +1074,17 @@
       if (depositoValorAPI !== null) payload[CONFIG.fields.depositoPrevio] = depositoValorAPI;
       if (detalhamentosTemConteudo) payload[CONFIG.fields.detalhamentos] = detalhamentos;
 
-      var rp = await fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/?user_field_names=false',
-        { method: 'POST', headers: apiHeaders(), body: JSON.stringify(payload) });
+      var rp = await fetch('/api/protocolo/cadastrar', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify(payload)
+      });
+      var rpJson = await rp.json();
       if (!rp.ok) {
-        var err = await rp.json();
-        if (err.detail && err.detail.includes('unique')) throw new Error('O protocolo "' + numProtocolo + '" já existe.');
-        throw new Error(err.detail || 'Erro ao cadastrar protocolo.');
+        throw new Error(rpJson.erro || 'Erro ao cadastrar protocolo.');
       }
-      var rpData = await rp.json();
+      var rpData = rpJson.row;
+      numProtocolo = rpJson.numero_protocolo;
 
       // 4. Auto-flag Advogado_T_F e Corretor_T_F
       if (advogadoEncontrado && !advogadoEncontrado[CONFIG.fields.clienteAdvTF]) {
@@ -1193,7 +1194,6 @@
 
   function limparFormulario() {
     clienteEncontrado = null;
-    document.getElementById('numProtocolo').value = '';
     document.getElementById('documento').value = '';
     document.getElementById('nomeInteressado').value = '';
     document.getElementById('nomeInteressado').readOnly = false;
