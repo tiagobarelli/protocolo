@@ -1140,8 +1140,39 @@
         }
       }
 
-      // 6. Redirecionar para página de impressão
-      // Se houve falha de e-mail, aguardar 2500ms para o usuário ler o aviso
+      // 6. Envio de e-mail ao advogado (fire-and-forget, sem bloquear o redirect)
+      if (temAdvogado && emailAdvogado) {
+        var servicoSelectAdv = document.getElementById('servico');
+        var servicoTextoAdv = servicoSelectAdv.options[servicoSelectAdv.selectedIndex].text;
+
+        var responsavelSelectAdv = document.getElementById('responsavel');
+        var responsavelTextoAdv = responsavelSelectAdv.options[responsavelSelectAdv.selectedIndex].text;
+
+        var horaAgendamentoAdv = document.getElementById('horaAgendamento').value.trim();
+
+        var emailPayloadAdv = {
+          destinatario_email: emailAdvogado,
+          destinatario_nome: nomeAdvogado,
+          numero_protocolo: numProtocolo,
+          servico: servicoTextoAdv,
+          data_entrada: dataEntrada,
+          agendado_para: agendadoParaData || null,
+          hora_agendamento: horaAgendamentoAdv || null,
+          responsavel: responsavelTextoAdv,
+          detalhamentos: detalhamentosTemConteudo ? detalhamentos : null
+        };
+
+        fetch('/api/email/protocolo-cadastrado', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(emailPayloadAdv)
+        }).catch(function(advErr) {
+          console.warn('Falha ao enviar e-mail ao advogado:', advErr);
+        });
+      }
+
+      // 7. Redirecionar para página de impressão
+      // Se houve falha de e-mail ao interessado, aguardar 2500ms para o usuário ler o aviso
       if (!emailEnviado) {
         setTimeout(function() {
           window.location.href = '/protocolo/' + rpData.id + '/imprimir';
