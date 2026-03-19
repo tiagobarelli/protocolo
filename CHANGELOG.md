@@ -2,6 +2,14 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.0.3] 2026-03-19
+
+### Corrigido
+
+- Criação de protocolo: corrigido o tamanho do campo de agendamento, que ficou espremido após a supressão do campo de número manual do protocolo.
+- Cliente pessoa física: corrigido um erro que não permitia inserir um CNPJ para a pessoa física, após indicar que ela exercia a empresa como empresário individual.
+- Página de controle de ato: inserida validação para não permitir ao usuário cadastrar uma escritura errada neste módulo (certidão, retificação e substabelecimento).
+
 ## [1.0.2] 2026-03-18
 
 A numeração dos protocolos agora é automática. Sistema na versão inicial colocado em produção.

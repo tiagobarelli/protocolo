@@ -43,6 +43,7 @@ var CONFIG = {
     // Protocolo (755)
     protoNumero: 'field_7240',
     protoInteressado: 'field_7241',
+    protoServico: 'field_7242',       // link_row → Servicos (746)
     protoStatus: 'field_7252',
     // Retificacoes (campo reverso no Controle + campos da tabela 753)
     retificacaoReversa: 'field_7232',
@@ -72,6 +73,13 @@ var CONFIG = {
   odinOpts: [
     { id: 3060, label: 'Finalizado' },
     { id: 3061, label: 'Pendente' }
+  ],
+  servicosBloqueados: [
+    { id: 7,  label: 'Retificação (Ata)',               url: '/retificacoes' },
+    { id: 8,  label: 'Retificação (Re-Ra)',              url: '/retificacoes' },
+    { id: 11, label: 'Certidão notarial',                url: '/controle-certidoes' },
+    { id: 30, label: 'Substabelecimento de procuração',  url: '/substabelecimentos' },
+    { id: 57, label: 'Revogação de procuração',           url: '/revogacao-procuracao' }
   ]
 };
 
@@ -683,6 +691,26 @@ function mostrarAutocompleteProtocolo(resultados) {
 }
 
 function selecionarProtocolo(row) {
+  // ── Validação: serviço incompatível com o Controle ──
+  var servicos = row[CONFIG.fields.protoServico] || [];
+  for (var s = 0; s < servicos.length; s++) {
+    var servicoId = servicos[s].id;
+    for (var b = 0; b < CONFIG.servicosBloqueados.length; b++) {
+      if (CONFIG.servicosBloqueados[b].id === servicoId) {
+        var bloqueado = CONFIG.servicosBloqueados[b];
+        document.getElementById('protocoloInput').value = '';
+        fecharAutoList('protocoloAutoList');
+        mostrarMsg('protocoloInfo', 'error',
+          'Este protocolo é do serviço <strong>' + bloqueado.label + '</strong>, ' +
+          'que deve ser cadastrado em sua página dedicada. ' +
+          '<a href="' + bloqueado.url + '" style="color: inherit; text-decoration: underline; font-weight: 600;">' +
+          'Clique aqui para acessar</a>.');
+        return;
+      }
+    }
+  }
+
+  // ── Lógica existente (inalterada a partir daqui) ──
   var numero = row[CONFIG.fields.protoNumero] || '';
   protocoloSelecionadoId = row.id;
   document.getElementById('protocoloInput').value = numero;

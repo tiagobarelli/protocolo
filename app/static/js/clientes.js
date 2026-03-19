@@ -2021,8 +2021,11 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('switchEmpresario').addEventListener('change', function() {
     var ativo = this.checked;
     document.getElementById('cnpjEmpresarioGroup').style.display = ativo ? '' : 'none';
-    if (!ativo) {
+    if (ativo) {
+      document.getElementById('cnpjInput').readOnly = false;
+    } else {
       document.getElementById('cnpjInput').value = '';
+      document.getElementById('cnpjInput').readOnly = !modoNovo;
     }
   });
 
