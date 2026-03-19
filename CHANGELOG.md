@@ -9,6 +9,7 @@ Controle de correções e melhorias do sistema
 - Criação de protocolo: corrigido o tamanho do campo de agendamento, que ficou espremido após a supressão do campo de número manual do protocolo.
 - Cliente pessoa física: corrigido um erro que não permitia inserir um CNPJ para a pessoa física, após indicar que ela exercia a empresa como empresário individual.
 - Página de controle de ato: inserida validação para não permitir ao usuário cadastrar uma escritura errada neste módulo (certidão, retificação e substabelecimento).
+- Página de detalhamento de protoocolo: agora exibe corretamente o telefone e emal do interessado, quando estes elementos estão presentes. Mesmo mecanismo para o advogado assessor, quando este é inserido.
 
 ## [1.0.2] 2026-03-18
 

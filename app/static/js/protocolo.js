@@ -147,18 +147,6 @@ function preencherDadosProtocolo(proto) {
     document.getElementById('infoDepositoRow').style.display = '';
   }
 
-  var telefone = proto[CONFIG.fields.telefone];
-  if (telefone) {
-    setText('infoTelefone', telefone);
-    document.getElementById('infoTelefoneRow').style.display = '';
-  }
-
-  var email = proto[CONFIG.fields.email];
-  if (email) {
-    setText('infoEmail', email);
-    document.getElementById('infoEmailRow').style.display = '';
-  }
-
   var detalhamentos = proto[CONFIG.fields.detalhamentos];
   if (detalhamentos) {
     var container = document.getElementById('infoDetalhamentos');
@@ -285,6 +273,19 @@ function carregarCliente(proto) {
         alertaEl.style.display = 'none';
       }
 
+      // Telefone e e-mail do interessado (fonte: tabela Clientes)
+      var telCliente = cliente[CONFIG.fields.clienteTelefone] || '';
+      if (telCliente) {
+        setText('infoTelefone', telCliente);
+        document.getElementById('infoTelefoneRow').style.display = '';
+      }
+
+      var emailCliente = cliente[CONFIG.fields.clienteEmail] || '';
+      if (emailCliente) {
+        setText('infoEmail', emailCliente);
+        document.getElementById('infoEmailRow').style.display = '';
+      }
+
       var promessas = [];
 
       if (advArr.length > 0) {
@@ -301,6 +302,18 @@ function carregarCliente(proto) {
               if (oab) {
                 setText('infoOab', oab);
                 document.getElementById('infoOabRow').style.display = '';
+              }
+
+              var telAdv = adv[CONFIG.fields.clienteTelefone] || '';
+              if (telAdv) {
+                setText('infoAdvTelefone', telAdv);
+                document.getElementById('infoAdvTelefoneRow').style.display = '';
+              }
+
+              var emailAdv = adv[CONFIG.fields.clienteEmail] || '';
+              if (emailAdv) {
+                setText('infoAdvEmail', emailAdv);
+                document.getElementById('infoAdvEmailRow').style.display = '';
               }
             })
         );
