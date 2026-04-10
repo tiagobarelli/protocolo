@@ -2,6 +2,13 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.0.4] 2026-04-11
+
+### Melhorias
+
+- Busca de cliente pessoa física: o sistema aplica a máscara de CPF automaticamente. Já não é necessário colocar manualmente os pontos e o traço.
+- Relatório de livro: Agora a bag e o texto que indica que a escritura foi retificada recebeu uma cor amarela, permitindo a rápida distinção das outras colunas.
+
 ## [1.0.3] 2026-03-19
 
 ### Corrigido

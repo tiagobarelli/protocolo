@@ -435,8 +435,11 @@ function configurarBusca() {
   input.addEventListener('input', function() {
     var raw = input.value.trim();
     var soDigitos = raw.replace(/\D/g, '');
-    // Se parece com documento (só dígitos + separadores), não autocompleta — aguarda Buscar
+    // Se parece com documento (só dígitos + separadores), aplica máscara e não autocompleta
     if (soDigitos.length >= 1 && soDigitos === raw.replace(/[\.\-\/]/g, '')) {
+      if (soDigitos.length <= 11) {
+        input.value = formatarCPF(input.value);
+      }
       fecharAutocompleteBusca();
       return;
     }

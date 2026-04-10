@@ -88,6 +88,13 @@ function badgeSimNao(arr) {
   return '<span class="badge-nao">N\u00e3o</span>';
 }
 
+function badgeRetificada(arr) {
+  if (arr && arr.length > 0) {
+    return '<span class="badge-retificada">Sim</span>';
+  }
+  return '<span class="badge-nao">N\u00e3o</span>';
+}
+
 /* ---------- BUSCA ---------- */
 
 function consultarLivro(livro) {
@@ -164,7 +171,7 @@ function renderizarResultados(results, livro) {
     html += '<td>' + obterValorSelect(row[CONFIG.fields.digitalizacao], 'Ausente') + '</td>';
     html += '<td>' + obterValorSelect(row[CONFIG.fields.doi], 'Ausente') + '</td>';
     html += '<td>' + obterValorSelect(row[CONFIG.fields.odin], 'Pendente') + '</td>';
-    html += '<td>' + badgeSimNao(row[CONFIG.fields.retificacaoReversa]) + '</td>';
+    html += '<td>' + badgeRetificada(row[CONFIG.fields.retificacaoReversa]) + '</td>';
     html += '<td>' + badgeSimNao(row[CONFIG.fields.substabelecimentoReverso]) + '</td>';
     html += '<td>' + badgeSimNao(row[CONFIG.fields.revogacaoReverso]) + '</td>';
     html += '<td>' + badgeSimNao(row[CONFIG.fields.clientes]) + '</td>';
