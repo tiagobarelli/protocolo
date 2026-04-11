@@ -658,7 +658,8 @@ function mostrarAutocompleteClientes(resultados) {
         (detalhe ? '<div class="ac-detail">' + detalhe + '</div>' : '');
 
       item.addEventListener('click', function() {
-        adicionarRequerido(cli.id, nome);
+        var isAdvogado = !!cli['field_7430'];
+        adicionarRequerido(cli.id, nome, isAdvogado);
         document.getElementById('clienteInput').value = '';
         fecharAutoList('clienteAutoList');
       });
@@ -672,20 +673,21 @@ function mostrarAutocompleteClientes(resultados) {
 // ═══════════════════════════════════════════════════════
 // CHIPS — REQUERIDOS
 // ═══════════════════════════════════════════════════════
-function adicionarRequerido(id, label) {
+function adicionarRequerido(id, label, advogado) {
   for (var i = 0; i < requeridosSelecionados.length; i++) {
     if (requeridosSelecionados[i].id === id) return;
   }
   requeridosSelecionados.push({ id: id, label: label });
-  renderizarChipRequerido(id, label);
+  renderizarChipRequerido(id, label, !!advogado);
 }
 
-function renderizarChipRequerido(id, label) {
+function renderizarChipRequerido(id, label, advogado) {
   var container = document.getElementById('requeridosChips');
   var chip = document.createElement('div');
   chip.className = 'chip';
   chip.id = 'chip-requerido-' + id;
-  chip.innerHTML = '<span>' + label + '</span>' +
+  var icone = advogado ? '<i class="ph ph-scales" title="Advogado"></i> ' : '';
+  chip.innerHTML = icone + '<span>' + label + '</span>' +
     '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>';
   chip.querySelector('.chip-remove').addEventListener('click', function() {
     removerRequerido(id);

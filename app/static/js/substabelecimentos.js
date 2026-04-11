@@ -738,7 +738,8 @@ function mostrarAutocompleteClientes(resultados) {
         (detalhe ? '<div class="ac-detail">' + detalhe + '</div>' : '');
 
       item.addEventListener('click', function() {
-        adicionarCliente(row.id, nome);
+        var isAdvogado = !!row['field_7430'];
+        adicionarCliente(row.id, nome, isAdvogado);
         document.getElementById('clienteInput').value = '';
         fecharAutoList('clienteAutoList');
       });
@@ -752,21 +753,22 @@ function mostrarAutocompleteClientes(resultados) {
 // ═══════════════════════════════════════════════════════
 // CHIPS DE CLIENTES
 // ═══════════════════════════════════════════════════════
-function adicionarCliente(id, nome) {
+function adicionarCliente(id, nome, advogado) {
   // Verificar duplicata
   for (var i = 0; i < clientesSelecionados.length; i++) {
     if (clientesSelecionados[i].id === id) return;
   }
   clientesSelecionados.push({ id: id, nome: nome });
-  renderizarChipCliente(id, nome);
+  renderizarChipCliente(id, nome, !!advogado);
 }
 
-function renderizarChipCliente(id, nome) {
+function renderizarChipCliente(id, nome, advogado) {
   var container = document.getElementById('clientesChips');
   var chip = document.createElement('div');
   chip.className = 'chip';
   chip.id = 'chip-cliente-' + id;
-  chip.innerHTML = '<span>' + nome + '</span>' +
+  var icone = advogado ? '<i class="ph ph-scales" title="Advogado"></i> ' : '';
+  chip.innerHTML = icone + '<span>' + nome + '</span>' +
     '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>';
   chip.querySelector('.chip-remove').addEventListener('click', function() {
     removerCliente(id);

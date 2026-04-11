@@ -139,7 +139,7 @@ function renderizarResultados(results, livro) {
     return;
   }
 
-  header.innerHTML = '<i class="ph ph-book-open-text"></i> Livro ' + livro + ' \u2014 ' + results.length + ' registro(s) encontrado(s)';
+  header.innerHTML = '<i class="ph ph-book-open-text"></i> Livro ' + livro + ' \u2014 ' + results.length + ' registro(s) encontrado(s). Observe que esse número exclui as atas retificativas, re-ratificações, substabelecimentos e rebogações de procurações. Esses atos possuem controle próprio.';
 
   var html = '<div class="table-wrapper"><table class="report-table">';
   html += '<thead><tr>';
