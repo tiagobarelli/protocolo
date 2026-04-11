@@ -14,6 +14,20 @@ def create_app(config=None):
     init_db(app)
     app.teardown_appcontext(close_db)
 
+    from app.settings import Settings, derivar_cores_alerta
+
+    @app.context_processor
+    def inject_settings():
+        try:
+            all_settings = Settings.get_all()
+            cor1 = all_settings.get('protocolo_cor_alerta1', '#d97706')
+            cor2 = all_settings.get('protocolo_cor_alerta2', '#b91c1c')
+            all_settings['_alerta1_cores'] = derivar_cores_alerta(cor1)
+            all_settings['_alerta2_cores'] = derivar_cores_alerta(cor2)
+        except Exception:
+            all_settings = {}
+        return dict(app_settings=all_settings)
+
     login_manager = LoginManager(app)
     login_manager.login_view = "auth.login"
     login_manager.login_message = "Faça login para acessar esta página."

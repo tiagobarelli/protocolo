@@ -2,6 +2,18 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.0.5] 2026-04-12
+
+### Melhorias
+
+- Quando o usuário insere um nome de advogado no controle se escritura, o sistema atribui um ícone de balança ao nome caso ele esteja habilitado como advogado no sistema.
+
+### Adicionado
+
+- Tela configurações. Nova tela com duas abas:
+    - Dados do cartório: permite a edição rápida dos dados do cartório, refletindo nos cabeçalhos em que essas informações são impressas.
+    - Protocolos: permite a imputação de tempo para os dois avisos de protocolo atrasados; e permite a alteração das cores de destaque.
+
 ## [1.0.4] 2026-04-11
 
 ### Melhorias

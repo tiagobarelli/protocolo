@@ -88,6 +88,21 @@ def init_db(app):
             );
             CREATE INDEX IF NOT EXISTS idx_notifications_destinatario
                 ON notifications(destinatario_id, lida);
+
+            CREATE TABLE IF NOT EXISTS settings (
+                key   TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('protocolo_dias_alerta1', '10');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('protocolo_dias_alerta2', '20');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('protocolo_cor_alerta1', '#d97706');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('protocolo_cor_alerta2', '#b91c1c');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('cartorio_denominacao', 'Tabelião de Notas e de Protesto de Letras e Títulos de Itápolis-SP');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('cartorio_endereco', 'Rua Barão do Rio Branco, n. 378 – Centro, Itápolis-SP (CEP 14900-057)');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('cartorio_email', 'contato@cartorioitapolis.com.br');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('cartorio_telefone', '(16) 3273 9448');
+            INSERT OR IGNORE INTO settings (key, value) VALUES ('cartorio_site', 'www.cartorioitapolis.com.br');
         """)
         conn.commit()
         conn.close()

@@ -8,10 +8,10 @@
 <div class="imprimir-container">
   <div class="receipt-paper">
     <div class="print-header">
-      <h2>Tabelião de Notas e de Protesto de Letras e Títulos de Itápolis-SP</h2>
-      <p>Rua Barão do Rio Branco, n. 378 – Centro, Itápolis-SP (CEP 14900-057)</p>
-      <p>contato@cartorioitapolis.com.br | (16) 3273 9448</p>
-      <p>www.cartorioitapolis.com.br</p>
+      <h2>{{ app_settings.get('cartorio_denominacao', 'Tabelião de Notas e de Protesto de Letras e Títulos de Itápolis-SP') }}</h2>
+      <p>{{ app_settings.get('cartorio_endereco', 'Rua Barão do Rio Branco, n. 378 – Centro, Itápolis-SP (CEP 14900-057)') }}</p>
+      <p>{{ app_settings.get('cartorio_email', 'contato@cartorioitapolis.com.br') }} | {{ app_settings.get('cartorio_telefone', '(16) 3273 9448') }}</p>
+      <p>{{ app_settings.get('cartorio_site', 'www.cartorioitapolis.com.br') }}</p>
     </div>
     <div class="protocol-title">PROTOCOLO – <span id="recProtocoloTitulo"></span></div>
     <table class="simple-table handwrite-table">

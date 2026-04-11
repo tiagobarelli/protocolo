@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Configurações — Administração{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/configuracoes.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+{% include "partials/flash_messages.html" %}
+<div class="container">
+  <div class="page-header">
+    <h1><i class="ph ph-gear" style="color: var(--accent);"></i> Configurações</h1>
+    <p>Gerencie os parâmetros do sistema.</p>
+  </div>
+
+  <!-- Abas -->
+  <div class="tabs-header">
+    <button type="button" class="tab-btn active" data-tab="protocolos" onclick="ativarAba('protocolos')">
+      <i class="ph ph-clock-countdown"></i> Protocolos
+    </button>
+    <button type="button" class="tab-btn" data-tab="cartorio" onclick="ativarAba('cartorio')">
+      <i class="ph ph-buildings"></i> Dados do Cartório
+    </button>
+  </div>
+
+  <!-- Aba Protocolos -->
+  <div class="tab-content active" id="tab-protocolos">
+    <div class="card">
+      <div class="section-title"><i class="ph ph-warning-circle"></i> Limiares de Alerta no Painel</div>
+      <p class="section-desc">Configure os dias e cores para destaque dos protocolos em andamento no painel principal.</p>
+
+      <div class="alerta-grid">
+        <!-- Alerta 1 -->
+        <div class="alerta-bloco">
+          <h3>Primeiro alerta</h3>
+          <div class="form-group">
+            <label for="diasAlerta1Input">Dias para o primeiro alerta de atraso</label>
+            <input type="number" id="diasAlerta1Input" min="1" value="{{ app_settings.get('protocolo_dias_alerta1', '10') }}">
+          </div>
+          <div class="form-group">
+            <label for="corAlerta1Input">Cor do primeiro alerta</label>
+            <div class="color-picker-row">
+              <input type="color" id="corAlerta1Input" value="{{ app_settings.get('protocolo_cor_alerta1', '#d97706') }}">
+              <div class="color-preview-card" id="previewAlerta1"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerta 2 -->
+        <div class="alerta-bloco">
+          <h3>Segundo alerta</h3>
+          <div class="form-group">
+            <label for="diasAlerta2Input">Dias para o segundo alerta de atraso</label>
+            <input type="number" id="diasAlerta2Input" min="1" value="{{ app_settings.get('protocolo_dias_alerta2', '20') }}">
+          </div>
+          <div class="form-group">
+            <label for="corAlerta2Input">Cor do segundo alerta</label>
+            <div class="color-picker-row">
+              <input type="color" id="corAlerta2Input" value="{{ app_settings.get('protocolo_cor_alerta2', '#b91c1c') }}">
+              <div class="color-preview-card" id="previewAlerta2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Aba Dados do Cartório -->
+  <div class="tab-content" id="tab-cartorio">
+    <div class="card">
+      <div class="section-title"><i class="ph ph-buildings"></i> Dados do Cartório</div>
+      <p class="section-desc">Informações exibidas em cabeçalhos de relatórios e impressões.</p>
+
+      <div class="form-group">
+        <label for="denominacaoInput">Denominação</label>
+        <input type="text" id="denominacaoInput" value="{{ app_settings.get('cartorio_denominacao', '') }}" placeholder="Ex: Tabelião de Notas e de Protesto...">
+      </div>
+      <div class="form-group">
+        <label for="enderecoInput">Endereço</label>
+        <input type="text" id="enderecoInput" value="{{ app_settings.get('cartorio_endereco', '') }}" placeholder="Ex: Rua..., n. ... – Centro, Cidade-UF (CEP ...)">
+      </div>
+      <div class="form-group">
+        <label for="emailInput">E-mail</label>
+        <input type="text" id="emailInput" value="{{ app_settings.get('cartorio_email', '') }}" placeholder="contato@exemplo.com.br">
+      </div>
+      <div class="form-group">
+        <label for="telefoneInput">Telefone</label>
+        <input type="text" id="telefoneInput" value="{{ app_settings.get('cartorio_telefone', '') }}" placeholder="(XX) XXXX-XXXX">
+      </div>
+      <div class="form-group">
+        <label for="siteInput">Site</label>
+        <input type="text" id="siteInput" value="{{ app_settings.get('cartorio_site', '') }}" placeholder="www.exemplo.com.br">
+      </div>
+    </div>
+  </div>
+
+  <!-- Rodapé -->
+  <div class="form-footer">
+    <div id="formMsg" class="msg-box" style="display:none;"></div>
+    <button type="button" class="btn btn-primary" id="btnSalvar">
+      <i class="ph ph-floppy-disk"></i> Salvar Configurações
+    </button>
+  </div>
+
+</div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.SETTINGS_ATUAIS = {
+    protocolo_dias_alerta1: "{{ app_settings.get('protocolo_dias_alerta1', '10') }}",
+    protocolo_dias_alerta2: "{{ app_settings.get('protocolo_dias_alerta2', '20') }}",
+    protocolo_cor_alerta1: "{{ app_settings.get('protocolo_cor_alerta1', '#d97706') }}",
+    protocolo_cor_alerta2: "{{ app_settings.get('protocolo_cor_alerta2', '#b91c1c') }}",
+    cartorio_denominacao: "{{ app_settings.get('cartorio_denominacao', '') }}",
+    cartorio_endereco: "{{ app_settings.get('cartorio_endereco', '') }}",
+    cartorio_email: "{{ app_settings.get('cartorio_email', '') }}",
+    cartorio_telefone: "{{ app_settings.get('cartorio_telefone', '') }}",
+    cartorio_site: "{{ app_settings.get('cartorio_site', '') }}"
+  };
+</script>
+<script src="{{ url_for('static', filename='js/configuracoes.js') }}"></script>
+{% endblock %}

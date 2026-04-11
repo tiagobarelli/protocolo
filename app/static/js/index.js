@@ -211,8 +211,10 @@ function construirCard(p) {
   var cardClasses = 'protocol-card';
   if (statusTexto === 'Em andamento' && dataEntrada) {
     var diasNum = calcularDiasAberto(dataEntrada);
-    if (diasNum > 20) cardClasses += ' card-danger';
-    else if (diasNum > 10) cardClasses += ' card-warning';
+    var limDanger = (window.ALERTA_CONFIG && window.ALERTA_CONFIG.dias2) || 20;
+    var limWarning = (window.ALERTA_CONFIG && window.ALERTA_CONFIG.dias1) || 10;
+    if (diasNum > limDanger) cardClasses += ' card-danger';
+    else if (diasNum > limWarning) cardClasses += ' card-warning';
   }
   if (servico && servico.toLowerCase().indexOf('certid\u00e3o notarial') !== -1) {
     cardClasses += ' card-certidao';

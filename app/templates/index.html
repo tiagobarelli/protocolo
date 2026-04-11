@@ -63,6 +63,10 @@
     nome: "{{ current_user.nome }}",
     perfil: "{{ current_user.perfil }}"
   };
+  window.ALERTA_CONFIG = {
+    dias1: parseInt("{{ app_settings.get('protocolo_dias_alerta1', '10') }}", 10),
+    dias2: parseInt("{{ app_settings.get('protocolo_dias_alerta2', '20') }}", 10)
+  };
 </script>
 <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}

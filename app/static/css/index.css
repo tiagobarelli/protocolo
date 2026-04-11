@@ -113,21 +113,21 @@
 
 .protocol-card:hover::before { opacity: 1; }
 
-/* Card com mais de 10 dias em aberto — fundo amarelo suave */
+/* Card com mais de X dias em aberto — primeiro alerta */
 .protocol-card.card-warning {
-  background: #F8F9FA;
-  border-color: #495057;
+  background: var(--alerta1-bg, #F8F9FA);
+  border-color: var(--alerta1-border, #495057);
 }
-.protocol-card.card-warning:hover { border-color: var(--warning); }
-.protocol-card.card-warning::before { background: var(--warning); }
+.protocol-card.card-warning:hover { border-color: var(--alerta1-accent, var(--warning)); }
+.protocol-card.card-warning::before { background: var(--alerta1-accent, var(--warning)); }
 
-/* Card com mais de 20 dias em aberto — fundo vermelho suave */
+/* Card com mais de X dias em aberto — segundo alerta */
 .protocol-card.card-danger {
-  background: #fef2f2;
-  border-color: #fca5a5;
+  background: var(--alerta2-bg, #fef2f2);
+  border-color: var(--alerta2-border, #fca5a5);
 }
-.protocol-card.card-danger:hover { border-color: var(--danger); }
-.protocol-card.card-danger::before { background: var(--danger); }
+.protocol-card.card-danger:hover { border-color: var(--alerta2-accent, var(--danger)); }
+.protocol-card.card-danger::before { background: var(--alerta2-accent, var(--danger)); }
 
 /* Card de Certidão notarial — serviço em verde */
 .protocol-card.card-certidao .card-field-servico {

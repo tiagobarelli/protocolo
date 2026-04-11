@@ -70,6 +70,18 @@
     @keyframes flashFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes flashFadeOut { from { opacity: 1; } to { opacity: 0; } }
   </style>
+  {% if app_settings and app_settings.get('_alerta1_cores') %}
+  <style>
+    :root {
+      --alerta1-bg: {{ app_settings['_alerta1_cores']['bg'] }};
+      --alerta1-border: {{ app_settings['_alerta1_cores']['border'] }};
+      --alerta1-accent: {{ app_settings['_alerta1_cores']['accent'] }};
+      --alerta2-bg: {{ app_settings['_alerta2_cores']['bg'] }};
+      --alerta2-border: {{ app_settings['_alerta2_cores']['border'] }};
+      --alerta2-accent: {{ app_settings['_alerta2_cores']['accent'] }};
+    }
+  </style>
+  {% endif %}
   {% block extra_css %}{% endblock %}
 </head>
 <body>

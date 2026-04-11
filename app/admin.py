@@ -1,9 +1,12 @@
 # app/admin.py — Blueprint: gerenciamento de usuários (master only)
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+import re
+
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import login_required
 
 from app.models import User
 from app.permissions import perfil_required
+from app.settings import Settings
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -160,3 +163,55 @@ def usuarios_master_senha():
     master_user.update_password(nova_senha)
     flash("Senha do master alterada com sucesso.", "success")
     return redirect(url_for("admin.usuarios"))
+
+
+# ─── Configurações ────────────────────────────────────────
+
+@admin_bp.route("/configuracoes")
+@login_required
+@perfil_required("master")
+def configuracoes():
+    return render_template("configuracoes.html")
+
+
+@admin_bp.route("/configuracoes/salvar", methods=["POST"])
+@login_required
+@perfil_required("master")
+def configuracoes_salvar():
+    data = request.get_json(silent=True) or {}
+
+    chaves_permitidas = {
+        'protocolo_dias_alerta1', 'protocolo_dias_alerta2',
+        'protocolo_cor_alerta1', 'protocolo_cor_alerta2',
+        'cartorio_denominacao', 'cartorio_endereco',
+        'cartorio_email', 'cartorio_telefone', 'cartorio_site',
+    }
+
+    salvar = {}
+    for key, value in data.items():
+        if key in chaves_permitidas:
+            salvar[key] = value.strip() if isinstance(value, str) else value
+
+    dias1 = salvar.get('protocolo_dias_alerta1')
+    dias2 = salvar.get('protocolo_dias_alerta2')
+    if dias1 is not None and dias2 is not None:
+        try:
+            d1 = int(dias1)
+            d2 = int(dias2)
+            if d1 <= 0 or d2 <= 0:
+                return jsonify(ok=False, erro="Os dias devem ser maiores que zero."), 400
+            if d1 >= d2:
+                return jsonify(ok=False, erro="O primeiro alerta deve ter menos dias que o segundo."), 400
+        except (ValueError, TypeError):
+            return jsonify(ok=False, erro="Dias inválidos."), 400
+
+    hex_re = re.compile(r'^#[0-9a-fA-F]{6}$')
+    for ck in ('protocolo_cor_alerta1', 'protocolo_cor_alerta2'):
+        if ck in salvar and not hex_re.match(salvar[ck]):
+            return jsonify(ok=False, erro="Cor inválida: " + salvar[ck]), 400
+
+    try:
+        Settings.set_many(salvar)
+        return jsonify(ok=True)
+    except Exception as e:
+        return jsonify(ok=False, erro=str(e)), 500
