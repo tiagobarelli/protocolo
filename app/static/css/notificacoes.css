@@ -23,6 +23,49 @@
   gap: 8px;
 }
 
+/* Tabs */
+.notif-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--border, #e7e5e4);
+}
+
+.notif-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  color: var(--text-muted, #495057);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notif-tab:hover {
+  color: var(--text-dark, #2f3e46);
+}
+
+.notif-tab.active {
+  color: var(--accent, #84a98c);
+  border-bottom-color: var(--accent, #84a98c);
+}
+
+/* Estilo para notificações enviadas (sem dot, sem unread) */
+.notification-item.sent {
+  background: transparent;
+  border-left: none;
+}
+
+.notification-item.sent:hover {
+  background: var(--accent-soft, #f5f5f4);
+}
+
 /* Notification items */
 .notification-item {
   display: flex;

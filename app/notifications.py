@@ -56,6 +56,69 @@ def listar_notificacoes():
     })
 
 
+@notifications_bp.route("/sent", methods=["GET"])
+@login_required
+def listar_enviadas():
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    if page < 1:
+        page = 1
+    if per_page < 1 or per_page > 100:
+        per_page = 20
+
+    db = get_db()
+
+    total = db.execute(
+        "SELECT COUNT(*) FROM ("
+        "    SELECT comment_id FROM notifications"
+        "    WHERE remetente_id = ?"
+        "    GROUP BY comment_id"
+        ")",
+        (current_user.id,),
+    ).fetchone()[0]
+
+    pages = max(1, math.ceil(total / per_page))
+    offset = (page - 1) * per_page
+
+    rows = db.execute(
+        "SELECT "
+        "    MIN(n.id) AS id, "
+        "    n.comment_id, "
+        "    n.protocolo_id, "
+        "    n.previa, "
+        "    MAX(n.criado_em) AS criado_em, "
+        "    COUNT(n.destinatario_id) AS total_destinatarios, "
+        "    GROUP_CONCAT(u.nome, ', ') AS destinatarios_nomes "
+        "FROM notifications n "
+        "JOIN users u ON u.id = n.destinatario_id "
+        "WHERE n.remetente_id = ? "
+        "GROUP BY n.comment_id "
+        "ORDER BY criado_em DESC "
+        "LIMIT ? OFFSET ?",
+        (current_user.id, per_page, offset),
+    ).fetchall()
+
+    notifications = []
+    for r in rows:
+        notifications.append({
+            "id": r["id"],
+            "comment_id": r["comment_id"],
+            "protocolo_id": r["protocolo_id"],
+            "previa": r["previa"],
+            "criado_em": r["criado_em"],
+            "total_destinatarios": r["total_destinatarios"],
+            "destinatarios_nomes": r["destinatarios_nomes"],
+        })
+
+    return jsonify({
+        "notifications": notifications,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "pages": pages,
+    })
+
+
 @notifications_bp.route("/count", methods=["GET"])
 @login_required
 def contar_nao_lidas():

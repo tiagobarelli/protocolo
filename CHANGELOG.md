@@ -2,7 +2,11 @@
 
 Controle de correções e melhorias do sistema
 
-## [1.0.6]
+## [1.1.0]
+
+### Adicionado
+
+- Aba Notificações Enviadas na página de notificações. Agora é possível visualizar o histórico de menções feitas pelo usuário em comentários de protocolos. Notificações enviadas para múltiplos destinatários no mesmo comentário são agrupadas em um único item.
 
 ### Melhorias
 
