@@ -33,7 +33,8 @@ var CONFIG = {
     clienteCnpj: 'field_7239',
     // Controle (745)
     ctrlLivro: 'field_7189',
-    ctrlPagina: 'field_7190'
+    ctrlPagina: 'field_7190',
+    ctrlClientes: 'field_7379'
   },
   servicoCertidaoId: 11,
   statusEmAndamento: 3064,
@@ -431,6 +432,7 @@ function resetarEstadoFormulario() {
   esconderMsg('formMsg');
   esconderMsg('formStatusMsg');
   esconderMsg('protocoloInfo');
+  esconderMsg('escrituraInfoMsg');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -766,6 +768,16 @@ function mostrarAutocompleteEscrituras(resultados) {
         adicionarEscritura(row.id, label);
         document.getElementById('escrituraInput').value = '';
         fecharAutoList('escrituraAutoList');
+
+        var clientes = row[CONFIG.fields.ctrlClientes] || [];
+        if (clientes.length > 0) {
+          esconderMsg('escrituraInfoMsg');
+          for (var k = 0; k < clientes.length; k++) {
+            adicionarRequerido(clientes[k].id, clientes[k].value || ('Cliente ' + clientes[k].id));
+          }
+        } else {
+          mostrarMsg('escrituraInfoMsg', 'info', 'Nenhum cliente cadastrado para esta escritura — preencha manualmente.');
+        }
       });
       lista.appendChild(item);
     })(resultados[i]);

@@ -2,6 +2,12 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.0.6]
+
+### Melhorias
+
+- Tela de finalização de protocolo de certidão: alteração na ordem dos campos. Se o usuário selecionar uma escritura para vincular ao pedido de certidão, o sistema já puxa os clientes cadastrados na escritura, desde que a escritura esteja cadastrada no controle de atos.
+
 ## [1.0.5] 2026-04-12
 
 ### Melhorias
