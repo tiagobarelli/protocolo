@@ -179,6 +179,26 @@ function toggleSidebar() {
 // ═══════════════════════════════════════════════════════
 // SELECT HELPERS
 // ═══════════════════════════════════════════════════════
+// IDs de enum que indicam estado "concluído" (borda verde)
+var CONCLUIDO = {
+  odin: ['3062'],
+  anotado: ['3081']
+};
+
+function atualizarBordaConcluido(selectEl, idsConcluidos) {
+  if (!selectEl) { return; }
+  var val = selectEl.value;
+  var concluido = false;
+  for (var i = 0; i < idsConcluidos.length; i++) {
+    if (idsConcluidos[i] === val) { concluido = true; break; }
+  }
+  if (concluido) {
+    selectEl.classList.add('select-concluido');
+  } else {
+    selectEl.classList.remove('select-concluido');
+  }
+}
+
 function popularSelectOpcoes(selectId, opcoes) {
   var sel = document.getElementById(selectId);
   sel.innerHTML = '<option value="">Selecione...</option>';
@@ -356,6 +376,9 @@ function preencherFormularioExistente(row) {
     document.getElementById('anotadoSelect').value = anotadoVal.id;
   }
 
+  atualizarBordaConcluido(document.getElementById('odinSelect'), CONCLUIDO.odin);
+  atualizarBordaConcluido(document.getElementById('anotadoSelect'), CONCLUIDO.anotado);
+
   // Protocolo (link_row single)
   var protoArr = row[CONFIG.fields.protocolo];
   if (protoArr && protoArr.length > 0) {
@@ -406,6 +429,8 @@ function resetarEstadoFormulario() {
   document.getElementById('escreventeSelect').value = '';
   document.getElementById('odinSelect').value = '';
   document.getElementById('anotadoSelect').value = '';
+  atualizarBordaConcluido(document.getElementById('odinSelect'), CONCLUIDO.odin);
+  atualizarBordaConcluido(document.getElementById('anotadoSelect'), CONCLUIDO.anotado);
   document.getElementById('observacaoTextarea').value = '';
   atualizarPreviewObservacao();
 
@@ -760,6 +785,16 @@ document.addEventListener('DOMContentLoaded', function() {
   carregarEscreventes();
   popularSelectOpcoes('odinSelect', CONFIG.odinOpts);
   popularSelectOpcoes('anotadoSelect', CONFIG.anotadoOpts);
+
+  // Borda verde de "concluído" nos selects de status
+  var odinSel = document.getElementById('odinSelect');
+  var anotadoSel = document.getElementById('anotadoSelect');
+  odinSel.addEventListener('change', function() {
+    atualizarBordaConcluido(odinSel, CONCLUIDO.odin);
+  });
+  anotadoSel.addEventListener('change', function() {
+    atualizarBordaConcluido(anotadoSel, CONCLUIDO.anotado);
+  });
 
   // Configurar componentes
   configurarMarkdownObservacao();

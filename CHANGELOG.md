@@ -2,6 +2,12 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.1.1] 2026-05-29
+
+### Melhorias
+
+- Páginas de Controle de Atos e Retificações: os selects de status (Digitalização, DOI e ODIN no controle; ODIN e Anotado nas retificações) agora exibem uma borda verde mais grossa quando o valor selecionado indica conclusão, facilitando a identificação visual rápida de itens concluídos. O destaque aparece tanto ao carregar um registro existente quanto ao alterar o valor manualmente.
+
 ## [1.1.0]
 
 ### Adicionado

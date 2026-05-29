@@ -20,6 +20,7 @@
   --danger-bg: #faf0ed;
   --success: #15803d;
   --success-bg: #f0f5f1;
+  --success-border: #16a34a;
   --warning: #d97706;
   --warning-bg: #faf5ed;
 }
@@ -52,6 +53,7 @@ label .hint { font-weight: 400; color: var(--text-muted); font-size: 0.85rem; }
 input[type="text"], input[type="date"], select, textarea { font-family: inherit; font-size: 0.95rem; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text-dark); transition: all 0.2s; width: 100%; box-shadow: var(--shadow-sm); }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-soft); }
 input[readonly] { background: #fafaf9; color: var(--text-muted); cursor: not-allowed; border-color: var(--border); box-shadow: none; }
+.select-concluido { border-style: solid; border-color: var(--success-border); border-width: 2px; }
 textarea { resize: vertical; min-height: 100px; }
 
 /* ==================== MSG BOX ==================== */

@@ -283,6 +283,27 @@ function toggleSidebar() {
 // ═══════════════════════════════════════════════════════
 // SELECT HELPERS
 // ═══════════════════════════════════════════════════════
+// IDs de enum que indicam estado "concluído" (borda verde)
+var CONCLUIDO = {
+  digitalizacao: ['3055', '3056'],
+  doi: ['3057', '3059'],
+  odin: ['3060']
+};
+
+function atualizarBordaConcluido(selectEl, idsConcluidos) {
+  if (!selectEl) { return; }
+  var val = selectEl.value;
+  var concluido = false;
+  for (var i = 0; i < idsConcluidos.length; i++) {
+    if (idsConcluidos[i] === val) { concluido = true; break; }
+  }
+  if (concluido) {
+    selectEl.classList.add('select-concluido');
+  } else {
+    selectEl.classList.remove('select-concluido');
+  }
+}
+
 function popularSelectOpcoes(selectId, opcoes) {
   var sel = document.getElementById(selectId);
   sel.innerHTML = '<option value="">Selecione...</option>';
@@ -495,6 +516,10 @@ function preencherFormularioExistente(row) {
     document.getElementById('odinSelect').value = odinVal.id;
   }
 
+  atualizarBordaConcluido(document.getElementById('digitalizacaoSelect'), CONCLUIDO.digitalizacao);
+  atualizarBordaConcluido(document.getElementById('doiSelect'), CONCLUIDO.doi);
+  atualizarBordaConcluido(document.getElementById('odinSelect'), CONCLUIDO.odin);
+
   // Pendencias
   var pendencias = row[CONFIG.fields.pendencias] || '';
   document.getElementById('pendenciasTextarea').value = pendencias;
@@ -589,6 +614,9 @@ function resetarEstadoFormulario() {
   document.getElementById('digitalizacaoSelect').value = '';
   document.getElementById('doiSelect').value = '';
   document.getElementById('odinSelect').value = '';
+  atualizarBordaConcluido(document.getElementById('digitalizacaoSelect'), CONCLUIDO.digitalizacao);
+  atualizarBordaConcluido(document.getElementById('doiSelect'), CONCLUIDO.doi);
+  atualizarBordaConcluido(document.getElementById('odinSelect'), CONCLUIDO.odin);
   document.getElementById('pendenciasTextarea').value = '';
   atualizarPreviewPendencias();
 
@@ -1494,6 +1522,20 @@ document.addEventListener('DOMContentLoaded', function() {
   popularSelectOpcoes('digitalizacaoSelect', CONFIG.digitalizacaoOpts);
   popularSelectOpcoes('doiSelect', CONFIG.doiOpts);
   popularSelectOpcoes('odinSelect', CONFIG.odinOpts);
+
+  // Borda verde de "concluído" nos selects de Status e Controle
+  var digSel = document.getElementById('digitalizacaoSelect');
+  var doiSel = document.getElementById('doiSelect');
+  var odinSel = document.getElementById('odinSelect');
+  digSel.addEventListener('change', function() {
+    atualizarBordaConcluido(digSel, CONCLUIDO.digitalizacao);
+  });
+  doiSel.addEventListener('change', function() {
+    atualizarBordaConcluido(doiSel, CONCLUIDO.doi);
+  });
+  odinSel.addEventListener('change', function() {
+    atualizarBordaConcluido(odinSel, CONCLUIDO.odin);
+  });
 
   // Configurar componentes
   configurarMarkdownPendencias();
