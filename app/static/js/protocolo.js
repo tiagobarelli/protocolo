@@ -2,7 +2,7 @@
 
 var API_BASE = '/api/baserow';
 var CONFIG = {
-  tables: { clientes: 754, protocolo: 755 },
+  tables: { clientes: 754, protocolo: 755, andamentos: 778 },
   fields: {
     protocolo: 'field_7240',
     interessado: 'field_7241',
@@ -18,7 +18,6 @@ var CONFIG = {
     criadoPorSistema: 'field_7398',
     agendadoPara: 'field_7268',
     depositoPrevio: 'field_7340',
-    andamento: 'field_7346',
     clienteNome: 'field_7237',
     clienteCpf: 'field_7238',
     clienteCnpj: 'field_7239',
@@ -34,7 +33,16 @@ var CONFIG = {
     revogacoes: 'field_7447',
     controleCertidao: 'field_7416',
     corretor: 'field_7433',
-    clienteCreci: 'field_7432'
+    clienteCreci: 'field_7432',
+    andName:          'field_7456',
+    andProtocolo:     'field_7457',
+    andTexto:         'field_7458',
+    andIsTarefa:      'field_7460',
+    andConcluido:     'field_7461',
+    andDataCriacao:   'field_7462',
+    andDataConclusao: 'field_7463',
+    andCriadoPor:     'field_7464',
+    andNotificado:    'field_7465'
   },
   statusIds: {
     emAndamento: 3064,
@@ -62,6 +70,10 @@ var protocoloRowId = null;
 var protocoloAtual = null;
 var snapshotProtocolo = null;
 var collaboratorsList = [];
+var emailInteressado = '';
+var nomeInteressado = '';
+var emailAdvogado = '';
+var nomeAdvogado = '';
 
 var FIELD_LABELS = {
   status: 'Status',
@@ -92,7 +104,7 @@ function carregarProtocolo(id) {
       preencherCabecalho(proto);
       preencherDadosProtocolo(proto);
       verificarVinculacaoAto(proto);
-      preencherAndamento(proto);
+      carregarAndamentos();
       renderizarControleStatus(proto);
       exibirJustificativa(proto);
       exibirLogsProtocolo(proto);
@@ -236,9 +248,87 @@ function verificarVinculacaoAto(proto) {
   cardEl.style.display = '';
 }
 
-function preencherAndamento(proto) {
-  var andamento = proto[CONFIG.fields.andamento] || '';
-  document.getElementById('andamentoTexto').value = andamento;
+function gerarDataHoraIso() {
+  var agora = new Date();
+  var ano = agora.getFullYear();
+  var mes = ('0' + (agora.getMonth() + 1)).slice(-2);
+  var dia = ('0' + agora.getDate()).slice(-2);
+  var hora = ('0' + agora.getHours()).slice(-2);
+  var min = ('0' + agora.getMinutes()).slice(-2);
+  return ano + '-' + mes + '-' + dia + 'T' + hora + ':' + min + ':00';
+}
+
+function carregarAndamentos() {
+  var lista = document.getElementById('andamentosLista');
+  if (!lista) return;
+  lista.innerHTML = '<div class="andamentos-empty">Carregando...</div>';
+
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.andamentos +
+            '/?user_field_names=false' +
+            '&filter__field_7457__link_row_has=' + protocoloRowId +
+            '&order_by=field_7462';
+
+  fetch(url, { headers: apiHeaders() })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao carregar andamentos');
+      return resp.json();
+    })
+    .then(function(data) {
+      renderizarAndamentos(data.results || []);
+    })
+    .catch(function(err) {
+      console.error('Erro ao carregar andamentos:', err);
+      if (lista) lista.innerHTML = '<div class="andamentos-empty">Erro ao carregar andamentos.</div>';
+    });
+}
+
+function renderizarAndamentos(items) {
+  var lista = document.getElementById('andamentosLista');
+  if (!lista) return;
+
+  if (!items || items.length === 0) {
+    lista.innerHTML = '<div class="andamentos-empty">Nenhum andamento registrado.</div>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var a = items[i];
+    var texto = a[CONFIG.fields.andTexto] || '';
+    var isTarefa = a[CONFIG.fields.andIsTarefa] || false;
+    var concluido = a[CONFIG.fields.andConcluido] || false;
+    var criadoPor = a[CONFIG.fields.andCriadoPor] || '';
+    var dataCriacao = a[CONFIG.fields.andDataCriacao] || '';
+    var notificado = a[CONFIG.fields.andNotificado] || false;
+    var itemId = a.id;
+
+    html += '<div class="andamento-item' + (isTarefa ? ' is-tarefa' : '') + (concluido ? ' concluido' : '') + '">';
+    html += '<div class="andamento-meta">';
+    if (isTarefa) {
+      html += '<i class="ph ' + (concluido ? 'ph-check-square' : 'ph-square') + ' tarefa-icon"></i>';
+    }
+    html += '<span class="andamento-autor">' + escapeHtml(criadoPor) + '</span>';
+    html += '<span class="andamento-data">' + formatarDataHora(dataCriacao) + '</span>';
+    if (notificado) {
+      html += ' <i class="ph ph-envelope-simple notificado-icon" title="Interessados notificados por e-mail"></i>';
+    }
+    html += '</div>';
+    html += '<div class="andamento-texto">' + escapeHtml(texto).replace(/\n/g, '<br>') + '</div>';
+    if (isTarefa) {
+      html += '<div class="andamento-actions">';
+      if (!concluido) {
+        html += '<button type="button" class="btn btn-sm btn-success" onclick="toggleConcluido(' + itemId + ', true)">' +
+                '<i class="ph ph-check"></i> Concluir</button>';
+      } else {
+        html += '<button type="button" class="btn-outline btn-sm" onclick="toggleConcluido(' + itemId + ', false)">' +
+                '<i class="ph ph-arrow-counter-clockwise"></i> Reabrir</button>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  lista.innerHTML = html;
 }
 
 function carregarCliente(proto) {
@@ -281,6 +371,8 @@ function carregarCliente(proto) {
       }
 
       var emailCliente = cliente[CONFIG.fields.clienteEmail] || '';
+      emailInteressado = emailCliente;
+      nomeInteressado = interessadoArr.length > 0 ? (interessadoArr[0].value || '') : '';
       if (emailCliente) {
         setText('infoEmail', emailCliente);
         document.getElementById('infoEmailRow').style.display = '';
@@ -311,6 +403,8 @@ function carregarCliente(proto) {
               }
 
               var emailAdv = adv[CONFIG.fields.clienteEmail] || '';
+              emailAdvogado = emailAdv;
+              nomeAdvogado = advArr.length > 0 ? (advArr[0].value || '') : '';
               if (emailAdv) {
                 setText('infoAdvEmail', emailAdv);
                 document.getElementById('infoAdvEmailRow').style.display = '';
@@ -365,21 +459,91 @@ function carregarCliente(proto) {
     });
 }
 
-/* ---------- SALVAR ANDAMENTO ---------- */
+/* ---------- ANDAMENTOS ---------- */
 
-function salvarAndamento() {
-  var texto = document.getElementById('andamentoTexto').value;
-  var btn = document.getElementById('btnSalvarAndamento');
+function adicionarAndamento() {
+  var textarea = document.getElementById('andamentoNovoTexto');
+  var chkTarefa = document.getElementById('andamentoIsTarefa');
+  var chkNotificar = document.getElementById('andamentoNotificar');
   var msgBox = document.getElementById('andamentoMsg');
+  var btn = document.getElementById('btnAdicionarAndamento');
+
+  if (!textarea) return;
+  var texto = textarea.value.trim();
+  if (!texto) {
+    msgBox.className = 'msg-box error';
+    msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Informe o texto do andamento.';
+    msgBox.style.display = 'flex';
+    return;
+  }
+
+  var isTarefa = chkTarefa ? chkTarefa.checked : false;
+  var notificar = chkNotificar ? chkNotificar.checked : false;
 
   btn.disabled = true;
-  btn.innerHTML = '<i class="ph ph-spinner"></i> Salvando...';
-  msgBox.className = 'msg-box';
+  btn.innerHTML = '<i class="ph ph-spinner"></i> Adicionando...';
   msgBox.style.display = 'none';
 
-  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/' + protocoloRowId + '/?user_field_names=false';
   var body = {};
-  body[CONFIG.fields.andamento] = texto;
+  body[CONFIG.fields.andTexto] = texto;
+  body[CONFIG.fields.andProtocolo] = [protocoloRowId];
+  body[CONFIG.fields.andIsTarefa] = isTarefa;
+  body[CONFIG.fields.andConcluido] = false;
+  body[CONFIG.fields.andDataCriacao] = gerarDataHoraIso();
+  body[CONFIG.fields.andCriadoPor] = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
+  body[CONFIG.fields.andNotificado] = false;
+
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.andamentos + '/?user_field_names=false';
+  var textoLocal = texto;
+  var notificarLocal = notificar;
+
+  fetch(url, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) {
+      if (!resp.ok) {
+        return resp.text().then(function(bodyTxt) {
+          console.error('Baserow 400 detail:', bodyTxt);
+          throw new Error('Erro ao adicionar andamento');
+        });
+      }
+      return resp.json();
+    })
+    .then(function(novoAndamento) {
+      var andamentoId = novoAndamento.id;
+      if (notificarLocal) {
+        return enviarEmailAndamento(andamentoId, textoLocal);
+      }
+    })
+    .then(function() {
+      textarea.value = '';
+      if (chkTarefa) chkTarefa.checked = false;
+      if (chkNotificar) chkNotificar.checked = false;
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ph ph-plus"></i> Adicionar';
+      msgBox.className = 'msg-box success';
+      msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Andamento adicionado.';
+      msgBox.style.display = 'flex';
+      setTimeout(function() { msgBox.style.display = 'none'; }, 3000);
+      carregarAndamentos();
+    })
+    .catch(function(err) {
+      console.error('Erro ao adicionar andamento:', err);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ph ph-plus"></i> Adicionar';
+      msgBox.className = 'msg-box error';
+      msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Erro ao adicionar andamento.';
+      msgBox.style.display = 'flex';
+    });
+}
+
+function toggleConcluido(andamentoId, concluir) {
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.andamentos + '/' + andamentoId + '/?user_field_names=false';
+  var body = {};
+  body[CONFIG.fields.andConcluido] = concluir;
+  body[CONFIG.fields.andDataConclusao] = concluir ? gerarDataHoraIso() : null;
 
   fetch(url, {
     method: 'PATCH',
@@ -387,23 +551,67 @@ function salvarAndamento() {
     body: JSON.stringify(body)
   })
     .then(function(resp) {
-      if (!resp.ok) throw new Error('Erro ao salvar');
+      if (!resp.ok) throw new Error('Erro ao atualizar tarefa');
       return resp.json();
     })
     .then(function() {
-      msgBox.className = 'msg-box success';
-      msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Andamento salvo com sucesso.';
-      msgBox.style.display = 'flex';
-      btn.disabled = false;
-      btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar Andamento';
+      carregarAndamentos();
     })
     .catch(function(err) {
-      console.error('Erro ao salvar andamento:', err);
+      console.error('Erro ao atualizar tarefa:', err);
+      alert('Erro ao atualizar tarefa: ' + err.message);
+    });
+}
+
+function enviarEmailAndamento(andamentoId, texto) {
+  var msgBox = document.getElementById('andamentoMsg');
+  var destinatarios = [];
+  if (emailInteressado) {
+    destinatarios.push({ email: emailInteressado, nome: nomeInteressado });
+  }
+  if (emailAdvogado) {
+    destinatarios.push({ email: emailAdvogado, nome: nomeAdvogado });
+  }
+
+  if (destinatarios.length === 0) {
+    if (msgBox) {
       msgBox.className = 'msg-box error';
-      msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Erro ao salvar andamento.';
+      msgBox.innerHTML = '<i class="ph ph-warning"></i> Andamento salvo. Nenhum e-mail cadastrado para notificação.';
       msgBox.style.display = 'flex';
-      btn.disabled = false;
-      btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar Andamento';
+    }
+    return Promise.resolve();
+  }
+
+  var numeroProtocolo = protocoloAtual ? (protocoloAtual[CONFIG.fields.protocolo] || '') : '';
+  var remetente = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
+  var andIdLocal = andamentoId;
+
+  return fetch('/api/email/andamento', {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify({
+      destinatarios: destinatarios,
+      numero_protocolo: numeroProtocolo,
+      texto: texto,
+      remetente: remetente
+    })
+  })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Falha no envio');
+      return resp.json();
+    })
+    .then(function() {
+      var patchUrl = API_BASE + '/database/rows/table/' + CONFIG.tables.andamentos + '/' + andIdLocal + '/?user_field_names=false';
+      var patchBody = {};
+      patchBody[CONFIG.fields.andNotificado] = true;
+      return fetch(patchUrl, {
+        method: 'PATCH',
+        headers: apiHeaders(),
+        body: JSON.stringify(patchBody)
+      });
+    })
+    .catch(function(err) {
+      console.error('Erro ao enviar e-mail de andamento:', err);
     });
 }
 
@@ -1534,10 +1742,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Andamento
-  var btnSalvar = document.getElementById('btnSalvarAndamento');
-  if (btnSalvar) {
-    btnSalvar.addEventListener('click', salvarAndamento);
+  // Andamentos
+  var btnAdicionar = document.getElementById('btnAdicionarAndamento');
+  if (btnAdicionar) {
+    btnAdicionar.addEventListener('click', adicionarAndamento);
   }
 
   // Status

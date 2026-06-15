@@ -2,6 +2,16 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.2.0] 2026-06-15
+
+### Adicionado
+
+- **Andamentos estruturados:** o antigo campo único de texto "Andamento" na tela do protocolo foi substituído por um sistema de andamentos individuais. Cada andamento é um registro próprio, exibido em ordem cronológica (do mais antigo ao mais novo), com autor e data/hora de criação.
+- **Tarefas (To Do):** ao registrar um andamento, é possível marcá-lo como **Tarefa**. Tarefas podem ser concluídas ou reabertas tanto no card do protocolo quanto na nova página To Do.
+- **Página To Do:** nova página, acessível pela barra lateral, que lista as tarefas pendentes do usuário logado. As tarefas são **agrupadas por protocolo** e cada grupo exibe o número do protocolo (com link direto), o tipo de ato, o interessado e o advogado (quando houver). Os grupos são ordenados pelo número do protocolo e as tarefas, dentro de cada grupo, da mais antiga para a mais nova.
+- **Notificação por e-mail no andamento:** ao registrar um andamento, é possível marcar a opção de **notificar os interessados por e-mail**. O sistema envia o conteúdo do andamento para o interessado e para o advogado (quando ambos tiverem e-mail cadastrado). Caso nenhum e-mail esteja cadastrado, o andamento é salvo normalmente e o usuário é avisado de que o e-mail não foi enviado.
+- **Indicador de tarefas pendentes:** a barra lateral exibe um contador (badge) com o número de tarefas pendentes do usuário ao lado do link To Do, atualizado automaticamente. O badge usa a cor verde para diferenciá-lo do badge de notificações (vermelho).
+
 ## [1.1.1] 2026-05-29
 
 ### Melhorias

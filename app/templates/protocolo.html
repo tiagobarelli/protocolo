@@ -190,15 +190,22 @@
     <div id="logContentProto" class="log-texto"></div>
   </div>
 
-  <!-- Andamento (editável) -->
+  <!-- Andamentos -->
   <div class="card andamento-card">
-    <div class="card-title"><i class="ph ph-pencil-line"></i> Andamento</div>
-    <textarea id="andamentoTexto" placeholder="Registre aqui o andamento do protocolo. Utilize quebra de linha para cada andamento. Antes do texto, insira a data do comentário. Por exemplo: 01/01/2026 - Contato com o cliente solicitando Certidão de Casamento."></textarea>
-    <div class="btn-row">
-      <button type="button" class="btn btn-primary" id="btnSalvarAndamento">
-        <i class="ph ph-floppy-disk"></i> Salvar Andamento
-      </button>
-      <div class="msg-box" id="andamentoMsg"></div>
+    <div class="card-title"><i class="ph ph-list-checks"></i> Andamentos</div>
+    <div id="andamentosLista"><div class="andamentos-empty">Carregando...</div></div>
+    <div class="andamento-form">
+      <textarea id="andamentoNovoTexto" placeholder="Registre o andamento, solicitação ou lembrete..."></textarea>
+      <div class="andamento-checks">
+        <label><input type="checkbox" id="andamentoIsTarefa"> Tarefa</label>
+        <label><input type="checkbox" id="andamentoNotificar"> Notificar interessados por e-mail</label>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary" id="btnAdicionarAndamento">
+          <i class="ph ph-plus"></i> Adicionar
+        </button>
+        <div class="msg-box" id="andamentoMsg"></div>
+      </div>
     </div>
   </div>
 

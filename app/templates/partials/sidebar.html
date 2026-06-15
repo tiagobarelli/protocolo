@@ -9,6 +9,7 @@
   {% set consultar_active = request.endpoint in ['main.consultar', 'main.protocolo_detalhe', 'main.protocolo_imprimir'] %}
   {% set relatorios_active = request.endpoint in ['main.relatorio_controle_atos', 'main.relatorio_controle_certidoes', 'main.relatorio_coaf'] %}
   {% set notificacoes_active = request.endpoint == 'main.notificacoes' %}
+  {% set todo_active = request.endpoint == 'main.todo' %}
   {% set clientes_pf_active = request.endpoint == 'main.clientes' %}
   {% set clientes_pj_active = request.endpoint == 'main.clientes_pj' %}
   {% set clientes_detalhamento_active = request.endpoint == 'main.clientes_detalhamento' %}
@@ -108,14 +109,19 @@
   </nav>
 
   <div class="sidebar-footer">
+    <a href="{{ url_for('main.todo') }}" class="notification-bell{% if todo_active %} active{% endif %}" id="todoBell" title="To Do">
+      <i class="ph ph-list-checks"></i> To Do
+      <span class="notification-badge" id="todoBadge" style="display:none;"></span>
+    </a>
         <a href="/notificacoes" class="notification-bell{% if notificacoes_active %} active{% endif %}" id="notificationBell" title="Notificações">
       <i class="ph ph-bell"></i> Notificações
       <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
     </a>
     <span class="user-info"><i class="ph ph-user"></i> {{ current_user.nome }}</span>
     <a href="{{ url_for('auth.logout') }}"><i class="ph ph-sign-out"></i> Sair</a>
-    <a href="{{ url_for('main.changelog') }}" class="version-link">v. 1.1.1</a>
+    <a href="{{ url_for('main.changelog') }}" class="version-link">v. 1.2.0</a>
   </div>
 </aside>
 
 <script src="{{ url_for('static', filename='js/notifications-badge.js') }}"></script>
+<script src="{{ url_for('static', filename='js/todo-badge.js') }}"></script>

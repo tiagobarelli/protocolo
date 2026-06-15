@@ -1,4 +1,5 @@
 # app/email_proxy.py — Blueprint para envio de e-mails via SMTP
+import html as _html
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -149,3 +150,105 @@ def enviar_email_protocolo():
     except Exception as exc:
         current_app.logger.error("Falha ao enviar e-mail para %s: %s", destinatario_email, exc)
         return jsonify(ok=False, erro="Falha no envio do e-mail."), 500
+
+
+@email_bp.route("/andamento", methods=["POST"])
+@login_required
+def enviar_email_andamento():
+    dados = request.get_json(silent=True) or {}
+
+    destinatarios = dados.get("destinatarios") or []
+    numero_protocolo = str(dados.get("numero_protocolo") or "").strip()
+    texto = (dados.get("texto") or "").strip()
+    remetente = dados.get("remetente") or ""
+
+    if not destinatarios or not numero_protocolo:
+        return jsonify(ok=False, erro="Dados insuficientes."), 400
+
+    cfg = current_app.config
+    mail_host = cfg["MAIL_SMTP_HOST"]
+    mail_port = cfg["MAIL_SMTP_PORT"]
+    mail_user = cfg["MAIL_USERNAME"]
+    mail_pass = cfg["MAIL_PASSWORD"]
+    sender_name = cfg["MAIL_SENDER_NAME"]
+
+    assunto = "Atualização do Protocolo {num} | {sender}".format(
+        num=numero_protocolo, sender=sender_name
+    )
+    texto_escapado = _html.escape(texto).replace("\n", "<br>")
+
+    enviados = 0
+
+    try:
+        with smtplib.SMTP(mail_host, mail_port) as server:
+            server.starttls()
+            server.login(mail_user, mail_pass)
+
+            for dest in destinatarios:
+                dest_email = (dest.get("email") or "").strip()
+                dest_nome = dest.get("nome") or ""
+                if not dest_email:
+                    continue
+
+                saudacao = ", <strong>{n}</strong>".format(n=dest_nome) if dest_nome else ""
+
+                corpo_html = (
+                    '<!DOCTYPE html>\n'
+                    '<html lang="pt-BR">\n'
+                    '<head><meta charset="UTF-8">\n'
+                    '  <style>\n'
+                    '    body {{ font-family: Arial, sans-serif; color: #333; font-size: 14px; }}\n'
+                    '    .container {{ max-width: 600px; margin: 0 auto; padding: 24px; }}\n'
+                    '    .header {{ background-color: #4a5e4a; color: #fff; padding: 16px 24px;\n'
+                    '              border-radius: 6px 6px 0 0; }}\n'
+                    '    .header h2 {{ margin: 0; font-size: 18px; }}\n'
+                    '    .body {{ border: 1px solid #ddd; border-top: none; padding: 24px;\n'
+                    '            border-radius: 0 0 6px 6px; }}\n'
+                    '    .field-label {{ font-size: 11px; text-transform: uppercase;\n'
+                    '                   color: #888; margin-bottom: 2px; }}\n'
+                    '    .field-value {{ font-size: 14px; color: #222; margin-bottom: 16px; }}\n'
+                    '    .andamento-box {{ background-color: #f5f5f5; border-left: 3px solid #4a5e4a;\n'
+                    '                      padding: 12px 16px; border-radius: 4px; margin-top: 8px;\n'
+                    '                      font-size: 13px; }}\n'
+                    '    .footer {{ margin-top: 24px; font-size: 12px; color: #aaa; text-align: center; }}\n'
+                    '  </style>\n'
+                    '</head>\n'
+                    '<body>\n'
+                    '  <div class="container">\n'
+                    '    <div class="header"><h2>Atualização de Protocolo</h2></div>\n'
+                    '    <div class="body">\n'
+                    '      <p>Olá{saudacao}. Há uma atualização no seu protocolo.</p>\n'
+                    '      <div class="field-label">Número do Protocolo</div>\n'
+                    '      <div class="field-value">{num}</div>\n'
+                    '      <div class="field-label">Andamento</div>\n'
+                    '      <div class="andamento-box">{texto}</div>\n'
+                    '      <div class="field-label" style="margin-top:16px;">Registrado por</div>\n'
+                    '      <div class="field-value">{remetente}</div>\n'
+                    '    </div>\n'
+                    '    <div class="footer">{sender_name}</div>\n'
+                    '  </div>\n'
+                    '</body>\n'
+                    '</html>'
+                ).format(
+                    saudacao=saudacao,
+                    num=numero_protocolo,
+                    texto=texto_escapado,
+                    remetente=remetente,
+                    sender_name=sender_name,
+                )
+
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = assunto
+                msg["From"] = "{name} <{addr}>".format(name=sender_name, addr=mail_user)
+                msg["To"] = dest_email
+                msg.attach(MIMEText(corpo_html, "html", "utf-8"))
+                server.sendmail(mail_user, [dest_email], msg.as_string())
+                enviados += 1
+
+    except Exception as exc:
+        current_app.logger.error("Falha ao enviar e-mail de andamento: %s", exc)
+        return jsonify(ok=False, erro="Falha no envio do e-mail."), 500
+
+    if enviados > 0:
+        return jsonify(ok=True, enviados=enviados), 200
+    return jsonify(ok=False, erro="Nenhum destinatário válido."), 400

@@ -1,10 +1,12 @@
 # app/routes.py — Blueprint: rotas principais (index, cadastrar, consultar)
 from pathlib import Path
+from urllib.parse import quote as url_quote
 
 import markdown as md
+import requests as http_requests
 
-from flask import Blueprint, current_app, render_template
-from flask_login import login_required
+from flask import Blueprint, current_app, jsonify, render_template
+from flask_login import current_user, login_required
 
 from app.permissions import perfil_required
 
@@ -155,5 +157,36 @@ def changelog():
 @login_required
 def notificacoes():
     return render_template("notificacoes.html")
+
+
+@main_bp.route("/todo")
+@login_required
+def todo():
+    return render_template("todo.html")
+
+
+@main_bp.route("/api/todo/count")
+@login_required
+def todo_count():
+    token = current_app.config.get("BASEROW_TOKEN", "")
+    base_url = current_app.config.get("BASEROW_URL", "")
+    nome_encoded = url_quote(current_user.nome, safe="")
+    url = (
+        base_url + "/api/database/rows/table/778/"
+        "?filter__field_7460__boolean=true"
+        "&filter__field_7461__boolean=false"
+        "&filter__field_7464__equal=" + nome_encoded +
+        "&page_size=1"
+    )
+    try:
+        resp = http_requests.get(
+            url,
+            headers={"Authorization": "Token " + token},
+            timeout=10,
+        )
+        count = resp.json().get("count", 0) if resp.ok else 0
+    except Exception:
+        count = 0
+    return jsonify({"count": count})
 
 
