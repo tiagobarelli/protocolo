@@ -12,6 +12,7 @@ var CONFIG_TODO = {
     andConcluido:    'field_7461',
     andDataCriacao:  'field_7462',
     andCriadoPor:    'field_7464',
+    andDataTarefa:   'field_7466',
     protoNumero:      'field_7240',
     protoInteressado: 'field_7241',
     protoServico:     'field_7242',
@@ -69,6 +70,47 @@ function gerarDataHoraIso() {
   return ano + '-' + mes + '-' + dia + 'T' + hora + ':' + min + ':00';
 }
 
+function dataHojeLocal() {
+  var hoje = new Date();
+  var ano = hoje.getFullYear();
+  var mes = ('0' + (hoje.getMonth() + 1)).slice(-2);
+  var dia = ('0' + hoje.getDate()).slice(-2);
+  return ano + '-' + mes + '-' + dia; // 'YYYY-MM-DD'
+}
+
+function extrairDataParte(isoStr) {
+  if (!isoStr) return '';
+  return isoStr.split('T')[0]; // 'YYYY-MM-DD'
+}
+
+function atualizarContadores(tarefas) {
+  var hoje = dataHojeLocal();
+  var nHoje = 0, nFuturo = 0, nSemData = 0, nAtrasadas = 0;
+
+  for (var i = 0; i < tarefas.length; i++) {
+    var data = extrairDataParte(tarefas[i][CONFIG_TODO.fields.andDataTarefa]);
+    if (!data) {
+      nSemData++;
+    } else if (data === hoje) {
+      nHoje++;
+    } else if (data > hoje) {
+      nFuturo++;
+    } else {
+      nAtrasadas++;
+    }
+  }
+
+  setContador('countHoje', nHoje);
+  setContador('countFuturo', nFuturo);
+  setContador('countSemData', nSemData);
+  setContador('countAtrasadas', nAtrasadas);
+}
+
+function setContador(id, valor) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = String(valor);
+}
+
 function carregarTarefas() {
   var lista = document.getElementById('todoLista');
   if (!lista) return;
@@ -90,6 +132,7 @@ function carregarTarefas() {
     })
     .then(function(data) {
       var tarefas = data.results || [];
+      atualizarContadores(tarefas);
       if (tarefas.length === 0) {
         renderizarGrupos([]);
         return;

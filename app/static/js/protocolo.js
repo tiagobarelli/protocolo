@@ -42,7 +42,8 @@ var CONFIG = {
     andDataCriacao:   'field_7462',
     andDataConclusao: 'field_7463',
     andCriadoPor:     'field_7464',
-    andNotificado:    'field_7465'
+    andNotificado:    'field_7465',
+    andDataTarefa:    'field_7466'
   },
   statusIds: {
     emAndamento: 3064,
@@ -300,6 +301,8 @@ function renderizarAndamentos(items) {
     var criadoPor = a[CONFIG.fields.andCriadoPor] || '';
     var dataCriacao = a[CONFIG.fields.andDataCriacao] || '';
     var notificado = a[CONFIG.fields.andNotificado] || false;
+    var dataTarefa = a[CONFIG.fields.andDataTarefa] || '';
+    var dataTarefaParte = dataTarefa ? dataTarefa.split('T')[0] : '';
     var itemId = a.id;
 
     html += '<div class="andamento-item' + (isTarefa ? ' is-tarefa' : '') + (concluido ? ' concluido' : '') + '">';
@@ -323,6 +326,24 @@ function renderizarAndamentos(items) {
         html += '<button type="button" class="btn-outline btn-sm" onclick="toggleConcluido(' + itemId + ', false)">' +
                 '<i class="ph ph-arrow-counter-clockwise"></i> Reabrir</button>';
       }
+
+      // Data da tarefa: exibição + edição inline
+      html += '<div class="andamento-data-tarefa" id="dataTarefaDisplay-' + itemId + '">';
+      if (dataTarefa) {
+        html += '<span class="data-tarefa-label"><i class="ph ph-calendar-check"></i> Concluir até: ' +
+                formatarDataHora(dataTarefa) + '</span>';
+      } else {
+        html += '<span class="data-tarefa-label sem-data"><i class="ph ph-calendar-blank"></i> Sem data</span>';
+      }
+      html += '<button type="button" class="btn-inline-edit" onclick="iniciarEdicaoDataTarefa(' + itemId + ')" title="Definir data">' +
+              '<i class="ph ph-calendar-plus"></i></button>';
+      html += '</div>';
+      html += '<div class="inline-edit" id="dataTarefaEdit-' + itemId + '" style="display:none;">' +
+              '<input type="date" class="inline-input" id="dataTarefaInput-' + itemId + '" data-valor="' + dataTarefaParte + '">' +
+              '<button type="button" class="btn-inline-save" onclick="salvarDataTarefa(' + itemId + ')" title="Salvar"><i class="ph ph-check"></i></button>' +
+              '<button type="button" class="btn-inline-cancel" onclick="cancelarEdicaoDataTarefa(' + itemId + ')" title="Cancelar"><i class="ph ph-x"></i></button>' +
+              '</div>';
+
       html += '</div>';
     }
     html += '</div>';
@@ -493,6 +514,11 @@ function adicionarAndamento() {
   body[CONFIG.fields.andCriadoPor] = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
   body[CONFIG.fields.andNotificado] = false;
 
+  if (isTarefa) {
+    var dataTarefaVal = document.getElementById('andamentoDataTarefa').value;
+    if (dataTarefaVal) body[CONFIG.fields.andDataTarefa] = dataTarefaVal; // 'YYYY-MM-DD'
+  }
+
   var url = API_BASE + '/database/rows/table/' + CONFIG.tables.andamentos + '/?user_field_names=false';
   var textoLocal = texto;
   var notificarLocal = notificar;
@@ -521,6 +547,11 @@ function adicionarAndamento() {
       textarea.value = '';
       if (chkTarefa) chkTarefa.checked = false;
       if (chkNotificar) chkNotificar.checked = false;
+      sincronizarChecksAndamento();
+      var dataWrapper = document.getElementById('andamentoDataWrapper');
+      var dataInput = document.getElementById('andamentoDataTarefa');
+      if (dataWrapper) dataWrapper.style.display = 'none';
+      if (dataInput) dataInput.value = '';
       btn.disabled = false;
       btn.innerHTML = '<i class="ph ph-plus"></i> Adicionar';
       msgBox.className = 'msg-box success';
@@ -560,6 +591,60 @@ function toggleConcluido(andamentoId, concluir) {
     .catch(function(err) {
       console.error('Erro ao atualizar tarefa:', err);
       alert('Erro ao atualizar tarefa: ' + err.message);
+    });
+}
+
+/* ---------- DATA DA TAREFA (edição inline) ---------- */
+
+function iniciarEdicaoDataTarefa(itemId) {
+  var display = document.getElementById('dataTarefaDisplay-' + itemId);
+  var editArea = document.getElementById('dataTarefaEdit-' + itemId);
+  var input = document.getElementById('dataTarefaInput-' + itemId);
+  if (display) display.style.display = 'none';
+  if (editArea) editArea.style.display = 'flex';
+  if (input) input.value = input.getAttribute('data-valor') || '';
+}
+
+function cancelarEdicaoDataTarefa(itemId) {
+  var display = document.getElementById('dataTarefaDisplay-' + itemId);
+  var editArea = document.getElementById('dataTarefaEdit-' + itemId);
+  if (display) display.style.display = '';
+  if (editArea) editArea.style.display = 'none';
+}
+
+/* Exclusão mútua: "Tarefa" e "Notificar por e-mail" não podem coexistir */
+function sincronizarChecksAndamento() {
+  var chkTarefa = document.getElementById('andamentoIsTarefa');
+  var chkNotificar = document.getElementById('andamentoNotificar');
+  if (!chkTarefa || !chkNotificar) return;
+
+  chkNotificar.disabled = chkTarefa.checked;
+  chkTarefa.disabled = chkNotificar.checked;
+}
+
+function salvarDataTarefa(itemId) {
+  var input = document.getElementById('dataTarefaInput-' + itemId);
+  var novoValor = input ? input.value : '';
+
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.andamentos + '/' + itemId + '/?user_field_names=false';
+  var body = {};
+  body[CONFIG.fields.andDataTarefa] = novoValor || null;
+
+  fetch(url, {
+    method: 'PATCH',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao salvar data');
+      return resp.json();
+    })
+    .then(function() {
+      carregarAndamentos();
+    })
+    .catch(function(err) {
+      console.error('Erro ao salvar data da tarefa:', err);
+      alert('Erro ao salvar data da tarefa: ' + err.message);
     });
 }
 
@@ -1747,6 +1832,31 @@ document.addEventListener('DOMContentLoaded', function() {
   if (btnAdicionar) {
     btnAdicionar.addEventListener('click', adicionarAndamento);
   }
+
+  // Campo de data da tarefa aparece só quando "Tarefa" está marcado
+  var chkTarefaNovo = document.getElementById('andamentoIsTarefa');
+  if (chkTarefaNovo) {
+    chkTarefaNovo.addEventListener('change', function() {
+      var wrapper = document.getElementById('andamentoDataWrapper');
+      var input = document.getElementById('andamentoDataTarefa');
+      if (this.checked) {
+        if (wrapper) wrapper.style.display = '';
+      } else {
+        if (wrapper) wrapper.style.display = 'none';
+        if (input) input.value = '';
+      }
+      sincronizarChecksAndamento();
+    });
+  }
+
+  // Exclusão mútua: "Notificar" bloqueia "Tarefa" e vice-versa
+  var chkNotificarNovo = document.getElementById('andamentoNotificar');
+  if (chkNotificarNovo) {
+    chkNotificarNovo.addEventListener('change', sincronizarChecksAndamento);
+  }
+
+  // Estado inicial dos checkboxes de andamento
+  sincronizarChecksAndamento();
 
   // Status
   var statusSelect = document.getElementById('statusSelect');

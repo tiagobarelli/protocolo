@@ -208,6 +208,67 @@ main {
 
 .andamento-actions {
   margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Data da tarefa (exibição + edição inline dentro das actions) */
+.andamento-data-tarefa {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.data-tarefa-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.data-tarefa-label i { font-size: 0.9rem; }
+
+.data-tarefa-label.sem-data { opacity: 0.7; }
+
+.andamento-data-tarefa .btn-inline-edit {
+  position: static;
+  opacity: 0.7;
+}
+.andamento-data-tarefa .btn-inline-edit:hover { opacity: 1; }
+
+/* Campo de data no formulário de criação */
+.andamento-data-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.andamento-data-wrapper label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.andamento-data-wrapper input[type="date"] {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-dark);
+  max-width: 220px;
+  transition: border-color 0.2s;
+}
+
+.andamento-data-wrapper input[type="date"]:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 /* Formulário de novo andamento */
@@ -260,6 +321,16 @@ main {
   height: 15px;
   accent-color: var(--accent);
   cursor: pointer;
+}
+
+/* Checkbox bloqueado (exclusão mútua Tarefa x Notificar) */
+.andamento-checks input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+.andamento-checks label:has(input[type="checkbox"]:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* Badge de sucesso para botão */
