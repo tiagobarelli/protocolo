@@ -136,12 +136,85 @@ a.todo-group-num:hover { text-decoration: underline; }
 .todo-item {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 14px 0;
+  gap: 12px;
+  padding: 12px 8px;
+  margin: 0 -8px;
   border-bottom: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: background 0.2s ease, opacity 0.4s ease, transform 0.4s ease,
+              max-height 0.4s ease, padding 0.4s ease, margin 0.4s ease;
 }
 
 .todo-item:last-child { border-bottom: none; }
+
+.todo-item:hover { background: var(--accent-soft); }
+
+/* Círculo de check (estilo Todoist) */
+.todo-check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  padding: 0;
+  border: 2px solid var(--text-muted);
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.todo-check i {
+  font-size: 0.75rem;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.todo-check:hover {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.todo-check:hover i {
+  opacity: 0.5;
+  transform: scale(1);
+  color: var(--success);
+}
+
+/* Estado concluindo: círculo preenchido + texto riscado */
+.todo-item.concluindo .todo-check {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.todo-item.concluindo .todo-check i {
+  opacity: 1;
+  transform: scale(1);
+  color: #fff;
+}
+
+.todo-item.concluindo .todo-texto {
+  text-decoration: line-through;
+  opacity: 0.5;
+  transition: opacity 0.25s ease;
+}
+
+/* Estado saindo: fade out + colapso */
+.todo-item.saindo {
+  opacity: 0;
+  transform: translateX(-8px);
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-bottom-color: transparent;
+  overflow: hidden;
+}
 
 .todo-main {
   flex: 1;
@@ -180,29 +253,6 @@ a.todo-group-num:hover { text-decoration: underline; }
   font-size: 0.75rem;
   color: var(--text-muted);
 }
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-
-.btn-success {
-  background: var(--success-bg);
-  color: var(--success);
-  border: 1px solid var(--success);
-}
-
-.btn-success:hover { background: var(--success); color: #fff; }
-.btn-success:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .overlay {
   position: fixed;

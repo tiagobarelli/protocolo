@@ -225,6 +225,8 @@ function renderizarGrupos(grupos) {
       var itemId = a.id;
 
       html += '<div class="todo-item" id="todo-item-' + itemId + '">';
+      html += '<button type="button" class="todo-check" onclick="concluirTarefa(' + itemId + ')" aria-label="Concluir tarefa">' +
+              '<i class="ph ph-check"></i></button>';
       html += '<div class="todo-main">';
       html += '<div class="todo-texto">' + escapeHtml(texto) + '</div>';
       if (dataCriacao) {
@@ -232,8 +234,6 @@ function renderizarGrupos(grupos) {
                 formatarDataHora(dataCriacao) + '</span></div>';
       }
       html += '</div>';
-      html += '<button type="button" class="btn btn-success" onclick="concluirTarefa(' + itemId + ')">' +
-              '<i class="ph ph-check"></i> Concluir</button>';
       html += '</div>';
     }
     html += '</div>';
@@ -245,6 +245,14 @@ function renderizarGrupos(grupos) {
 }
 
 function concluirTarefa(andamentoId) {
+  var item = document.getElementById('todo-item-' + andamentoId);
+
+  // Evitar duplo clique
+  if (item && item.className.indexOf('concluindo') !== -1) return;
+
+  // Feedback visual imediato: risca + preenche o círculo
+  if (item) item.className += ' concluindo';
+
   var url = API_BASE + '/database/rows/table/' + CONFIG_TODO.tableAndamentos + '/' + andamentoId + '/?user_field_names=false';
   var body = {};
   body[CONFIG_TODO.fields.andConcluido] = true;
@@ -260,10 +268,18 @@ function concluirTarefa(andamentoId) {
       return resp.json();
     })
     .then(function() {
-      carregarTarefas();
+      // Mantém a tarefa riscada visível por ~2,5s, depois fade out e recarga
+      setTimeout(function() {
+        if (item) item.className += ' saindo';
+        setTimeout(function() {
+          carregarTarefas();
+        }, 400);
+      }, 2500);
     })
     .catch(function(err) {
       console.error('Erro ao concluir tarefa:', err);
+      // Reverter o estado visual em caso de erro
+      if (item) item.className = item.className.replace(' concluindo', '');
       var msgBox = document.getElementById('todoMsg');
       if (msgBox) {
         msgBox.className = 'msg-box error';
