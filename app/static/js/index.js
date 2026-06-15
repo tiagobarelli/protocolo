@@ -2,7 +2,7 @@
 
 var API_BASE = '/api/baserow';
 var CONFIG = {
-  tables: { protocolo: 755 },
+  tables: { protocolo: 755, andamentos: 778 },
   fields: {
     protocolo: 'field_7240',
     interessado: 'field_7241',
@@ -11,7 +11,11 @@ var CONFIG = {
     dataEntrada: 'field_7250',
     status: 'field_7252',
     advogado: 'field_7254',
-    agendadoPara: 'field_7268'
+    agendadoPara: 'field_7268',
+    andIsTarefa:  'field_7460',
+    andConcluido: 'field_7461',
+    andCriadoPor: 'field_7464',
+    andProtocolo: 'field_7457'
   }
 };
 
@@ -137,9 +141,19 @@ function carregarProtocolos(pagina) {
     .then(function(data) {
       totalRegistros = data.count || 0;
       loading.style.display = 'none';
-      renderizarCards(data.results || []);
+      var protocolos = data.results || [];
       renderizarPaginacao();
       atualizarSumario(totalRegistros);
+
+      // Protocolos → tarefas → render com badge (degradação graciosa)
+      carregarContadorTarefas()
+        .then(function(mapa) {
+          renderizarCards(protocolos, mapa);
+        })
+        .catch(function(err) {
+          console.error('Erro ao carregar contador de tarefas:', err);
+          renderizarCards(protocolos, {});
+        });
     })
     .catch(function(err) {
       console.error('Erro ao carregar protocolos:', err);
@@ -153,9 +167,54 @@ function aplicarFiltros() {
   carregarProtocolos(1);
 }
 
-function renderizarCards(protocolos) {
+/* ---------- CONTADOR DE TAREFAS ABERTAS ---------- */
+
+function carregarContadorTarefas() {
+  var mapa = {};
+  var perfilMaster = (window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+  var nome = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
+
+  var baseUrl = API_BASE + '/database/rows/table/' + CONFIG.tables.andamentos +
+    '/?user_field_names=false' +
+    '&size=200' +
+    '&filter__' + CONFIG.fields.andIsTarefa + '__boolean=true' +
+    '&filter__' + CONFIG.fields.andConcluido + '__boolean=false';
+
+  if (!perfilMaster && nome) {
+    baseUrl += '&filter__' + CONFIG.fields.andCriadoPor + '__equal=' + encodeURIComponent(nome);
+  }
+
+  function buscarPagina(pagina) {
+    var url = baseUrl + '&page=' + pagina;
+    return fetch(url, { headers: apiHeaders() })
+      .then(function(resp) {
+        if (!resp.ok) throw new Error('Erro ao carregar tarefas');
+        return resp.json();
+      })
+      .then(function(data) {
+        var results = data.results || [];
+        for (var i = 0; i < results.length; i++) {
+          var protoArr = results[i][CONFIG.fields.andProtocolo] || [];
+          if (protoArr.length > 0) {
+            var pid = protoArr[0].id;
+            mapa[pid] = (mapa[pid] || 0) + 1;
+          }
+        }
+        var totalCount = data.count || 0;
+        if (pagina * 200 < totalCount) {
+          return buscarPagina(pagina + 1);
+        }
+        return mapa;
+      });
+  }
+
+  return buscarPagina(1);
+}
+
+function renderizarCards(protocolos, contadores) {
   var grid = document.getElementById('protocolGrid');
   var empty = document.getElementById('emptyState');
+  if (!contadores) contadores = {};
 
   if (protocolos.length === 0) {
     grid.innerHTML = '';
@@ -168,13 +227,14 @@ function renderizarCards(protocolos) {
 
   for (var i = 0; i < protocolos.length; i++) {
     var p = protocolos[i];
-    html += construirCard(p);
+    html += construirCard(p, contadores[p.id] || 0);
   }
 
   grid.innerHTML = html;
 }
 
-function construirCard(p) {
+function construirCard(p, contadorTarefas) {
+  if (!contadorTarefas) contadorTarefas = 0;
   var numero = p[CONFIG.fields.protocolo] || '—';
   var statusObj = p[CONFIG.fields.status];
   var statusTexto = statusObj ? (statusObj.value || '') : '';
@@ -237,13 +297,16 @@ function construirCard(p) {
   cardHtml += '<div class="card-field"><i class="ph ph-identification-badge"></i> ' + escapeHtml(responsavel) + '</div>';
   cardHtml += '</div>';
 
-  if (diasAberto || agendado) {
+  if (diasAberto || agendado || contadorTarefas >= 1) {
     cardHtml += '<div class="card-footer">';
     if (diasAberto) {
       cardHtml += '<span class="' + diasClasse + '"><i class="ph ph-clock"></i> ' + diasAberto + '</span>';
     }
     if (agendado) {
       cardHtml += '<span><i class="ph ph-calendar-blank"></i> ' + formatarData(agendado) + '</span>';
+    }
+    if (contadorTarefas >= 1) {
+      cardHtml += '<span class="card-tarefas-badge"><i class="ph ph-list-checks"></i> ' + contadorTarefas + '</span>';
     }
     cardHtml += '</div>';
   }

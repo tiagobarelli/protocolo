@@ -217,6 +217,20 @@
   gap: 4px;
 }
 
+/* Badge de tarefas abertas vinculadas ao protocolo */
+.card-tarefas-badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--primary-hover);
+  font-weight: 600;
+}
+
+.card-tarefas-badge i {
+  color: var(--primary-hover);
+}
+
 .dias-aberto {
   color: var(--warning) !important;
   font-weight: 600;
