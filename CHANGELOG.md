@@ -2,6 +2,15 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.2.1] 2026-06-17
+
+### Melhorias
+
+- **Destaque de tarefas para hoje (To Do):** na página To Do, cada tarefa cuja data de conclusão é o dia de hoje ganha uma faixa lateral roxa e uma etiqueta "Hoje" ao lado do texto, facilitando identificar rapidamente o que precisa ser feito no dia.
+- **Ordenação dos cards na página To Do:** novo seletor que permite ordenar os protocolos por "Protocolo mais antigo primeiro" (padrão), "Protocolos mais recentes primeiro" ou "Protocolos com tarefas para hoje" (que leva ao topo os protocolos com tarefa agendada para hoje). A ordem interna das tarefas dentro de cada protocolo não muda.
+- **Edição do texto dos andamentos:** agora é possível corrigir o texto de uma nota de andamento já registrada, tanto na tela do protocolo quanto na página To Do, sem precisar criar uma nova nota. A edição é feita no próprio local (botão de lápis) e altera apenas o texto — nunca dispara e-mail. O botão de editar só aparece para o autor da nota ou para o perfil master; tarefas já concluídas não podem ser editadas.
+- **Conclusão de tarefas por círculo (tela do protocolo):** os botões "Concluir" e "Reabrir" das tarefas no card do protocolo foram substituídos por um único círculo clicável à esquerda da nota, no mesmo padrão visual da página To Do. Clicar no círculo conclui (com animação) ou reabre a tarefa, que permanece visível na lista com o estado atualizado.
+
 ## [1.2.0] 2026-06-15
 
 ### Adicionado

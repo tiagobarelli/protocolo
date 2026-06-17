@@ -305,27 +305,39 @@ function renderizarAndamentos(items) {
     var dataTarefaParte = dataTarefa ? dataTarefa.split('T')[0] : '';
     var itemId = a.id;
 
-    html += '<div class="andamento-item' + (isTarefa ? ' is-tarefa' : '') + (concluido ? ' concluido' : '') + '">';
-    html += '<div class="andamento-meta">';
+    var nomeAtual = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
+    var ehMaster = (window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+    var podeEditar = (ehMaster || criadoPor === nomeAtual) && (!isTarefa || !concluido);
+
+    html += '<div class="andamento-item' + (isTarefa ? ' is-tarefa' : '') + (concluido ? ' concluido' : '') + '" id="andamento-item-' + itemId + '">';
     if (isTarefa) {
-      html += '<i class="ph ' + (concluido ? 'ph-check-square' : 'ph-square') + ' tarefa-icon"></i>';
+      html += '<button type="button" class="andamento-check" id="andamento-check-' + itemId + '" onclick="toggleConcluido(' + itemId + ', ' + (concluido ? 'false' : 'true') + ')" aria-label="' + (concluido ? 'Reabrir tarefa' : 'Concluir tarefa') + '">' +
+              '<i class="ph ph-check"></i></button>';
+      html += '<div class="andamento-main">';
     }
+    html += '<div class="andamento-meta">';
     html += '<span class="andamento-autor">' + escapeHtml(criadoPor) + '</span>';
     html += '<span class="andamento-data">' + formatarDataHora(dataCriacao) + '</span>';
     if (notificado) {
       html += ' <i class="ph ph-envelope-simple notificado-icon" title="Interessados notificados por e-mail"></i>';
     }
     html += '</div>';
+    html += '<div class="andamento-texto-wrap" id="textoDisplay-' + itemId + '">';
     html += '<div class="andamento-texto">' + escapeHtml(texto).replace(/\n/g, '<br>') + '</div>';
+    if (podeEditar) {
+      html += '<button type="button" class="btn-inline-edit btn-edit-texto" onclick="iniciarEdicaoTexto(' + itemId + ')" title="Editar texto"><i class="ph ph-pencil-simple"></i></button>';
+    }
+    html += '</div>';
+    if (podeEditar) {
+      var textoAttr = escapeHtml(texto).replace(/"/g, '&quot;');
+      html += '<div class="inline-edit inline-edit-texto" id="textoEdit-' + itemId + '" style="display:none;">';
+      html += '<textarea class="inline-textarea" id="textoInput-' + itemId + '" data-valor="' + textoAttr + '">' + escapeHtml(texto) + '</textarea>';
+      html += '<button type="button" class="btn-inline-save" onclick="salvarEdicaoTexto(' + itemId + ')" title="Salvar"><i class="ph ph-check"></i></button>';
+      html += '<button type="button" class="btn-inline-cancel" onclick="cancelarEdicaoTexto(' + itemId + ')" title="Cancelar"><i class="ph ph-x"></i></button>';
+      html += '</div>';
+    }
     if (isTarefa) {
       html += '<div class="andamento-actions">';
-      if (!concluido) {
-        html += '<button type="button" class="btn btn-sm btn-success" onclick="toggleConcluido(' + itemId + ', true)">' +
-                '<i class="ph ph-check"></i> Concluir</button>';
-      } else {
-        html += '<button type="button" class="btn-outline btn-sm" onclick="toggleConcluido(' + itemId + ', false)">' +
-                '<i class="ph ph-arrow-counter-clockwise"></i> Reabrir</button>';
-      }
 
       // Data da tarefa: exibição + edição inline
       html += '<div class="andamento-data-tarefa" id="dataTarefaDisplay-' + itemId + '">';
@@ -344,7 +356,8 @@ function renderizarAndamentos(items) {
               '<button type="button" class="btn-inline-cancel" onclick="cancelarEdicaoDataTarefa(' + itemId + ')" title="Cancelar"><i class="ph ph-x"></i></button>' +
               '</div>';
 
-      html += '</div>';
+      html += '</div>';   // fecha .andamento-actions
+      html += '</div>';   // fecha .andamento-main
     }
     html += '</div>';
   }
@@ -571,6 +584,11 @@ function adicionarAndamento() {
 }
 
 function toggleConcluido(andamentoId, concluir) {
+  var item = document.getElementById('andamento-item-' + andamentoId);
+
+  // Feedback visual otimista ao concluir: preenche o círculo + risca o texto
+  if (item && concluir) item.className += ' concluindo';
+
   var url = API_BASE + '/database/rows/table/' + CONFIG.tables.andamentos + '/' + andamentoId + '/?user_field_names=false';
   var body = {};
   body[CONFIG.fields.andConcluido] = concluir;
@@ -586,10 +604,12 @@ function toggleConcluido(andamentoId, concluir) {
       return resp.json();
     })
     .then(function() {
-      carregarAndamentos();
+      var espera = concluir ? 450 : 0;
+      setTimeout(function() { carregarAndamentos(); }, espera);
     })
     .catch(function(err) {
       console.error('Erro ao atualizar tarefa:', err);
+      if (item) item.className = item.className.replace(' concluindo', '');
       alert('Erro ao atualizar tarefa: ' + err.message);
     });
 }
@@ -610,6 +630,48 @@ function cancelarEdicaoDataTarefa(itemId) {
   var editArea = document.getElementById('dataTarefaEdit-' + itemId);
   if (display) display.style.display = '';
   if (editArea) editArea.style.display = 'none';
+}
+
+function iniciarEdicaoTexto(itemId) {
+  var display = document.getElementById('textoDisplay-' + itemId);
+  var editArea = document.getElementById('textoEdit-' + itemId);
+  var input = document.getElementById('textoInput-' + itemId);
+  if (display) display.style.display = 'none';
+  if (editArea) editArea.style.display = 'flex';
+  if (input) { input.value = input.getAttribute('data-valor') || ''; input.focus(); }
+}
+
+function cancelarEdicaoTexto(itemId) {
+  var display = document.getElementById('textoDisplay-' + itemId);
+  var editArea = document.getElementById('textoEdit-' + itemId);
+  if (display) display.style.display = '';
+  if (editArea) editArea.style.display = 'none';
+}
+
+function salvarEdicaoTexto(itemId) {
+  var input = document.getElementById('textoInput-' + itemId);
+  var novoTexto = input ? input.value : '';
+
+  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.andamentos + '/' + itemId + '/?user_field_names=false';
+  var body = {};
+  body[CONFIG.fields.andTexto] = novoTexto;
+
+  fetch(url, {
+    method: 'PATCH',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao salvar texto');
+      return resp.json();
+    })
+    .then(function() {
+      carregarAndamentos();
+    })
+    .catch(function(err) {
+      console.error('Erro ao salvar texto:', err);
+      alert('Erro ao salvar texto: ' + err.message);
+    });
 }
 
 /* Exclusão mútua: "Tarefa" e "Notificar por e-mail" não podem coexistir */

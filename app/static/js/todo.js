@@ -20,8 +20,16 @@ var CONFIG_TODO = {
   }
 };
 
+var TAREFAS_CACHE = [];
+var DETALHES_CACHE = {};
+
 function apiHeaders() {
   return { 'Content-Type': 'application/json' };
+}
+
+function modoAtual() {
+  var sel = document.getElementById('todoOrdenacao');
+  return sel ? sel.value : 'antigos';
 }
 
 function mostrarOverlay(show) {
@@ -134,11 +142,15 @@ function carregarTarefas() {
       var tarefas = data.results || [];
       atualizarContadores(tarefas);
       if (tarefas.length === 0) {
+        TAREFAS_CACHE = [];
+        DETALHES_CACHE = {};
         renderizarGrupos([]);
         return;
       }
       return carregarDetalhesProtocolos(tarefas).then(function(detalhes) {
-        renderizarGrupos(agruparTarefas(tarefas, detalhes));
+        TAREFAS_CACHE = tarefas;
+        DETALHES_CACHE = detalhes;
+        renderizarGrupos(ordenarGrupos(agruparTarefas(tarefas, detalhes), modoAtual()));
       });
     })
     .catch(function(err) {
@@ -205,17 +217,11 @@ function agruparTarefas(tarefas, detalhes) {
     grupos[pid].tarefas.push(a);
   }
 
-  // Ordenar grupos por número de protocolo (crescente, numérico quando possível)
+  // Monta a lista de grupos (sem ordenar — a ordenação fica em ordenarGrupos)
   var listaGrupos = [];
   for (var key in grupos) {
     if (grupos.hasOwnProperty(key)) listaGrupos.push(grupos[key]);
   }
-  listaGrupos.sort(function(g1, g2) {
-    var n1 = parseInt(g1.info.numero, 10);
-    var n2 = parseInt(g2.info.numero, 10);
-    if (!isNaN(n1) && !isNaN(n2)) return n1 - n2;
-    return String(g1.info.numero).localeCompare(String(g2.info.numero));
-  });
 
   // Grupo "sem protocolo" no fim
   if (ordemSemProto.length > 0) {
@@ -223,6 +229,48 @@ function agruparTarefas(tarefas, detalhes) {
   }
 
   return listaGrupos;
+}
+
+function ordenarGrupos(listaGrupos, modo) {
+  var semProto = null, comProto = [];
+  for (var i = 0; i < listaGrupos.length; i++) {
+    if (listaGrupos[i].protoId === null) semProto = listaGrupos[i];
+    else comProto.push(listaGrupos[i]);
+  }
+
+  function numProto(g) {
+    var n = parseInt(g.info ? g.info.numero : '', 10);
+    return isNaN(n) ? null : n;
+  }
+  function compararCrescente(g1, g2) {
+    var n1 = numProto(g1), n2 = numProto(g2);
+    if (n1 !== null && n2 !== null) return n1 - n2;
+    return String(g1.info ? g1.info.numero : '')
+           .localeCompare(String(g2.info ? g2.info.numero : ''));
+  }
+
+  if (modo === 'recentes') {
+    comProto.sort(function(g1, g2) { return -compararCrescente(g1, g2); });
+  } else if (modo === 'hoje') {
+    var hoje = dataHojeLocal();
+    function temTarefaHoje(g) {
+      for (var i = 0; i < g.tarefas.length; i++) {
+        if (extrairDataParte(g.tarefas[i][CONFIG_TODO.fields.andDataTarefa]) === hoje) return true;
+      }
+      return false;
+    }
+    comProto.sort(function(g1, g2) {
+      var h1 = temTarefaHoje(g1) ? 1 : 0;
+      var h2 = temTarefaHoje(g2) ? 1 : 0;
+      if (h1 !== h2) return h2 - h1;           // hoje primeiro
+      return compararCrescente(g1, g2);        // depois, crescente
+    });
+  } else {
+    comProto.sort(compararCrescente);          // 'antigos' (padrão)
+  }
+
+  if (semProto) comProto.push(semProto);
+  return comProto;
 }
 
 function renderizarGrupos(grupos) {
@@ -267,11 +315,34 @@ function renderizarGrupos(grupos) {
       var dataCriacao = a[CONFIG_TODO.fields.andDataCriacao] || '';
       var itemId = a.id;
 
-      html += '<div class="todo-item" id="todo-item-' + itemId + '">';
+      var dataTarefaParte = extrairDataParte(a[CONFIG_TODO.fields.andDataTarefa]);
+      var ehHoje = (dataTarefaParte && dataTarefaParte === dataHojeLocal());
+
+      var criadoPor = a[CONFIG_TODO.fields.andCriadoPor] || '';
+      var nomeAtual = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
+      var ehMaster = (window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+      var podeEditar = (ehMaster || criadoPor === nomeAtual);
+
+      var itemClasse = ehHoje ? 'todo-item todo-item-hoje' : 'todo-item';
+      html += '<div class="' + itemClasse + '" id="todo-item-' + itemId + '">';
       html += '<button type="button" class="todo-check" onclick="concluirTarefa(' + itemId + ')" aria-label="Concluir tarefa">' +
               '<i class="ph ph-check"></i></button>';
       html += '<div class="todo-main">';
-      html += '<div class="todo-texto">' + escapeHtml(texto) + '</div>';
+      html += '<div class="todo-texto-wrap" id="todoTextoDisplay-' + itemId + '">';
+      html += '<div class="todo-texto">' + escapeHtml(texto) +
+              (ehHoje ? '<span class="todo-pill-hoje">Hoje</span>' : '') + '</div>';
+      if (podeEditar) {
+        html += '<button type="button" class="btn-inline-edit btn-edit-texto" onclick="iniciarEdicaoTexto(' + itemId + ')" title="Editar texto"><i class="ph ph-pencil-simple"></i></button>';
+      }
+      html += '</div>';
+      if (podeEditar) {
+        var textoAttr = escapeHtml(texto).replace(/"/g, '&quot;');
+        html += '<div class="inline-edit inline-edit-texto" id="todoTextoEdit-' + itemId + '" style="display:none;">';
+        html += '<textarea class="inline-textarea" id="todoTextoInput-' + itemId + '" data-valor="' + textoAttr + '">' + escapeHtml(texto) + '</textarea>';
+        html += '<button type="button" class="btn-inline-save" onclick="salvarEdicaoTexto(' + itemId + ')" title="Salvar"><i class="ph ph-check"></i></button>';
+        html += '<button type="button" class="btn-inline-cancel" onclick="cancelarEdicaoTexto(' + itemId + ')" title="Cancelar"><i class="ph ph-x"></i></button>';
+        html += '</div>';
+      }
       if (dataCriacao) {
         html += '<div class="todo-meta"><span class="todo-data"><i class="ph ph-clock"></i> ' +
                 formatarDataHora(dataCriacao) + '</span></div>';
@@ -332,6 +403,56 @@ function concluirTarefa(andamentoId) {
     });
 }
 
+function iniciarEdicaoTexto(itemId) {
+  var display = document.getElementById('todoTextoDisplay-' + itemId);
+  var editArea = document.getElementById('todoTextoEdit-' + itemId);
+  var input = document.getElementById('todoTextoInput-' + itemId);
+  if (display) display.style.display = 'none';
+  if (editArea) editArea.style.display = 'flex';
+  if (input) { input.value = input.getAttribute('data-valor') || ''; input.focus(); }
+}
+
+function cancelarEdicaoTexto(itemId) {
+  var display = document.getElementById('todoTextoDisplay-' + itemId);
+  var editArea = document.getElementById('todoTextoEdit-' + itemId);
+  if (display) display.style.display = '';
+  if (editArea) editArea.style.display = 'none';
+}
+
+function salvarEdicaoTexto(itemId) {
+  var input = document.getElementById('todoTextoInput-' + itemId);
+  var novoTexto = input ? input.value : '';
+
+  var url = API_BASE + '/database/rows/table/' + CONFIG_TODO.tableAndamentos + '/' + itemId + '/?user_field_names=false';
+  var body = {};
+  body[CONFIG_TODO.fields.andTexto] = novoTexto;
+
+  fetch(url, {
+    method: 'PATCH',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro ao salvar texto');
+      return resp.json();
+    })
+    .then(function() {
+      carregarTarefas();
+    })
+    .catch(function(err) {
+      console.error('Erro ao salvar texto:', err);
+      alert('Erro ao salvar texto: ' + err.message);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+  var selOrd = document.getElementById('todoOrdenacao');
+  if (selOrd) {
+    selOrd.value = 'antigos'; // garante padrão
+    selOrd.addEventListener('change', function() {
+      renderizarGrupos(ordenarGrupos(
+        agruparTarefas(TAREFAS_CACHE, DETALHES_CACHE), selOrd.value));
+    });
+  }
   carregarTarefas();
 });

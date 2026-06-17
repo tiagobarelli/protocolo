@@ -48,7 +48,14 @@
       </div>
 
       <div class="card">
-        <div class="card-title"><i class="ph ph-clock"></i> Tarefas Pendentes</div>
+        <div class="card-title-row">
+          <div class="card-title"><i class="ph ph-clock"></i> Tarefas Pendentes</div>
+          <select id="todoOrdenacao" class="todo-ordenacao">
+            <option value="antigos">Protocolo mais antigo primeiro</option>
+            <option value="recentes">Protocolos mais recentes primeiro</option>
+            <option value="hoje">Protocolos com tarefas para hoje</option>
+          </select>
+        </div>
         <div id="todoLista">
           <div class="todo-empty"><i class="ph ph-check-circle"></i> Carregando...</div>
         </div>

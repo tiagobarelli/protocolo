@@ -17,6 +17,8 @@
   --success-bg: #f0f5f1;
   --danger: #b91c1c;
   --danger-bg: #faf0ed;
+  --today-highlight: #5b21b6;       /* roxo escuro */
+  --today-highlight-soft: #ede9fe;  /* fundo suave do pill */
 }
 
 main {
@@ -64,6 +66,38 @@ main {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Cabeçalho do card com seletor de ordenação */
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.card-title-row .card-title {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.todo-ordenacao {
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+  background: var(--surface);
+  border: 1px solid var(--border-focus);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.todo-ordenacao:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 /* Quadro de contadores */
@@ -192,6 +226,24 @@ a.todo-group-num:hover { text-decoration: underline; }
 .todo-item:last-child { border-bottom: none; }
 
 .todo-item:hover { background: var(--accent-soft); }
+
+/* Destaque para tarefas agendadas para hoje */
+.todo-item-hoje {
+  border-left: 3px solid var(--today-highlight);
+  padding-left: 5px; /* 8px original - 3px da borda, mantém alinhamento */
+}
+
+.todo-pill-hoje {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--today-highlight);
+  border-radius: 999px;
+  vertical-align: middle;
+}
 
 /* Círculo de check (estilo Todoist) */
 .todo-check {
@@ -336,3 +388,78 @@ a.todo-group-num:hover { text-decoration: underline; }
   color: #991b1b;
   display: flex;
 }
+
+/* Edição inline do texto da tarefa */
+.todo-texto-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.todo-texto-wrap .todo-texto { flex: 1; }
+
+.btn-inline-edit {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.85rem;
+  transition: opacity 0.2s;
+}
+
+.btn-edit-texto {
+  position: static;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.todo-texto-wrap:hover .btn-edit-texto { opacity: 1; }
+
+.inline-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.inline-edit-texto { align-items: flex-start; }
+
+.inline-textarea {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-dark);
+  flex: 1;
+  min-height: 60px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.inline-textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.btn-inline-save,
+.btn-inline-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-inline-save { background: var(--success-bg); color: var(--success); }
+.btn-inline-save:hover { background: var(--success); color: #fff; }
+.btn-inline-cancel { background: var(--danger-bg); color: var(--danger); }
+.btn-inline-cancel:hover { background: var(--danger); color: #fff; }

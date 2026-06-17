@@ -164,21 +164,82 @@ main {
   opacity: 0.6;
 }
 
+/* Tarefa: layout com círculo à esquerda + conteúdo à direita (estilo To Do) */
+.andamento-item.is-tarefa {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.andamento-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Círculo de conclusão (estilo Todoist) */
+.andamento-check {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  padding: 0;
+  border: 2px solid var(--text-muted);
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.andamento-check i {
+  font-size: 0.8rem;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.andamento-check:hover {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.andamento-check:hover i {
+  opacity: 0.5;
+  transform: scale(1);
+  color: var(--success);
+}
+
+/* Estado concluído (e durante a animação "concluindo"): círculo preenchido + check */
+.andamento-item.concluido .andamento-check,
+.andamento-item.concluindo .andamento-check {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.andamento-item.concluido .andamento-check i,
+.andamento-item.concluindo .andamento-check i {
+  opacity: 1;
+  transform: scale(1);
+  color: #fff;
+}
+
+/* Risco do texto durante a animação (estado concluido já tratado acima) */
+.andamento-item.concluindo .andamento-texto {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  opacity: 0.6;
+  transition: opacity 0.25s ease;
+}
+
 .andamento-meta {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
   flex-wrap: wrap;
-}
-
-.tarefa-icon {
-  font-size: 1rem;
-  color: var(--accent);
-}
-
-.andamento-item.concluido .tarefa-icon {
-  color: var(--success);
 }
 
 .andamento-autor {
@@ -680,6 +741,31 @@ main {
 .btn-inline-save:hover { background: var(--success); color: #fff; }
 .btn-inline-cancel { background: var(--danger-bg); color: var(--danger); }
 .btn-inline-cancel:hover { background: var(--danger); color: #fff; }
+
+/* Edição inline do texto da nota */
+.andamento-texto-wrap { display: flex; align-items: flex-start; gap: 6px; }
+.andamento-texto-wrap .andamento-texto { flex: 1; }
+.btn-edit-texto { position: static; opacity: 0.5; flex-shrink: 0; }
+.andamento-texto-wrap:hover .btn-edit-texto { opacity: 1; }
+.inline-edit-texto { align-items: flex-start; }
+.inline-textarea {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-dark);
+  flex: 1;
+  min-height: 60px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.inline-textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
 
 /* ==================== ALERTA INLINE DE CLIENTE ==================== */
 .alerta-inline-proto {
