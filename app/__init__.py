@@ -47,6 +47,7 @@ def create_app(config=None):
     from app.notifications import notifications_bp
     from app.email_proxy import email_bp
     from app.protocolo_api import protocolo_api_bp
+    from app.internal_messages import internal_messages_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -59,5 +60,6 @@ def create_app(config=None):
     app.register_blueprint(notifications_bp)
     app.register_blueprint(email_bp)
     app.register_blueprint(protocolo_api_bp)
+    app.register_blueprint(internal_messages_bp)
 
     return app

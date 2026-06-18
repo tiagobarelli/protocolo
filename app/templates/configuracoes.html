@@ -32,6 +32,11 @@
     <button type="button" class="tab-btn" data-tab="cartorio" onclick="ativarAba('cartorio')">
       <i class="ph ph-buildings"></i> Dados do Cartório
     </button>
+    {% if current_user.perfil == 'master' %}
+    <button type="button" class="tab-btn" data-tab="mensagens" onclick="ativarAba('mensagens')">
+      <i class="ph ph-megaphone"></i> Mensagens Internas
+    </button>
+    {% endif %}
   </div>
 
   <!-- Aba Protocolos -->
@@ -105,6 +110,53 @@
     </div>
   </div>
 
+  {% if current_user.perfil == 'master' %}
+  <!-- Aba Mensagens Internas -->
+  <div class="tab-content" id="tab-mensagens">
+    <div class="card">
+      <div class="section-title"><i class="ph ph-megaphone"></i> Nova mensagem</div>
+      <p class="section-desc">Publique um aviso em Markdown. Ele aparecerá no painel inicial de todos os usuários.</p>
+
+      <div class="form-group">
+        <label for="imTitulo">Título</label>
+        <input type="text" id="imTitulo" maxlength="200" placeholder="Ex: Aviso sobre feriado">
+      </div>
+
+      <div class="form-group">
+        <label for="imCorpoTextarea">Corpo (Markdown)</label>
+        <div class="md-grid">
+          <div class="md-editor-container">
+            <div class="md-toolbar">
+              <button type="button" class="md-btn" onclick="addMarkdownMensagem('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
+              <button type="button" class="md-btn" onclick="addMarkdownMensagem('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+              <button type="button" class="md-btn" onclick="addMarkdownMensagem('list')" title="Lista"><i class="ph ph-list-bullets"></i></button>
+              <button type="button" class="md-btn" onclick="addMarkdownMensagem('heading')" title="Título"><i class="ph ph-text-h-two"></i></button>
+              <button type="button" class="md-btn" onclick="addMarkdownMensagem('code')" title="Código"><i class="ph ph-code"></i></button>
+              <button type="button" class="md-btn" onclick="addMarkdownMensagem('checklist')" title="Checklist"><i class="ph ph-check-square"></i></button>
+              <button type="button" class="md-btn" onclick="addMarkdownMensagem('hr')" title="Separador"><i class="ph ph-minus"></i></button>
+            </div>
+            <textarea id="imCorpoTextarea" maxlength="20000" placeholder="Escreva o aviso aqui..." autocomplete="off"></textarea>
+          </div>
+          <div id="imCorpoPreview" class="md-preview"><div class="md-placeholder">Pré-visualização do Markdown...</div></div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <div id="imMsg" class="msg-box" style="display:none;"></div>
+        <button type="button" class="btn btn-primary" id="imBtnPublicar" onclick="publicarMensagemInterna()">
+          <i class="ph ph-paper-plane-tilt"></i> Publicar mensagem
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="ph ph-list-dashes"></i> Mensagens publicadas</div>
+      <p class="section-desc">Mensagens ativas e desativadas, com o histórico de quem confirmou a leitura.</p>
+      <div id="imLista"><div class="md-placeholder">Carregando mensagens...</div></div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Rodapé -->
   <div class="form-footer">
     <div id="formMsg" class="msg-box" style="display:none;"></div>
@@ -131,6 +183,12 @@
     cartorio_telefone: "{{ app_settings.get('cartorio_telefone', '') }}",
     cartorio_site: "{{ app_settings.get('cartorio_site', '') }}"
   };
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
 </script>
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
 <script src="{{ url_for('static', filename='js/configuracoes.js') }}"></script>
 {% endblock %}

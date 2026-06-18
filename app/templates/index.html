@@ -4,6 +4,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/internal_messages_modal.css') }}">
 {% endblock %}
 
 {% block flash_messages %}{% endblock %}
@@ -54,6 +55,26 @@
     <div class="pagination-bar" id="paginationContainer" style="display: none;"></div>
   </main>
 </div>
+
+<!-- Modal de avisos internos -->
+<div class="im-modal-overlay" id="imModalOverlay" style="display: none;">
+  <div class="im-modal" role="dialog" aria-modal="true" aria-labelledby="imModalTitulo">
+    <div class="im-modal-header">
+      <i class="ph ph-megaphone"></i>
+      <h2 id="imModalTitulo"></h2>
+    </div>
+    <div class="im-modal-body" id="imModalBody"></div>
+    <div class="im-modal-footer">
+      <label class="im-modal-check">
+        <input type="checkbox" id="imNaoExibir">
+        <span>Não exibir novamente</span>
+      </label>
+      <button type="button" class="im-modal-ok" id="imBtnOk">
+        <i class="ph ph-check"></i> Ok
+      </button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -69,4 +90,6 @@
   };
 </script>
 <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/internal_messages_modal.js') }}"></script>
 {% endblock %}

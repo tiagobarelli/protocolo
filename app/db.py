@@ -103,6 +103,29 @@ def init_db(app):
             INSERT OR IGNORE INTO settings (key, value) VALUES ('cartorio_email', 'contato@cartorioitapolis.com.br');
             INSERT OR IGNORE INTO settings (key, value) VALUES ('cartorio_telefone', '(16) 3273 9448');
             INSERT OR IGNORE INTO settings (key, value) VALUES ('cartorio_site', 'www.cartorioitapolis.com.br');
+
+            CREATE TABLE IF NOT EXISTS internal_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                titulo TEXT NOT NULL,
+                corpo TEXT NOT NULL,
+                criado_por_id INTEGER NOT NULL,
+                criado_por_nome TEXT NOT NULL,
+                criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+                ativa INTEGER NOT NULL DEFAULT 1
+            );
+            CREATE INDEX IF NOT EXISTS idx_internal_messages_ativa
+                ON internal_messages(ativa);
+
+            CREATE TABLE IF NOT EXISTS internal_message_reads (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                message_id INTEGER NOT NULL,
+                usuario_id INTEGER NOT NULL,
+                usuario_nome TEXT NOT NULL,
+                lida_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(message_id, usuario_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_internal_reads_message
+                ON internal_message_reads(message_id);
         """)
         conn.commit()
         conn.close()
