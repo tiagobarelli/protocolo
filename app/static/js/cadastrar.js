@@ -1040,16 +1040,54 @@
               { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(atAdv) });
           }
         } else {
-          var novoAdv = {};
-          novoAdv[CONFIG.fields.clienteNome] = nomeAdvogado;
-          novoAdv[CONFIG.fields.clienteCpf] = cpfAdvogado;
-          if (oabAdvogado) novoAdv[CONFIG.fields.clienteOab] = oabAdvogado;
-          if (telefoneAdvogado) novoAdv[CONFIG.fields.clienteTelefone] = telefoneAdvogado;
-          if (emailAdvogado) novoAdv[CONFIG.fields.clienteEmail] = emailAdvogado;
-          var ra = await fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/?user_field_names=false',
-            { method: 'POST', headers: apiHeaders(), body: JSON.stringify(novoAdv) });
-          if (!ra.ok) throw new Error((await ra.json()).detail || 'Erro ao cadastrar advogado.');
-          advogadoId = (await ra.json()).id;
+          // Antes de criar, verifica por CPF se o advogado já existe na 754
+          // (a busca por nome é sensível a acentos e pode não encontrá-lo).
+          var cpfAdvLimpo = cpfAdvogado.replace(/\D/g, '');
+          var cpfAdvFormatado = cpfAdvogado;
+          var advExistente = null;
+          var urlAdv = API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/?user_field_names=false&filter__' + CONFIG.fields.clienteCpf + '__equal=' + encodeURIComponent(cpfAdvLimpo) + '&size=1';
+          var respAdv = await fetch(urlAdv, { headers: apiHeaders() });
+          var dataAdv = await respAdv.json();
+          if (!dataAdv.results || dataAdv.results.length === 0) {
+            urlAdv = API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/?user_field_names=false&filter__' + CONFIG.fields.clienteCpf + '__equal=' + encodeURIComponent(cpfAdvFormatado) + '&size=1';
+            respAdv = await fetch(urlAdv, { headers: apiHeaders() });
+            dataAdv = await respAdv.json();
+          }
+          if (dataAdv.results && dataAdv.results.length > 0) {
+            advExistente = dataAdv.results[0];
+          }
+
+          if (advExistente) {
+            advogadoId = advExistente.id;
+            // Completa apenas os campos vazios do registro existente.
+            var patch = {};
+            if (oabAdvogado && !advExistente[CONFIG.fields.clienteOab]) patch[CONFIG.fields.clienteOab] = oabAdvogado;
+            if (telefoneAdvogado && !advExistente[CONFIG.fields.clienteTelefone]) patch[CONFIG.fields.clienteTelefone] = telefoneAdvogado;
+            if (emailAdvogado && !advExistente[CONFIG.fields.clienteEmail]) patch[CONFIG.fields.clienteEmail] = emailAdvogado;
+            if (Object.keys(patch).length > 0) {
+              await fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' + advogadoId + '/?user_field_names=false',
+                { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(patch) });
+            }
+            mostrarMsg('advogadoInfo', 'warning', 'Advogado já cadastrado, dados reaproveitados. Verifique no módulo pessoa física eventual dado desatualizado.');
+          } else {
+            var novoAdv = {};
+            novoAdv[CONFIG.fields.clienteNome] = nomeAdvogado;
+            novoAdv[CONFIG.fields.clienteCpf] = cpfAdvogado;
+            if (oabAdvogado) novoAdv[CONFIG.fields.clienteOab] = oabAdvogado;
+            if (telefoneAdvogado) novoAdv[CONFIG.fields.clienteTelefone] = telefoneAdvogado;
+            if (emailAdvogado) novoAdv[CONFIG.fields.clienteEmail] = emailAdvogado;
+            var ra = await fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/?user_field_names=false',
+              { method: 'POST', headers: apiHeaders(), body: JSON.stringify(novoAdv) });
+            if (!ra.ok) {
+              var erroAdv = await ra.json();
+              var detalheAdv = erroAdv.detail || '';
+              if (ra.status === 400 && typeof detalheAdv === 'string' && detalheAdv.toLowerCase().indexOf('constraint') !== -1) {
+                throw new Error('Já existe um cliente cadastrado com este CPF. Localize o advogado pela busca por nome.');
+              }
+              throw new Error(detalheAdv || 'Erro ao cadastrar advogado.');
+            }
+            advogadoId = (await ra.json()).id;
+          }
         }
       }
 

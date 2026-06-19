@@ -2,6 +2,12 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.2.2] 2026-06-19
+
+### Correções
+
+- **Cadastro de protocolo com advogado já existente:** corrigido o erro que impedia salvar um protocolo quando o advogado informado tinha um CPF já cadastrado, mas não havia sido localizado pela busca por nome (por exemplo, quando o nome foi digitado sem acento). Agora, antes de criar um advogado novo, o sistema verifica o CPF na base: se já existir, reaproveita o cadastro, completa apenas os campos que estiverem vazios (telefone, e-mail e OAB) e avisa que os dados foram reaproveitados, sem nunca sobrescrever informações já preenchidas.
+
 ## [1.2.1] 2026-06-17
 
 ### Melhorias
