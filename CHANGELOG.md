@@ -4,6 +4,10 @@ Controle de correções e melhorias do sistema
 
 ## [1.2.2] 2026-06-19
 
+### Melhorias
+
+- **Formatação nas notas de andamento:** o campo de criação de uma nova nota de andamento (tela do protocolo) ganhou uma barra de ferramentas com três botões — **negrito**, *itálico* e **lista numerada** — que aplicam a formatação ao texto selecionado (ou inserem um modelo, quando não há seleção). As notas salvas passam a ser exibidas já formatadas, tanto na tela do protocolo quanto na página To Do. Notas antigas, escritas em texto simples, continuam sendo exibidas normalmente. A edição do texto de uma nota já registrada permanece em texto simples (sem a barra de ferramentas); quem quiser formatar na edição pode digitar a marcação manualmente.
+
 ### Correções
 
 - **Cadastro de protocolo com advogado já existente:** corrigido o erro que impedia salvar um protocolo quando o advogado informado tinha um CPF já cadastrado, mas não havia sido localizado pela busca por nome (por exemplo, quando o nome foi digitado sem acento). Agora, antes de criar um advogado novo, o sistema verifica o CPF na base: se já existir, reaproveita o cadastro, completa apenas os campos que estiverem vazios (telefone, e-mail e OAB) e avisa que os dados foram reaproveitados, sem nunca sobrescrever informações já preenchidas.

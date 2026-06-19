@@ -74,5 +74,7 @@
     perfil: "{{ current_user.perfil }}"
   };
 </script>
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/todo.js') }}"></script>
 {% endblock %}

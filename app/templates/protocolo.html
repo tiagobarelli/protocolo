@@ -195,6 +195,11 @@
     <div class="card-title"><i class="ph ph-list-checks"></i> Andamentos</div>
     <div id="andamentosLista"><div class="andamentos-empty">Carregando...</div></div>
     <div class="andamento-form">
+      <div class="md-toolbar andamento-md-toolbar">
+        <button type="button" class="md-btn" onclick="inserirMarkdownAndamento('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
+        <button type="button" class="md-btn" onclick="inserirMarkdownAndamento('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+        <button type="button" class="md-btn" onclick="inserirMarkdownAndamento('list')" title="Lista numerada"><i class="ph ph-list-numbers"></i></button>
+      </div>
       <textarea id="andamentoNovoTexto" placeholder="Registre o andamento, solicitação ou lembrete..."></textarea>
       <div class="andamento-checks">
         <label><input type="checkbox" id="andamentoIsTarefa"> Tarefa</label>
@@ -245,6 +250,7 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
 <script>
   window.PROTOCOLO_ID = {{ protocolo_id }};
   window.CURRENT_USER = {

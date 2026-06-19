@@ -18,8 +18,12 @@
   function renderMarkdown(target, md) {
     if (!target) return;
     md = md || '';
-    if (window.marked) target.innerHTML = marked.parse(md);
-    else target.textContent = md;
+    if (window.marked) {
+      var html = marked.parse(md);
+      target.innerHTML = (window.DOMPurify) ? DOMPurify.sanitize(html) : html;
+    } else {
+      target.textContent = md;
+    }
   }
 
   function esconderModal() {

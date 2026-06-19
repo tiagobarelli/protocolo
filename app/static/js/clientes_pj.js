@@ -127,8 +127,12 @@ if (window.marked) {
 function renderMarkdownInto(el, md) {
   if (!el) return;
   md = md || '';
-  if (window.marked) el.innerHTML = marked.parse(md);
-  else el.textContent = md;
+  if (window.marked) {
+    var html = marked.parse(md);
+    el.innerHTML = (window.DOMPurify) ? DOMPurify.sanitize(html) : html;
+  } else {
+    el.textContent = md;
+  }
 }
 
 function atualizarPreviewOutros() {

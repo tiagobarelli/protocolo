@@ -263,9 +263,16 @@ main {
   font-size: 0.9rem;
   color: var(--text-main);
   line-height: 1.55;
-  white-space: pre-wrap;
+  white-space: normal;
   word-break: break-word;
 }
+.andamento-texto p { margin: 0 0 6px; }
+.andamento-texto p:last-child { margin-bottom: 0; }
+.andamento-texto ul,
+.andamento-texto ol { margin: 4px 0 6px; padding-left: 22px; }
+.andamento-texto ul:last-child,
+.andamento-texto ol:last-child { margin-bottom: 0; }
+.andamento-texto li { margin: 2px 0; }
 
 .andamento-actions {
   margin-top: 8px;
@@ -359,6 +366,36 @@ main {
   outline: none;
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.andamento-md-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  background: #fafaf9;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.andamento-md-toolbar .md-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+.andamento-md-toolbar .md-btn:hover {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+  border-color: #d6d3d1;
 }
 
 .andamento-checks {

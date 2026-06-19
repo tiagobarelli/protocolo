@@ -1,5 +1,9 @@
 /* protocolo.js — Detalhe do protocolo e campo Andamento (ES5) */
 
+if (window.marked) {
+  marked.use({ gfm: true, breaks: true });
+}
+
 var API_BASE = '/api/baserow';
 var CONFIG = {
   tables: { clientes: 754, protocolo: 755, andamentos: 778 },
@@ -164,7 +168,8 @@ function preencherDadosProtocolo(proto) {
   if (detalhamentos) {
     var container = document.getElementById('infoDetalhamentos');
     if (typeof marked !== 'undefined' && marked.parse) {
-      container.innerHTML = marked.parse(detalhamentos);
+      var detHtml = marked.parse(detalhamentos);
+      container.innerHTML = (window.DOMPurify) ? DOMPurify.sanitize(detHtml) : detHtml;
     } else {
       container.textContent = detalhamentos;
     }
@@ -283,6 +288,41 @@ function carregarAndamentos() {
     });
 }
 
+function inserirMarkdownAndamento(tipo) {
+  var ta = document.getElementById('andamentoNovoTexto');
+  if (!ta) return;
+  var start = ta.selectionStart;
+  var end = ta.selectionEnd;
+  var texto = ta.value;
+  var selecionado = texto.substring(start, end);
+  var antes = texto.substring(0, start);
+  var depois = texto.substring(end);
+  var prefixo = '';
+  var sufixo = '';
+  var textoNovo = '';
+  switch (tipo) {
+    case 'bold':
+      prefixo = '**'; sufixo = '**'; textoNovo = selecionado || 'texto em negrito'; break;
+    case 'italic':
+      prefixo = '*'; sufixo = '*'; textoNovo = selecionado || 'texto itálico'; break;
+    case 'list':
+      if (selecionado.indexOf('\n') !== -1) {
+        textoNovo = selecionado.split('\n').map(function(l, i) { return (i + 1) + '. ' + l; }).join('\n');
+      } else {
+        prefixo = '\n1. '; textoNovo = selecionado || 'item da lista';
+      }
+      break;
+  }
+  ta.value = antes + prefixo + textoNovo + sufixo + depois;
+  ta.focus();
+  var novaPos = start + prefixo.length + textoNovo.length + sufixo.length;
+  if ((tipo === 'bold' || tipo === 'italic') && !selecionado) {
+    ta.setSelectionRange(start + prefixo.length, start + prefixo.length + textoNovo.length);
+  } else {
+    ta.setSelectionRange(novaPos, novaPos);
+  }
+}
+
 function renderizarAndamentos(items) {
   var lista = document.getElementById('andamentosLista');
   if (!lista) return;
@@ -323,7 +363,9 @@ function renderizarAndamentos(items) {
     }
     html += '</div>';
     html += '<div class="andamento-texto-wrap" id="textoDisplay-' + itemId + '">';
-    html += '<div class="andamento-texto">' + escapeHtml(texto).replace(/\n/g, '<br>') + '</div>';
+    var textoHtml = window.marked ? marked.parse(texto) : escapeHtml(texto);
+    if (window.DOMPurify) textoHtml = DOMPurify.sanitize(textoHtml);
+    html += '<div class="andamento-texto">' + textoHtml + '</div>';
     if (podeEditar) {
       html += '<button type="button" class="btn-inline-edit btn-edit-texto" onclick="iniciarEdicaoTexto(' + itemId + ')" title="Editar texto"><i class="ph ph-pencil-simple"></i></button>';
     }

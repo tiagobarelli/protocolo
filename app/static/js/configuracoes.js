@@ -172,8 +172,12 @@ function formatarDataIM(str) {
 function renderMarkdownIM(el, md) {
   if (!el) return;
   md = md || '';
-  if (window.marked) el.innerHTML = marked.parse(md);
-  else el.textContent = md;
+  if (window.marked) {
+    var html = marked.parse(md);
+    el.innerHTML = (window.DOMPurify) ? DOMPurify.sanitize(html) : html;
+  } else {
+    el.textContent = md;
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -323,6 +327,8 @@ function carregarMensagensInternas() {
           acoes += '<button type="button" class="im-btn-mini danger" onclick="desativarMensagemInterna(' + m.id + ')">' +
               '<i class="ph ph-prohibit"></i> Desativar</button>';
         }
+        var corpoHtml = window.marked ? marked.parse(m.corpo || '') : escapeHtmlIM(m.corpo);
+        if (window.marked && window.DOMPurify) corpoHtml = DOMPurify.sanitize(corpoHtml);
         html += '<div class="im-item ' + (m.ativa ? '' : 'inativa') + '">' +
           '<div class="im-item-head">' +
             '<div>' +
@@ -334,7 +340,7 @@ function carregarMensagensInternas() {
               '</div>' +
             '</div>' +
           '</div>' +
-          '<div class="im-item-corpo">' + (window.marked ? marked.parse(m.corpo || '') : escapeHtmlIM(m.corpo)) + '</div>' +
+          '<div class="im-item-corpo">' + corpoHtml + '</div>' +
           '<div class="im-item-acoes">' + acoes + '</div>' +
           '<div class="im-historico" id="imHistorico-' + m.id + '" style="display:none;"></div>' +
         '</div>';

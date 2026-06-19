@@ -1,5 +1,9 @@
 /* todo.js — Página To Do (ES5) */
 
+if (window.marked) {
+  marked.use({ gfm: true, breaks: true });
+}
+
 var API_BASE = '/api/baserow';
 
 var CONFIG_TODO = {
@@ -329,7 +333,9 @@ function renderizarGrupos(grupos) {
               '<i class="ph ph-check"></i></button>';
       html += '<div class="todo-main">';
       html += '<div class="todo-texto-wrap" id="todoTextoDisplay-' + itemId + '">';
-      html += '<div class="todo-texto">' + escapeHtml(texto) +
+      var textoHtml = window.marked ? marked.parse(texto) : escapeHtml(texto);
+      if (window.DOMPurify) textoHtml = DOMPurify.sanitize(textoHtml);
+      html += '<div class="todo-texto">' + textoHtml +
               (ehHoje ? '<span class="todo-pill-hoje">Hoje</span>' : '') + '</div>';
       if (podeEditar) {
         html += '<button type="button" class="btn-inline-edit btn-edit-texto" onclick="iniciarEdicaoTexto(' + itemId + ')" title="Editar texto"><i class="ph ph-pencil-simple"></i></button>';

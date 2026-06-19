@@ -321,10 +321,17 @@ a.todo-group-num:hover { text-decoration: underline; }
   font-size: 0.92rem;
   color: var(--text-main);
   line-height: 1.55;
-  white-space: pre-wrap;
+  white-space: normal;
   word-break: break-word;
   margin-bottom: 8px;
 }
+.todo-texto p { margin: 0 0 6px; }
+.todo-texto p:last-child { margin-bottom: 0; }
+.todo-texto ul,
+.todo-texto ol { margin: 4px 0 6px; padding-left: 22px; }
+.todo-texto ul:last-child,
+.todo-texto ol:last-child { margin-bottom: 0; }
+.todo-texto li { margin: 2px 0; }
 
 .todo-meta {
   display: flex;

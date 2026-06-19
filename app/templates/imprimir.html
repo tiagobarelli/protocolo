@@ -46,6 +46,7 @@
 {% endblock %}
 {% block extra_js %}
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
 <script>window.PROTOCOLO_ID = {{ protocolo_id }};</script>
 <script src="{{ url_for('static', filename='js/imprimir.js') }}"></script>
 {% endblock %}
