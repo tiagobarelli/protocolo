@@ -245,6 +245,34 @@ a.todo-group-num:hover { text-decoration: underline; }
   vertical-align: middle;
 }
 
+.todo-item-atrasada {
+  border-left: 3px solid var(--danger);
+  padding-left: 5px; /* 8px original - 3px da borda, mantém alinhamento */
+}
+
+.todo-pill-atrasada {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--danger);
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.todo-aviso-atraso {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--danger);
+  opacity: 0.85;
+}
+.todo-aviso-atraso i { font-size: 0.9rem; }
+
 /* Círculo de check (estilo Todoist) */
 .todo-check {
   flex-shrink: 0;

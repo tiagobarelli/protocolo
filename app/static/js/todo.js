@@ -321,13 +321,16 @@ function renderizarGrupos(grupos) {
 
       var dataTarefaParte = extrairDataParte(a[CONFIG_TODO.fields.andDataTarefa]);
       var ehHoje = (dataTarefaParte && dataTarefaParte === dataHojeLocal());
+      var ehAtrasada = (dataTarefaParte && dataTarefaParte < dataHojeLocal());
 
       var criadoPor = a[CONFIG_TODO.fields.andCriadoPor] || '';
       var nomeAtual = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
       var ehMaster = (window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
       var podeEditar = (ehMaster || criadoPor === nomeAtual);
 
-      var itemClasse = ehHoje ? 'todo-item todo-item-hoje' : 'todo-item';
+      var itemClasse = 'todo-item';
+      if (ehHoje) itemClasse += ' todo-item-hoje';
+      else if (ehAtrasada) itemClasse += ' todo-item-atrasada';
       html += '<div class="' + itemClasse + '" id="todo-item-' + itemId + '">';
       html += '<button type="button" class="todo-check" onclick="concluirTarefa(' + itemId + ')" aria-label="Concluir tarefa">' +
               '<i class="ph ph-check"></i></button>';
@@ -336,7 +339,8 @@ function renderizarGrupos(grupos) {
       var textoHtml = window.marked ? marked.parse(texto) : escapeHtml(texto);
       if (window.DOMPurify) textoHtml = DOMPurify.sanitize(textoHtml);
       html += '<div class="todo-texto">' + textoHtml +
-              (ehHoje ? '<span class="todo-pill-hoje">Hoje</span>' : '') + '</div>';
+              (ehHoje ? '<span class="todo-pill-hoje">Hoje</span>'
+                      : (ehAtrasada ? '<span class="todo-pill-atrasada">Atrasada</span>' : '')) + '</div>';
       if (podeEditar) {
         html += '<button type="button" class="btn-inline-edit btn-edit-texto" onclick="iniciarEdicaoTexto(' + itemId + ')" title="Editar texto"><i class="ph ph-pencil-simple"></i></button>';
       }
@@ -348,6 +352,10 @@ function renderizarGrupos(grupos) {
         html += '<button type="button" class="btn-inline-save" onclick="salvarEdicaoTexto(' + itemId + ')" title="Salvar"><i class="ph ph-check"></i></button>';
         html += '<button type="button" class="btn-inline-cancel" onclick="cancelarEdicaoTexto(' + itemId + ')" title="Cancelar"><i class="ph ph-x"></i></button>';
         html += '</div>';
+      }
+      if (ehAtrasada) {
+        html += '<div class="todo-aviso-atraso"><i class="ph ph-info"></i> ' +
+                'Tarefa atrasada — você pode remarcar a data na tela do protocolo.</div>';
       }
       if (dataCriacao) {
         html += '<div class="todo-meta"><span class="todo-data"><i class="ph ph-clock"></i> ' +
