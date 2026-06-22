@@ -26,6 +26,17 @@
     <p>Busque, cadastre ou edite pessoas jurídicas por CNPJ ou denominação.</p>
   </div>
 
+  <!-- Abas -->
+  <div class="tabs-header">
+    <button type="button" class="tab-btn active" data-tab="dados" onclick="ativarAbaCliente('dados')">
+      <i class="ph ph-identification-card"></i> Dados
+    </button>
+    <button type="button" class="tab-btn" data-tab="enderecos" id="tabBtnEnderecos" disabled onclick="ativarAbaCliente('enderecos')">
+      <i class="ph ph-map-pin"></i> Endereços
+    </button>
+  </div>
+
+  <div class="tab-content active" id="tab-dados">
   <!-- ── BUSCA ── -->
   <div class="card" id="buscaCard">
     <div class="search-bar">
@@ -94,17 +105,6 @@
       </div>
     </div>
 
-    <!-- Endereço -->
-    <div class="form-section">
-      <div class="section-title"><i class="ph ph-map-pin"></i> Sede</div>
-      <div class="form-row single">
-        <div class="form-group">
-          <label for="enderecoTextarea">Endereço</label>
-          <textarea id="enderecoTextarea" rows="3"></textarea>
-        </div>
-      </div>
-    </div>
-
     <!-- Outros / Anotações -->
     <div class="form-section">
       <div class="section-title"><i class="ph ph-note"></i> Outros / Anotações</div>
@@ -157,6 +157,85 @@
     </div>
     <div id="formMsg" class="msg-box"></div>
   </div><!-- /#formCard -->
+  </div><!-- /#tab-dados -->
+
+  <div class="tab-content" id="tab-enderecos">
+    <div class="card" id="enderecosCard">
+      <div class="enderecos-header">
+        <div class="section-title">
+          <i class="ph ph-map-pin"></i> Endereços do Cliente
+        </div>
+        <button type="button" class="btn btn-primary" id="btnAddEndereco">
+          <i class="ph ph-plus"></i> Adicionar endereço
+        </button>
+      </div>
+
+      <!-- Formulário inline (criação/edição) -->
+      <div id="enderecoFormWrap" class="endereco-form" style="display:none;">
+        <div class="form-row">
+          <div class="form-group small">
+            <label for="endTipo">Tipo</label>
+            <select id="endTipo">
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+          <div class="form-group small">
+            <label for="endCep">CEP</label>
+            <input type="text" id="endCep" placeholder="00000-000" maxlength="9" autocomplete="off">
+            <div id="endCepStatus" class="endereco-cep-status"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="endLogradouro">Logradouro</label>
+            <input type="text" id="endLogradouro" autocomplete="off">
+          </div>
+          <div class="form-group small">
+            <label for="endNumero">Número</label>
+            <input type="text" id="endNumero" placeholder="S/N" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="endComplemento">Complemento <span class="hint">(Opcional)</span></label>
+            <input type="text" id="endComplemento" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="endBairro">Bairro</label>
+            <input type="text" id="endBairro" autocomplete="off">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="endMunicipio">Município</label>
+            <input type="text" id="endMunicipio" autocomplete="off">
+          </div>
+          <div class="form-group small">
+            <label for="endUf">UF</label>
+            <select id="endUf">
+              <option value="">--</option>
+            </select>
+          </div>
+          <div class="form-group small">
+            <label for="endPais">País</label>
+            <input type="text" id="endPais" value="Brasil" autocomplete="off">
+          </div>
+        </div>
+        <div id="enderecoFormMsg" class="msg-box"></div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="btnCancelarEndereco">
+            <i class="ph ph-x"></i> Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" id="btnSalvarEndereco">
+            <i class="ph ph-floppy-disk"></i> Salvar endereço
+          </button>
+        </div>
+      </div>
+
+      <!-- Lista de endereços -->
+      <div id="enderecosLista" class="enderecos-lista"></div>
+    </div>
+  </div>
 
 </div><!-- /.container -->
   </main>
@@ -174,4 +253,5 @@
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/clientes_pj.js') }}"></script>
+<script src="{{ url_for('static', filename='js/enderecos.js') }}"></script>
 {% endblock %}

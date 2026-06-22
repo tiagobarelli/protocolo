@@ -11,7 +11,6 @@ var FIELDS = {
   cnpj:       'field_7239',
   telefone:   'field_7243',
   email:      'field_7244',
-  endereco:   'field_7245',
   outros:     'field_7246',
   protocolos: 'field_7247',
   alerta:     'field_7394',
@@ -23,7 +22,6 @@ var FIELD_LABELS = {
   cnpj:      'CNPJ',
   telefone:  'Telefone',
   email:     'E-mail',
-  endereco:  'Endereço',
   alerta:    'Alerta'
 };
 
@@ -302,6 +300,7 @@ function buscarPorCnpj(soDigitos, valorFormatado) {
                 document.getElementById('alertaReadonly').style.display = 'none';
               }
               mostrarFormulario();
+              habilitarAbaEnderecos(false);
               mostrarMsg('buscaMsg', 'warning',
                 'Nenhuma pessoa jurídica encontrada com este CNPJ. Preencha os dados para cadastrar.');
               document.getElementById('denominacaoInput').focus();
@@ -358,6 +357,46 @@ function fecharAutocompleteBusca() {
   document.getElementById('buscaAutoList').classList.remove('open');
 }
 
+// ═══════════════════════════════════════════════════════
+// ABAS (Dados | Endereços)
+// ═══════════════════════════════════════════════════════
+function ativarAbaCliente(nome) {
+  // Não permitir ativar "endereços" se estiver desabilitada
+  var btn = document.querySelector('.tab-btn[data-tab="' + nome + '"]');
+  if (btn && btn.disabled) return;
+
+  var btns = document.querySelectorAll('.tab-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute('data-tab') === nome) {
+      btns[i].classList.add('active');
+    } else {
+      btns[i].classList.remove('active');
+    }
+  }
+  var conteudos = document.querySelectorAll('.tab-content');
+  for (var j = 0; j < conteudos.length; j++) {
+    if (conteudos[j].id === 'tab-' + nome) {
+      conteudos[j].classList.add('active');
+    } else {
+      conteudos[j].classList.remove('active');
+    }
+  }
+  if (nome === 'enderecos' && window.carregarEnderecos) window.carregarEnderecos();
+}
+
+function habilitarAbaEnderecos(habilitar) {
+  window.ENDERECO_CLIENTE_ID = (habilitar && clienteAtual) ? clienteAtual.id : null;
+  if (habilitar && window.carregarEnderecos) window.carregarEnderecos();
+  var btn = document.getElementById('tabBtnEnderecos');
+  if (!btn) return;
+  btn.disabled = !habilitar;
+  // Se desabilitar enquanto a aba está ativa, voltar para "Dados"
+  if (!habilitar) {
+    var ativo = document.querySelector('.tab-btn[data-tab="enderecos"].active');
+    if (ativo) ativarAbaCliente('dados');
+  }
+}
+
 function selecionarDaBusca(cli) {
   clienteAtual = cli;
   modoNovo = false;
@@ -366,6 +405,7 @@ function selecionarDaBusca(cli) {
   preencherFormulario(cli);
   mostrarFormulario();
   esconderOverlay();
+  habilitarAbaEnderecos(true);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -388,6 +428,7 @@ function novaPessoaJuridica() {
     document.getElementById('alertaReadonly').style.display = 'none';
   }
   mostrarFormulario();
+  habilitarAbaEnderecos(false);
   document.getElementById('denominacaoInput').focus();
 }
 
@@ -412,7 +453,6 @@ function capturarSnapshot(cli) {
   snap.cnpj      = cli[FIELDS.cnpj] || '';
   snap.telefone  = cli[FIELDS.telefone] || '';
   snap.email     = cli[FIELDS.email] || '';
-  snap.endereco  = cli[FIELDS.endereco] || '';
   snap.alerta    = cli[FIELDS.alerta] || '';
   return snap;
 }
@@ -423,7 +463,6 @@ function capturarEstadoAtualFormulario() {
   estado.cnpj      = document.getElementById('cnpjInput').value.trim();
   estado.telefone  = document.getElementById('telefoneInput').value.trim();
   estado.email     = document.getElementById('emailInput').value.trim();
-  estado.endereco  = document.getElementById('enderecoTextarea').value.trim();
 
   var alertaEl = document.getElementById('alertaTextarea');
   var podeEditarAlerta = window.CURRENT_USER &&
@@ -483,7 +522,6 @@ function preencherFormulario(cli) {
   document.getElementById('cnpjInput').value      = cli[FIELDS.cnpj] || '';
   document.getElementById('telefoneInput').value  = cli[FIELDS.telefone] || '';
   document.getElementById('emailInput').value     = cli[FIELDS.email] || '';
-  document.getElementById('enderecoTextarea').value = cli[FIELDS.endereco] || '';
 
   var outrosVal = cli[FIELDS.outros] || '';
   document.getElementById('outrosTextarea').value = outrosVal;
@@ -541,7 +579,6 @@ function limparCamposFormulario() {
   document.getElementById('cnpjInput').value        = '';
   document.getElementById('telefoneInput').value    = '';
   document.getElementById('emailInput').value       = '';
-  document.getElementById('enderecoTextarea').value = '';
   document.getElementById('outrosTextarea').value   = '';
   atualizarPreviewOutros();
   document.getElementById('protocolosList').innerHTML =
@@ -564,6 +601,7 @@ function limparFormulario() {
   document.getElementById('buscaInput').value = '';
   esconderMsg('formMsg');
   esconderFormulario();
+  habilitarAbaEnderecos(false);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -657,7 +695,6 @@ function construirPayload(isNovo) {
   payload[FIELDS.nome]     = document.getElementById('denominacaoInput').value.trim();
   payload[FIELDS.telefone] = document.getElementById('telefoneInput').value.trim();
   payload[FIELDS.email]    = document.getElementById('emailInput').value.trim();
-  payload[FIELDS.endereco] = document.getElementById('enderecoTextarea').value.trim();
   payload[FIELDS.outros]   = document.getElementById('outrosTextarea').value;
 
   if (isNovo) {
@@ -735,6 +772,7 @@ function executarPost(btnSalvar) {
       esconderOverlay();
       btnSalvar.disabled = false;
       mostrarMsg('formMsg', 'success', 'Pessoa jurídica cadastrada com sucesso!');
+      habilitarAbaEnderecos(true);
     })
     .catch(function(e) {
       esconderOverlay();

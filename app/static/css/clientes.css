@@ -41,6 +41,138 @@ main {
 .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 500; color: var(--text-muted); text-decoration: none; margin-bottom: 24px; transition: color 0.2s; }
 .back-link:hover { color: var(--accent); }
 
+/* ── Abas (Dados | Endereços) ──────────────────────────── */
+.tabs-header {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+.tab-btn {
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-btn:hover { color: var(--text-dark); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.enderecos-placeholder {
+  color: var(--muted, #6b7280);
+  font-size: 0.95rem;
+  padding: 1rem 0;
+}
+@media (max-width: 640px) {
+  .tabs-header { overflow-x: auto; }
+}
+
+/* ── Módulo de Endereços (FASE 3) ──────────────────────── */
+.enderecos-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.enderecos-header .section-title { margin: 0; }
+
+.endereco-form {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fbfbfa;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.endereco-form .btn-row { margin-top: 16px; }
+
+.endereco-cep-status {
+  font-size: 0.8rem;
+  margin-top: 4px;
+  min-height: 1em;
+}
+.endereco-cep-ok { color: var(--success); display: inline-flex; align-items: center; gap: 4px; }
+.endereco-cep-warn { color: var(--warning); }
+.endereco-spinner {
+  display: inline-block;
+  animation: enderecoSpin 0.8s linear infinite;
+}
+@keyframes enderecoSpin { to { transform: rotate(360deg); } }
+
+.enderecos-lista { display: flex; flex-direction: column; gap: 10px; }
+.enderecos-empty {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.endereco-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 14px 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.endereco-item:hover { border-color: #d6d3d1; box-shadow: var(--shadow-sm); }
+
+.endereco-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.endereco-tag {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-hover);
+  border-radius: 6px;
+  padding: 1px 8px;
+  margin-bottom: 2px;
+}
+.endereco-linha { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+.endereco-sub { font-size: 0.85rem; color: var(--text-muted); }
+
+.endereco-acoes { display: flex; gap: 6px; flex-shrink: 0; }
+.endereco-btn-acao {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-muted);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  transition: all 0.2s;
+}
+.endereco-btn-acao:hover { border-color: var(--accent); color: var(--accent); }
+.endereco-btn-excluir:hover { border-color: var(--danger); color: var(--danger); }
+
+@media (max-width: 640px) {
+  .endereco-item { flex-direction: column; align-items: stretch; }
+  .endereco-acoes { justify-content: flex-end; }
+}
+
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ── Cards ── */

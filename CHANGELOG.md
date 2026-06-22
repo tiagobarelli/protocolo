@@ -2,6 +2,17 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.3] 2026-06-22
+
+### Adicionado
+
+- **Endereços estruturados dos clientes:** as telas de Pessoa Física e Pessoa Jurídica foram reorganizadas em duas abas — **Dados** e **Endereços**. A aba Endereços permite cadastrar quantos endereços forem necessários para o mesmo cliente, cada um com tipo (Residencial ou Profissional), CEP, logradouro, número, complemento, bairro, município, UF e país. Cada endereço é gravado como um registro próprio, com autor e data de criação/atualização. A aba só fica disponível depois que o cliente está salvo (carregado por busca ou recém-cadastrado).
+- **Preenchimento automático por CEP (ViaCEP):** ao digitar um CEP válido no cadastro de endereço, o sistema consulta a base dos Correios e preenche automaticamente logradouro, bairro, município e UF. O número e o complemento continuam sendo digitados manualmente. Se o CEP não for encontrado ou o serviço estiver indisponível, é exibido um aviso discreto e todos os campos permanecem editáveis para preenchimento manual — o cadastro funciona normalmente em qualquer caso.
+
+### Melhorias
+
+- **Endereço do cliente fora do formulário principal:** o antigo campo de endereço em texto livre saiu dos formulários de Pessoa Física e Pessoa Jurídica e do detalhamento do cliente, dando lugar ao novo módulo de endereços estruturados. Os endereços antigos já cadastrados continuam preservados na base e poderão ser migrados para o novo formato.
+
 ## [1.2.2] 2026-06-19
 
 ### Melhorias

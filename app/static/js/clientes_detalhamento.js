@@ -20,7 +20,6 @@ var CONFIG = {
     cnpj: 'field_7239',
     telefone: 'field_7243',
     email: 'field_7244',
-    endereco: 'field_7245',
     outros: 'field_7246',
     oab: 'field_7256',
     rg: 'field_7342',
@@ -305,7 +304,6 @@ function renderizarDadosCadastrais(row, isPJ) {
     html += dadoItem('CNPJ', row[f.cnpj] || '\u2014');
     if (row[f.telefone]) html += dadoItem('Telefone', row[f.telefone]);
     if (row[f.email]) html += dadoItem('E-mail', row[f.email]);
-    if (row[f.endereco]) html += dadoItem('Endereço', row[f.endereco], true);
     if (row[f.outros]) html += dadoItem('Outros', row[f.outros], true);
   } else {
     // 1. Nome
@@ -364,9 +362,7 @@ function renderizarDadosCadastrais(row, isPJ) {
     if (row[f.telefone]) html += dadoItem('Telefone', row[f.telefone]);
     // 16. E-mail
     if (row[f.email]) html += dadoItem('E-mail', row[f.email]);
-    // 17. Endereço
-    if (row[f.endereco]) html += dadoItem('Endereço', row[f.endereco], true);
-    // 18. Estado civil
+    // 17. Estado civil
     var ec = row[f.estadoCivil];
     if (ec && ec.value) html += dadoItem('Estado Civil', ec.value);
     // 19. Regime de bens

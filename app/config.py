@@ -36,6 +36,9 @@ class BaseConfig:
     PAPERLESS_URL = os.environ.get("PAPERLESS_URL", "http://192.168.0.31:8094").rstrip("/")
     PAPERLESS_TOKEN = os.environ.get("PAPERLESS_TOKEN", "")
 
+    # ViaCEP (API pública de consulta de CEP — sem token)
+    VIACEP_URL = os.environ.get("VIACEP_URL", "https://viacep.com.br/ws").rstrip("/")
+
     # E-mail (SMTP)
     MAIL_SMTP_HOST = os.environ.get("MAIL_SMTP_HOST", "smtp.gmail.com")
     MAIL_SMTP_PORT = int(os.environ.get("MAIL_SMTP_PORT", "587"))
