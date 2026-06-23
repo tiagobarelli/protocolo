@@ -2,6 +2,13 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.3.1] 2026-06-23
+
+### Adicionado
+
+- **Botão "Ver no Google Maps" nos endereços:** cada endereço cadastrado na aba Endereços do cliente ganhou um botão de mapa que abre o Google Maps em uma nova aba, já buscando o endereço completo daquele registro (logradouro, número, bairro, município, UF e CEP).
+- **Anotações no endereço:** o cadastro de endereço passou a ter um campo opcional de **Anotações**, para observações que não fazem parte do endereço em si. Quando preenchida, a anotação aparece em destaque no card do endereço, no estilo de um post-it amarelo, preservando as quebras de linha do texto.
+
 ## [1.3] 2026-06-22
 
 ### Adicionado

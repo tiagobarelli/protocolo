@@ -19,6 +19,7 @@
   var F_MUNICIPIO   = 'field_7476';
   var F_UF          = 'field_7477';
   var F_PAIS        = 'field_7478';
+  var F_ANOTACOES   = 'field_7482';
   var F_CRIADO_POR  = 'field_7479';
   var F_CRIADO_EM   = 'field_7480';
   var F_ATUALIZADO  = 'field_7481';
@@ -197,7 +198,28 @@
     if (partes.length) {
       html += '<span class="endereco-sub">' + escapar(partes.join(' — ')) + '</span>';
     }
+    var anotacoes = row[F_ANOTACOES] || '';
+    if (anotacoes && anotacoes.trim() !== '') {
+      html += '<div class="endereco-anotacao">' +
+              '<i class="ph ph-note"></i>' +
+              '<span class="endereco-anotacao-texto">' + escapar(anotacoes) + '</span>' +
+              '</div>';
+    }
     return html;
+  }
+
+  // ── Google Maps ───────────────────────────────────────
+  function urlGoogleMaps(row) {
+    var partes = [];
+    if (row[F_LOGRADOURO]) partes.push(row[F_LOGRADOURO]);
+    if (row[F_NUMERO])     partes.push(row[F_NUMERO]);
+    if (row[F_BAIRRO])     partes.push(row[F_BAIRRO]);
+    if (row[F_MUNICIPIO])  partes.push(row[F_MUNICIPIO]);
+    var uf = valorSelect(row[F_UF]); // sigla (value), nunca o id
+    if (uf)                partes.push(uf);
+    if (row[F_CEP])        partes.push(mascararCep(row[F_CEP]));
+    return 'https://www.google.com/maps/search/?api=1&query=' +
+      encodeURIComponent(partes.join(', '));
   }
 
   function renderLista(rows) {
@@ -220,6 +242,15 @@
         var acoes = document.createElement('div');
         acoes.className = 'endereco-acoes';
 
+        var btnMapa = document.createElement('button');
+        btnMapa.type = 'button';
+        btnMapa.className = 'endereco-btn-acao';
+        btnMapa.title = 'Ver no Google Maps';
+        btnMapa.innerHTML = '<i class="ph ph-map-pin"></i>';
+        btnMapa.addEventListener('click', function() {
+          window.open(urlGoogleMaps(row), '_blank');
+        });
+
         var btnEditar = document.createElement('button');
         btnEditar.type = 'button';
         btnEditar.className = 'endereco-btn-acao';
@@ -234,6 +265,7 @@
         btnExcluir.innerHTML = '<i class="ph ph-trash"></i>';
         btnExcluir.addEventListener('click', function() { excluirEndereco(row.id); });
 
+        acoes.appendChild(btnMapa);
         acoes.appendChild(btnEditar);
         acoes.appendChild(btnExcluir);
         item.appendChild(info);
@@ -254,6 +286,7 @@
     el('endMunicipio').value = '';
     el('endUf').value = '';
     el('endPais').value = 'Brasil';
+    el('endAnotacoes').value = '';
     el('endCepStatus').innerHTML = '';
     esconderFormMsg();
   }
@@ -271,6 +304,7 @@
       el('endMunicipio').value = row[F_MUNICIPIO] || '';
       el('endUf').value = idSelect(row[F_UF]) || '';
       el('endPais').value = row[F_PAIS] || 'Brasil';
+      el('endAnotacoes').value = row[F_ANOTACOES] || '';
     } else {
       enderecoEditId = null;
     }
@@ -343,6 +377,7 @@
     payload[F_MUNICIPIO]   = el('endMunicipio').value.trim();
     payload[F_UF]          = ufVal ? parseInt(ufVal, 10) : null;
     payload[F_PAIS]        = el('endPais').value.trim() || 'Brasil';
+    payload[F_ANOTACOES]   = el('endAnotacoes').value.trim();
     payload[F_NAME]        = logradouro + (numero ? ', ' + numero : '');
     payload[F_ATUALIZADO]  = agora;
 
