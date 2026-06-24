@@ -69,6 +69,49 @@
     .flash-item.info { background: #f0f5f1; color: #0369a1; border: 1px solid #c1d5c4; }
     @keyframes flashFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes flashFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+    /* ── Toast global ── */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 360px;
+      pointer-events: none;   /* o container não bloqueia cliques; cada toast reativa */
+    }
+    .toast {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-dark);
+      cursor: pointer;
+      animation: toastIn 0.25s ease-out;
+    }
+    .toast.hide { animation: toastOut 0.3s ease-in forwards; }
+    .toast .toast-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .toast .toast-msg { flex: 1; }
+    .toast .toast-close { flex-shrink: 0; opacity: 0.6; font-size: 1rem; }
+    .toast.success { border-color: #c1d5c4; }
+    .toast.success .toast-icon { color: var(--success); }
+    .toast.error   { border-color: #e8c4b8; }
+    .toast.error   .toast-icon { color: var(--danger); }
+    .toast.info    .toast-icon { color: var(--primary-hover); }
+    @keyframes toastIn  { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(20px); } }
+    @media (max-width: 640px) {
+      .toast-container { left: 12px; right: 12px; max-width: none; }
+    }
   </style>
   {% if app_settings and app_settings.get('_alerta1_cores') %}
   <style>
@@ -85,6 +128,7 @@
   {% block extra_css %}{% endblock %}
 </head>
 <body>
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
   {% if current_user.is_authenticated %}
   <nav class="topbar">
     <span class="user"><i class="ph ph-user"></i> {{ current_user.nome }}</span>
@@ -146,6 +190,55 @@ function toggleNavGroup(btn) {
     group.classList.remove('open');
   } else {
     group.classList.add('open');
+  }
+}
+
+/* ── Toast global reutilizável ──
+   mostrarToast(mensagem, tipo, duracaoMs)
+   - tipo: 'success' (padrão) | 'error' | 'info'
+   - duracaoMs: tempo até o auto-dismiss (padrão 4000). Use 0 para não sumir sozinho.
+   - clique no toast fecha imediatamente. */
+function mostrarToast(mensagem, tipo, duracaoMs) {
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  var t = tipo || 'success';
+  var dur = (typeof duracaoMs === 'number') ? duracaoMs : 4000;
+
+  var icones = { success: 'ph-check-circle', error: 'ph-warning-circle', info: 'ph-info' };
+  var icone = icones[t] || icones.success;
+
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + t;
+
+  var spanIcon = document.createElement('span');
+  spanIcon.className = 'toast-icon';
+  spanIcon.innerHTML = '<i class="ph ' + icone + '"></i>';
+
+  var spanMsg = document.createElement('span');
+  spanMsg.className = 'toast-msg';
+  spanMsg.textContent = mensagem;
+
+  var spanClose = document.createElement('span');
+  spanClose.className = 'toast-close';
+  spanClose.innerHTML = '<i class="ph ph-x"></i>';
+
+  toast.appendChild(spanIcon);
+  toast.appendChild(spanMsg);
+  toast.appendChild(spanClose);
+  container.appendChild(toast);
+
+  var removido = false;
+  function remover() {
+    if (removido) return;
+    removido = true;
+    toast.classList.add('hide');
+    setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+  }
+
+  toast.addEventListener('click', remover);
+  if (dur > 0) {
+    setTimeout(remover, dur);
   }
 }
 </script>

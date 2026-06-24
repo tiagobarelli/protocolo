@@ -181,12 +181,16 @@
     var tipo = valorSelect(row[F_TIPO]);
     var logr = row[F_LOGRADOURO] || '';
     var num  = row[F_NUMERO] || '';
+    var compl = row[F_COMPLEMENTO] || '';
     var bairro = row[F_BAIRRO] || '';
     var mun  = row[F_MUNICIPIO] || '';
     var uf   = valorSelect(row[F_UF]);
     var cep  = row[F_CEP] || '';
 
     var linha1 = logr + (num ? ', ' + num : '');
+    if (compl && compl.trim() !== '') {
+      linha1 += ' — ' + compl.trim();
+    }
     var partes = [];
     if (bairro) partes.push(bairro);
     if (mun || uf) partes.push(mun + (uf ? '/' + uf : ''));

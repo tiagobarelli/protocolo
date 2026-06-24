@@ -228,11 +228,12 @@ function configurarBusca() {
   input.addEventListener('input', function() {
     var raw = input.value.trim();
     var soDigitos = raw.replace(/\D/g, '');
-    // Se parece com documento (só dígitos + separadores), não autocompleta
+    // Se parece com documento (só dígitos + separadores), aplica a máscara e não autocompleta
     if (soDigitos.length >= 1 && soDigitos === raw.replace(/[\.\-\/]/g, '')) {
+      input.value = formatarCNPJ(input.value);
       fecharAutocompleteBusca();
-      // Busca automática ao completar CNPJ formatado (18 chars)
-      if (raw.length === 18) {
+      // Busca automática ao completar o CNPJ (14 dígitos)
+      if (soDigitos.length === 14) {
         executarBusca();
       }
       return;
@@ -382,26 +383,46 @@ function ativarAbaCliente(nome) {
     }
   }
   if (nome === 'enderecos' && window.carregarEnderecos) window.carregarEnderecos();
+  atualizarVisibilidadeBarraAcoes(nome);
 }
 
-function habilitarAbaEnderecos(habilitar) {
+function atualizarVisibilidadeBarraAcoes(nomeAba) {
+  var barra = document.querySelector('.form-actions-sticky');
+  if (!barra) return;
+  barra.style.display = (nomeAba === 'enderecos') ? 'none' : '';
+}
+
+function habilitarAbasDependentes(habilitar) {
   window.ENDERECO_CLIENTE_ID = (habilitar && clienteAtual) ? clienteAtual.id : null;
   if (habilitar && window.carregarEnderecos) window.carregarEnderecos();
-  var btn = document.getElementById('tabBtnEnderecos');
-  if (!btn) return;
-  btn.disabled = !habilitar;
-  // Se desabilitar enquanto a aba está ativa, voltar para "Dados"
-  if (!habilitar) {
-    var ativo = document.querySelector('.tab-btn[data-tab="enderecos"].active');
-    if (ativo) ativarAbaCliente('dados');
+
+  var ids = ['tabBtnEnderecos', 'tabBtnProtocolos', 'tabBtnHistorico', 'tabBtnEventos'];
+  for (var i = 0; i < ids.length; i++) {
+    var btn = document.getElementById(ids[i]);
+    if (btn) btn.disabled = !habilitar;
   }
+
+  // Se desabilitar enquanto uma aba dependente está ativa, voltar para "Denominação"
+  if (!habilitar) {
+    var dependentes = ['enderecos', 'protocolos', 'historico', 'eventos'];
+    for (var j = 0; j < dependentes.length; j++) {
+      var ativo = document.querySelector('.tab-btn[data-tab="' + dependentes[j] + '"].active');
+      if (ativo) { ativarAbaCliente('denominacao'); break; }
+    }
+  }
+}
+
+// Alias de compatibilidade (chamadas antigas seguem funcionando)
+function habilitarAbaEnderecos(habilitar) {
+  habilitarAbasDependentes(habilitar);
 }
 
 function selecionarDaBusca(cli) {
   clienteAtual = cli;
   modoNovo = false;
   clienteCarregadoPorBusca = true;
-  mostrarMsg('buscaMsg', 'success', 'Pessoa jurídica já cadastrada. Seguem os dados abaixo.');
+  esconderMsg('buscaMsg');
+  mostrarToast('Pessoa jurídica já cadastrada. Seguem os dados abaixo.', 'success');
   preencherFormulario(cli);
   mostrarFormulario();
   esconderOverlay();
@@ -436,11 +457,13 @@ function novaPessoaJuridica() {
 // FORMULÁRIO — visibilidade e preenchimento
 // ═══════════════════════════════════════════════════════
 function mostrarFormulario() {
-  document.getElementById('formCard').style.display = 'block';
+  document.getElementById('cadastroWrap').style.display = 'block';
+  var ativo = document.querySelector('.tab-btn.active');
+  atualizarVisibilidadeBarraAcoes(ativo ? ativo.getAttribute('data-tab') : 'denominacao');
 }
 
 function esconderFormulario() {
-  document.getElementById('formCard').style.display = 'none';
+  document.getElementById('cadastroWrap').style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -517,6 +540,29 @@ function exibirLogs(cli) {
   }
 }
 
+function atualizarResumoCliente() {
+  var box = document.getElementById('resumoCliente');
+  if (!box) return;
+
+  var nome = document.getElementById('denominacaoInput').value.trim();
+  var cnpj = document.getElementById('cnpjInput').value.trim();
+
+  if (!nome) { box.style.display = 'none'; return; }
+
+  document.getElementById('resumoNome').textContent = nome;
+
+  var cnpjEl = document.getElementById('resumoCpf');
+  if (cnpj) {
+    cnpjEl.textContent = 'CNPJ ' + cnpj;
+    cnpjEl.style.display = '';
+  } else {
+    cnpjEl.textContent = '';
+    cnpjEl.style.display = 'none';
+  }
+
+  box.style.display = 'flex';
+}
+
 function preencherFormulario(cli) {
   document.getElementById('denominacaoInput').value = cli[FIELDS.nome] || '';
   document.getElementById('cnpjInput').value      = cli[FIELDS.cnpj] || '';
@@ -542,6 +588,9 @@ function preencherFormulario(cli) {
 
   // Protocolos vinculados
   carregarProtocolos(cli[FIELDS.protocolos] || []);
+
+  // Resumo de leitura (Denominação/CNPJ no topo da aba Denominação)
+  atualizarResumoCliente();
 }
 
 function atualizarVisibilidadeAlerta(cli) {
@@ -591,6 +640,7 @@ function limparCamposFormulario() {
   document.getElementById('logContent').textContent = '';
   document.getElementById('logCard').style.display = 'none';
   esconderMsg('buscaMsg');
+  atualizarResumoCliente();
 }
 
 function limparFormulario() {
@@ -717,12 +767,18 @@ function salvar() {
   var cnpjLimpo = cnpjRaw.replace(/\D/g, '');
 
   if (!nome) {
+    ativarAbaCliente('denominacao');
+    document.getElementById('denominacaoInput').focus();
     return mostrarMsg('formMsg', 'error', 'A denominação é obrigatória.');
   }
   if (modoNovo && !cnpjLimpo) {
+    ativarAbaCliente('denominacao');
+    document.getElementById('cnpjInput').focus();
     return mostrarMsg('formMsg', 'error', 'Informe o CNPJ para cadastrar uma nova pessoa jurídica.');
   }
   if (cnpjLimpo && !validarCNPJ(cnpjLimpo)) {
+    ativarAbaCliente('denominacao');
+    document.getElementById('cnpjInput').focus();
     return mostrarMsg('formMsg', 'error', 'CNPJ inválido. Verifique os dígitos verificadores.');
   }
 
@@ -826,6 +882,10 @@ document.addEventListener('DOMContentLoaded', function() {
   configurarBusca();
   configurarMascaras();
   configurarMarkdownOutros();
+
+  // Resumo de leitura (Denominação/CNPJ) — atualizar em tempo real durante o cadastro
+  document.getElementById('denominacaoInput').addEventListener('input', atualizarResumoCliente);
+  document.getElementById('cnpjInput').addEventListener('input', atualizarResumoCliente);
 
   document.getElementById('btnNovoCliente').addEventListener('click', novaPessoaJuridica);
   document.getElementById('btnSalvar').addEventListener('click', salvar);

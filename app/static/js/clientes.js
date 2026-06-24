@@ -599,26 +599,46 @@ function ativarAbaCliente(nome) {
     }
   }
   if (nome === 'enderecos' && window.carregarEnderecos) window.carregarEnderecos();
+  atualizarVisibilidadeBarraAcoes(nome);
 }
 
-function habilitarAbaEnderecos(habilitar) {
+function atualizarVisibilidadeBarraAcoes(nomeAba) {
+  var barra = document.querySelector('.form-actions-sticky');
+  if (!barra) return;
+  barra.style.display = (nomeAba === 'enderecos') ? 'none' : '';
+}
+
+function habilitarAbasDependentes(habilitar) {
   window.ENDERECO_CLIENTE_ID = (habilitar && clienteAtual) ? clienteAtual.id : null;
   if (habilitar && window.carregarEnderecos) window.carregarEnderecos();
-  var btn = document.getElementById('tabBtnEnderecos');
-  if (!btn) return;
-  btn.disabled = !habilitar;
-  // Se desabilitar enquanto a aba está ativa, voltar para "Dados"
-  if (!habilitar) {
-    var ativo = document.querySelector('.tab-btn[data-tab="enderecos"].active');
-    if (ativo) ativarAbaCliente('dados');
+
+  var ids = ['tabBtnEnderecos', 'tabBtnProtocolos', 'tabBtnHistorico'];
+  for (var i = 0; i < ids.length; i++) {
+    var btn = document.getElementById(ids[i]);
+    if (btn) btn.disabled = !habilitar;
   }
+
+  // Se desabilitar enquanto uma aba dependente está ativa, voltar para "Cliente"
+  if (!habilitar) {
+    var dependentes = ['enderecos', 'protocolos', 'historico'];
+    for (var j = 0; j < dependentes.length; j++) {
+      var ativo = document.querySelector('.tab-btn[data-tab="' + dependentes[j] + '"].active');
+      if (ativo) { ativarAbaCliente('cliente'); break; }
+    }
+  }
+}
+
+// Alias de compatibilidade (chamadas antigas continuam funcionando)
+function habilitarAbaEnderecos(habilitar) {
+  habilitarAbasDependentes(habilitar);
 }
 
 function selecionarDaBusca(cli) {
   clienteAtual = cli;
   modoNovo = false;
   clienteCarregadoPorBusca = true;
-  mostrarMsg('buscaMsg', 'success', 'Cliente já cadastrado. Seguem os dados abaixo.');
+  esconderMsg('buscaMsg');
+  mostrarToast('Cliente já cadastrado. Seguem os dados abaixo.', 'success');
   preencherFormulario(cli);
   mostrarFormulario();
   fecharDrawer();
@@ -657,12 +677,13 @@ function novoCliente() {
 // FORMULÁRIO — visibilidade e preenchimento
 // ═══════════════════════════════════════════════════════
 function mostrarFormulario() {
-  var card = document.getElementById('formCard');
-  card.style.display = 'block';
+  document.getElementById('cadastroWrap').style.display = 'block';
+  var ativo = document.querySelector('.tab-btn.active');
+  atualizarVisibilidadeBarraAcoes(ativo ? ativo.getAttribute('data-tab') : 'cliente');
 }
 
 function esconderFormulario() {
-  document.getElementById('formCard').style.display = 'none';
+  document.getElementById('cadastroWrap').style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -818,6 +839,32 @@ function exibirLogs(cli) {
   }
 }
 
+function atualizarResumoCliente() {
+  var box = document.getElementById('resumoCliente');
+  if (!box) return;
+
+  var nome = document.getElementById('nomeInput').value.trim();
+  var cpf  = document.getElementById('cpfInput').value.trim();
+
+  if (!nome) {
+    box.style.display = 'none';
+    return;
+  }
+
+  document.getElementById('resumoNome').textContent = nome;
+
+  var cpfEl = document.getElementById('resumoCpf');
+  if (cpf) {
+    cpfEl.textContent = 'CPF ' + cpf;
+    cpfEl.style.display = '';
+  } else {
+    cpfEl.textContent = '';
+    cpfEl.style.display = 'none';
+  }
+
+  box.style.display = 'flex';
+}
+
 function preencherFormulario(cli) {
   document.getElementById('nomeInput').value      = cli[FIELDS.nome]      || '';
   document.getElementById('cpfInput').value       = cli[FIELDS.cpf]       || '';
@@ -935,6 +982,9 @@ function preencherFormulario(cli) {
 
   // Documentos Digitalizados (Paperless) — mostrar seção se tem CPF
   atualizarVisibilidadeDocumentos();
+
+  // Resumo de leitura (Nome/CPF no topo da aba Cliente)
+  atualizarResumoCliente();
 }
 
 function limparCamposFormulario() {
@@ -984,6 +1034,7 @@ function limparCamposFormulario() {
   document.getElementById('logContent').textContent = '';
   document.getElementById('logCard').style.display = 'none';
   esconderMsg('buscaMsg');
+  atualizarResumoCliente();
 }
 
 function limparFormulario() {
@@ -1403,15 +1454,23 @@ function salvarCliente() {
   var cnpjLimpo = cnpjRaw.replace(/\D/g, '');
 
   if (!nome) {
+    ativarAbaCliente('cliente');
+    document.getElementById('nomeInput').focus();
     return mostrarMsg('formMsg', 'error', 'O nome do cliente é obrigatório.');
   }
   if (modoNovo && !cpfLimpo) {
+    ativarAbaCliente('cliente');
+    document.getElementById('cpfInput').focus();
     return mostrarMsg('formMsg', 'error', 'Informe o CPF para cadastrar um novo cliente.');
   }
   if (cpfLimpo && !validarCPF(cpfLimpo)) {
+    ativarAbaCliente('cliente');
+    document.getElementById('cpfInput').focus();
     return mostrarMsg('formMsg', 'error', 'CPF inválido. Verifique os dígitos verificadores.');
   }
   if (cnpjLimpo && !validarCNPJ(cnpjLimpo)) {
+    ativarAbaCliente('qualificacoes');
+    document.getElementById('cnpjInput').focus();
     return mostrarMsg('formMsg', 'error', 'CNPJ inválido. Verifique os dígitos verificadores.');
   }
 
@@ -2038,6 +2097,10 @@ document.addEventListener('DOMContentLoaded', function() {
   configurarCompanheiro();
   configurarMascaras();
   configurarMarkdownOutros();
+
+  // Resumo de leitura (Nome/CPF) — atualizar em tempo real durante o cadastro
+  document.getElementById('nomeInput').addEventListener('input', atualizarResumoCliente);
+  document.getElementById('cpfInput').addEventListener('input', atualizarResumoCliente);
 
   document.getElementById('btnNovoCliente').addEventListener('click', novoCliente);
   document.getElementById('btnSalvar').addEventListener('click', salvarCliente);

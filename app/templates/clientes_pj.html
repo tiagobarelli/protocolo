@@ -26,18 +26,7 @@
     <p>Busque, cadastre ou edite pessoas jurídicas por CNPJ ou denominação.</p>
   </div>
 
-  <!-- Abas -->
-  <div class="tabs-header">
-    <button type="button" class="tab-btn active" data-tab="dados" onclick="ativarAbaCliente('dados')">
-      <i class="ph ph-identification-card"></i> Dados
-    </button>
-    <button type="button" class="tab-btn" data-tab="enderecos" id="tabBtnEnderecos" disabled onclick="ativarAbaCliente('enderecos')">
-      <i class="ph ph-map-pin"></i> Endereços
-    </button>
-  </div>
-
-  <div class="tab-content active" id="tab-dados">
-  <!-- ── BUSCA ── -->
+  <!-- ── BUSCA (sempre visível, acima das abas) ── -->
   <div class="card" id="buscaCard">
     <div class="search-bar">
       <div class="autocomplete-wrapper" style="flex:1;">
@@ -59,6 +48,40 @@
   <!-- ── MENSAGEM DE RESULTADO DE BUSCA ── -->
   <div id="buscaMsg" class="msg-box"></div>
 
+  <!-- ── WRAPPER DO CADASTRO (oculto até busca resolver ou Nova PJ) ── -->
+  <div id="cadastroWrap" style="display:none;">
+
+  <!-- Abas -->
+  <div class="tabs-header">
+    <button type="button" class="tab-btn active" data-tab="denominacao" onclick="ativarAbaCliente('denominacao')">
+      <i class="ph ph-buildings"></i> Denominação
+    </button>
+    <button type="button" class="tab-btn" data-tab="contato" onclick="ativarAbaCliente('contato')">
+      <i class="ph ph-phone"></i> Contato
+    </button>
+    <button type="button" class="tab-btn" data-tab="enderecos" id="tabBtnEnderecos" disabled onclick="ativarAbaCliente('enderecos')">
+      <i class="ph ph-map-pin"></i> Endereços
+    </button>
+    <button type="button" class="tab-btn" data-tab="protocolos" id="tabBtnProtocolos" disabled onclick="ativarAbaCliente('protocolos')">
+      <i class="ph ph-stack"></i> Protocolos Vinculados
+    </button>
+    <button type="button" class="tab-btn" data-tab="historico" id="tabBtnHistorico" disabled onclick="ativarAbaCliente('historico')">
+      <i class="ph ph-clock-counter-clockwise"></i> Histórico
+    </button>
+    <button type="button" class="tab-btn" data-tab="eventos" id="tabBtnEventos" disabled onclick="ativarAbaCliente('eventos')">
+      <i class="ph ph-handshake"></i> Eventos Societários
+    </button>
+  </div>
+
+  <!-- ABA 1 — Denominação -->
+  <div class="tab-content active" id="tab-denominacao">
+
+  <!-- Resumo (somente leitura): Denominação + CNPJ no topo -->
+  <div class="cliente-resumo" id="resumoCliente" style="display:none;">
+    <span class="resumo-nome" id="resumoNome"></span>
+    <span class="resumo-cpf" id="resumoCpf"></span>
+  </div>
+
   <!-- ── ALERTA DO CLIENTE (visível conforme regras de permissão) ── -->
   <div class="card docs-top-card alert-card" id="alertaCard" style="display:none;">
     <div class="section-title">
@@ -70,10 +93,8 @@
     </div>
   </div>
 
-  <!-- ── FORMULÁRIO ── -->
-  <div class="card" id="formCard" style="display:none;">
-
-    <!-- Identificação -->
+  <!-- ── DADOS DE IDENTIFICAÇÃO + ANOTAÇÕES ── -->
+  <div class="card">
     <div class="form-section">
       <div class="section-title"><i class="ph ph-buildings"></i> Identificação</div>
       <div class="form-row single">
@@ -90,27 +111,10 @@
       </div>
     </div>
 
-    <!-- Contato -->
     <div class="form-section">
-      <div class="section-title"><i class="ph ph-phone"></i> Contato</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="telefoneInput">Telefone</label>
-          <input type="text" id="telefoneInput" placeholder="(00) 00000-0000" maxlength="15" autocomplete="tel">
-        </div>
-        <div class="form-group">
-          <label for="emailInput">E-mail</label>
-          <input type="text" id="emailInput" autocomplete="email">
-        </div>
-      </div>
-    </div>
-
-    <!-- Outros / Anotações -->
-    <div class="form-section">
-      <div class="section-title"><i class="ph ph-note"></i> Outros / Anotações</div>
+      <div class="section-title"><i class="ph ph-note"></i> Outros / Anotações <span class="hint">(Markdown)</span></div>
       <div class="form-row single">
         <div class="form-group">
-          <label>Outros / Anotações <span class="hint">(Markdown)</span></label>
           <div class="md-grid">
             <div class="md-editor-container">
               <div class="md-toolbar">
@@ -131,34 +135,26 @@
         </div>
       </div>
     </div>
+  </div>
+  </div><!-- /#tab-denominacao -->
 
-    <!-- Protocolos Vinculados (readonly) -->
-    <div class="form-section">
-      <div class="section-title"><i class="ph ph-stack"></i> Protocolos Vinculados</div>
-      <div class="protocols-list" id="protocolosList">
-        <div class="protocols-empty">Nenhum protocolo vinculado.</div>
+  <!-- ABA 2 — Contato -->
+  <div class="tab-content" id="tab-contato">
+    <div class="card">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="telefoneInput">Telefone</label>
+          <input type="text" id="telefoneInput" placeholder="(00) 00000-0000" maxlength="15" autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label for="emailInput">E-mail</label>
+          <input type="text" id="emailInput" autocomplete="email">
+        </div>
       </div>
     </div>
+  </div>
 
-    <!-- Logs de Alterações -->
-    <div class="card log-card" id="logCard" style="display:none;">
-      <div class="card-title"><i class="ph ph-clock-counter-clockwise"></i> Histórico de Alterações</div>
-      <div id="logContent" class="log-texto"></div>
-    </div>
-
-    <!-- Botões -->
-    <div class="btn-row">
-      <button type="button" class="btn btn-secondary" id="btnLimpar">
-        <i class="ph ph-eraser"></i> Limpar
-      </button>
-      <button type="button" class="btn btn-primary" id="btnSalvar">
-        <i class="ph ph-floppy-disk"></i> Salvar
-      </button>
-    </div>
-    <div id="formMsg" class="msg-box"></div>
-  </div><!-- /#formCard -->
-  </div><!-- /#tab-dados -->
-
+  <!-- ABA 3 — Endereços -->
   <div class="tab-content" id="tab-enderecos">
     <div class="card" id="enderecosCard">
       <div class="enderecos-header">
@@ -243,6 +239,48 @@
       <div id="enderecosLista" class="enderecos-lista"></div>
     </div>
   </div>
+
+  <!-- ABA 4 — Protocolos Vinculados -->
+  <div class="tab-content" id="tab-protocolos">
+    <div class="card">
+      <div class="protocols-list" id="protocolosList">
+        <div class="protocols-empty">Nenhum protocolo vinculado.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA 5 — Histórico -->
+  <div class="tab-content" id="tab-historico">
+    <div class="card log-card" id="logCard" style="display:none;">
+      <div class="card-title"><i class="ph ph-clock-counter-clockwise"></i> Histórico de Alterações</div>
+      <div id="logContent" class="log-texto"></div>
+    </div>
+  </div>
+
+  <!-- ABA 6 — Eventos Societários (placeholder, função futura) -->
+  <div class="tab-content" id="tab-eventos">
+    <div class="card">
+      <div class="aba-placeholder">
+        <i class="ph ph-handshake"></i>
+        Eventos Societários — funcionalidade em desenvolvimento.
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de ação fixa (salva o registro inteiro, independente da aba ativa) -->
+  <div class="form-actions-sticky">
+    <div id="formMsg" class="msg-box"></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-secondary" id="btnLimpar">
+        <i class="ph ph-eraser"></i> Limpar
+      </button>
+      <button type="button" class="btn btn-primary" id="btnSalvar">
+        <i class="ph ph-floppy-disk"></i> Salvar
+      </button>
+    </div>
+  </div>
+
+  </div><!-- /#cadastroWrap -->
 
 </div><!-- /.container -->
   </main>

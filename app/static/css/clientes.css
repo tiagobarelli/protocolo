@@ -32,7 +32,7 @@ main {
   padding-bottom: 40px;
 }
 
-.container { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+.container { max-width: 1280px; margin: 0 auto; padding: 30px 32px; width: 100%; }
 
 .page-header { text-align: center; margin-bottom: 32px; animation: fadeIn 0.5s ease-out; }
 .page-header h1 { font-size: 1.75rem; font-weight: 700; color: var(--text-dark); letter-spacing: -0.025em; display: flex; align-items: center; justify-content: center; gap: 10px; }
@@ -44,40 +44,40 @@ main {
 /* ── Abas (Dados | Endereços) ──────────────────────────── */
 .tabs-header {
   display: flex;
-  gap: 0;
-  border-bottom: 2px solid var(--border);
+  flex-wrap: wrap;
+  gap: 4px 24px;            /* 4px entre linhas, 24px entre abas */
   margin-bottom: 24px;
 }
 .tab-btn {
-  padding: 10px 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  padding: 8px 2px;
+  font-size: 0.9rem;
+  font-weight: 500;
   color: var(--text-muted);
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
+  border-bottom: 2px solid transparent;   /* underline só aparece no ativo */
+  border-radius: 0;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.15s, border-color 0.15s;
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 .tab-btn:hover { color: var(--text-dark); }
 .tab-btn.active {
   color: var(--accent);
+  font-weight: 600;
   border-bottom-color: var(--accent);
 }
-.tab-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.tab-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.tab-btn:disabled:hover { color: var(--text-muted); }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 .enderecos-placeholder {
   color: var(--muted, #6b7280);
   font-size: 0.95rem;
   padding: 1rem 0;
-}
-@media (max-width: 640px) {
-  .tabs-header { overflow-x: auto; }
 }
 
 /* ── Módulo de Endereços (FASE 3) ──────────────────────── */
@@ -238,7 +238,7 @@ textarea { resize: vertical; min-height: 80px; }
 
 /* ── Autocomplete ── */
 .autocomplete-wrapper { position: relative; }
-.autocomplete-list { position: absolute; top: 105%; left: 0; right: 0; z-index: 50; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); max-height: 220px; overflow-y: auto; box-shadow: var(--shadow-md); display: none; }
+.autocomplete-list { position: absolute; top: 105%; left: 0; right: 0; z-index: 150; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); max-height: 220px; overflow-y: auto; box-shadow: var(--shadow-md); display: none; }
 .autocomplete-list.open { display: block; }
 .autocomplete-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--bg-body); transition: background 0.1s; }
 .autocomplete-item:last-child { border-bottom: none; }
@@ -545,3 +545,57 @@ textarea { resize: vertical; min-height: 80px; }
   color: var(--status-info-text, #0c5460);
   border: 1px solid var(--status-info-border, #bee5eb);
 }
+
+/* ── Barra de ação sticky (Salvar/Limpar) ── */
+.form-actions-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 16px 20px;
+  margin-top: 8px;
+}
+.form-actions-sticky .btn-row { margin: 0; display: flex; justify-content: flex-end; gap: 12px; }
+.form-actions-sticky .msg-box { margin-bottom: 12px; }
+
+/* ── Box de resumo do cliente (somente leitura, topo da aba Cliente) ── */
+.cliente-resumo {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 12px 18px;
+  margin-bottom: 24px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+}
+.cliente-resumo .resumo-nome {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+.cliente-resumo .resumo-cpf {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* ── Acabamento responsivo (Fase 3) ── */
+@media (max-width: 768px) {
+  .container { padding: 20px 14px; }
+  .form-actions-sticky { padding: 12px 14px; }
+  .form-actions-sticky .btn-row { flex-wrap: wrap; }
+}
+
+/* ── Placeholder de aba reservada para função futura ── */
+.aba-placeholder {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  padding: 32px 16px;
+}
+.aba-placeholder i { font-size: 2rem; display: block; margin-bottom: 12px; opacity: 0.5; }

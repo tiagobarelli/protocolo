@@ -2,6 +2,19 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.4.0] 2026-06-24
+
+### Melhorias
+
+- **Cadastro de Pessoa Física reorganizado em abas:** a tela de Pessoa Física foi reformulada para ficar mais clara e fácil de usar. O campo de busca passou a ficar sempre visível no topo, e o restante do cadastro só aparece depois de buscar um cliente ou iniciar um novo. Os dados, antes empilhados em um formulário único e longo, foram divididos em **8 abas** — Cliente, Dados Auxiliares, Estado Civil, Endereços, Qualificações Especiais, Informações Complementares, Protocolos Vinculados e Histórico — facilitando localizar cada informação. As abas que dependem de um cliente já salvo (Endereços, Protocolos e Histórico) ficam desabilitadas até o cadastro existir.
+- **Cadastro de Pessoa Jurídica reorganizado em abas:** a tela de Pessoa Jurídica recebeu o mesmo tratamento, dividida em **6 abas** — Denominação, Contato, Endereços, Protocolos Vinculados, Histórico e Eventos Societários (esta última reservada para uma funcionalidade futura). As abas que dependem de um registro salvo (Endereços, Protocolos, Histórico e Eventos) começam desabilitadas e são liberadas após salvar.
+- **Resumo do cliente sempre à vista:** no topo da primeira aba, uma faixa de destaque mostra o nome (ou denominação) e o documento (CPF/CNPJ) do cliente em foco, para que a identificação fique visível sem precisar rolar a página.
+- **Botão "Salvar" sempre acessível:** Salvar e Limpar passaram a ficar em uma barra fixa no rodapé do cadastro, sempre ao alcance independentemente da aba aberta. O cadastro continua sendo salvo de uma vez só, com todas as abas. Na aba Endereços, em que cada endereço é salvo individualmente, essa barra é ocultada para evitar confusão.
+- **Validação leva direto ao campo com problema:** ao salvar com alguma pendência (nome/denominação em branco, CPF/CNPJ ausente ou inválido), o sistema agora abre automaticamente a aba do campo e posiciona o cursor nele, mostrando o aviso ao lado do botão Salvar.
+- **Aviso de cliente já cadastrado mais discreto:** ao localizar um cliente existente pela busca, a confirmação passou a aparecer como um aviso flutuante (toast) no canto da tela, que some sozinho, em vez de uma faixa fixa no formulário.
+- **Máscara automática de CNPJ na busca de Pessoa Jurídica:** ao digitar o CNPJ no campo de busca, a formatação `00.000.000/0000-00` é aplicada automaticamente, sem precisar digitar a pontuação, e a busca dispara ao completar os 14 dígitos.
+- **Complemento no card de endereço:** quando preenchido, o complemento do endereço (ex.: "apartamento 51") passou a ser exibido na primeira linha do card, junto do logradouro e número.
+
 ## [1.3.1] 2026-06-23
 
 ### Adicionado

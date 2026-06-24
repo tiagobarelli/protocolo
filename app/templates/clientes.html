@@ -26,18 +26,7 @@
     <p>Busque, cadastre ou edite clientes por CPF ou nome.</p>
   </div>
 
-  <!-- Abas -->
-  <div class="tabs-header">
-    <button type="button" class="tab-btn active" data-tab="dados" onclick="ativarAbaCliente('dados')">
-      <i class="ph ph-identification-card"></i> Dados
-    </button>
-    <button type="button" class="tab-btn" data-tab="enderecos" id="tabBtnEnderecos" disabled onclick="ativarAbaCliente('enderecos')">
-      <i class="ph ph-map-pin"></i> Endereços
-    </button>
-  </div>
-
-  <div class="tab-content active" id="tab-dados">
-  <!-- ── BUSCA ── -->
+  <!-- ── BUSCA (sempre visível, acima das abas) ── -->
   <div class="card" id="buscaCard">
     <div class="search-bar">
       <div class="autocomplete-wrapper" style="flex:1;">
@@ -58,6 +47,46 @@
 
   <!-- ── MENSAGEM DE RESULTADO DE BUSCA ── -->
   <div id="buscaMsg" class="msg-box"></div>
+
+  <!-- ── WRAPPER DO CADASTRO (oculto até busca resolver ou Novo Cliente) ── -->
+  <div id="cadastroWrap" style="display:none;">
+
+  <!-- Abas -->
+  <div class="tabs-header">
+    <button type="button" class="tab-btn active" data-tab="cliente" onclick="ativarAbaCliente('cliente')">
+      <i class="ph ph-identification-card"></i> Cliente
+    </button>
+    <button type="button" class="tab-btn" data-tab="auxiliares" onclick="ativarAbaCliente('auxiliares')">
+      <i class="ph ph-info"></i> Dados Auxiliares
+    </button>
+    <button type="button" class="tab-btn" data-tab="estadocivil" onclick="ativarAbaCliente('estadocivil')">
+      <i class="ph ph-heart"></i> Estado Civil
+    </button>
+    <button type="button" class="tab-btn" data-tab="enderecos" id="tabBtnEnderecos" disabled onclick="ativarAbaCliente('enderecos')">
+      <i class="ph ph-map-pin"></i> Endereços
+    </button>
+    <button type="button" class="tab-btn" data-tab="qualificacoes" onclick="ativarAbaCliente('qualificacoes')">
+      <i class="ph ph-identification-badge"></i> Qualificações Especiais
+    </button>
+    <button type="button" class="tab-btn" data-tab="complementares" onclick="ativarAbaCliente('complementares')">
+      <i class="ph ph-note-pencil"></i> Informações Complementares
+    </button>
+    <button type="button" class="tab-btn" data-tab="protocolos" id="tabBtnProtocolos" disabled onclick="ativarAbaCliente('protocolos')">
+      <i class="ph ph-stack"></i> Protocolos Vinculados
+    </button>
+    <button type="button" class="tab-btn" data-tab="historico" id="tabBtnHistorico" disabled onclick="ativarAbaCliente('historico')">
+      <i class="ph ph-clock-counter-clockwise"></i> Histórico
+    </button>
+  </div>
+
+  <!-- ABA 1 — Cliente -->
+  <div class="tab-content active" id="tab-cliente">
+
+  <!-- Resumo (somente leitura): mantém Nome/CPF visíveis no topo -->
+  <div class="cliente-resumo" id="resumoCliente" style="display:none;">
+    <span class="resumo-nome" id="resumoNome"></span>
+    <span class="resumo-cpf" id="resumoCpf"></span>
+  </div>
 
   <!-- ── ALERTA DO CLIENTE (visível conforme regras de permissão) ── -->
   <div class="card docs-top-card alert-card" id="alertaCard" style="display:none;">
@@ -83,12 +112,10 @@
     </div>
   </div>
 
-  <!-- ── FORMULÁRIO ── -->
-  <div class="card" id="formCard" style="display:none;">
-
-    <!-- Dados Pessoais -->
+  <!-- ── DADOS DE IDENTIFICAÇÃO + CONTATO ── -->
+  <div class="card">
     <div class="form-section">
-      <div class="section-title"><i class="ph ph-user"></i> Dados Pessoais</div>
+      <div class="section-title"><i class="ph ph-identification-card"></i> Identificação</div>
       <div class="form-row single">
         <div class="form-group">
           <label for="nomeInput">Nome Completo <span class="hint">*</span></label>
@@ -101,6 +128,27 @@
           <input type="text" id="cpfInput" placeholder="000.000.000-00" maxlength="14" autocomplete="off">
         </div>
       </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-phone"></i> Contato</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="telefoneInput">Telefone <span class="hint">(Opcional)</span></label>
+          <input type="text" id="telefoneInput" placeholder="(00) 00000-0000" maxlength="15" autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label for="emailInput">E-mail <span class="hint">(Opcional)</span></label>
+          <input type="text" id="emailInput" autocomplete="email">
+        </div>
+      </div>
+    </div>
+  </div>
+  </div><!-- /#tab-cliente -->
+
+  <!-- ABA 2 — Dados Auxiliares -->
+  <div class="tab-content" id="tab-auxiliares">
+    <div class="card">
       <div class="form-row">
         <div class="form-group">
           <label for="rgInput">RG <span class="hint">(Opcional)</span></label>
@@ -116,10 +164,11 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Estado Civil -->
-    <div class="form-section">
-      <div class="section-title"><i class="ph ph-heart"></i> Estado Civil</div>
+  <!-- ABA 3 — Estado Civil -->
+  <div class="tab-content" id="tab-estadocivil">
+    <div class="card">
 
       <!-- Linha 1: Estado Civil + Regra Patrimonial (casado) + Cônjuge (casado) -->
       <div class="form-row">
@@ -176,142 +225,9 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Qualificações Especiais -->
-    <div class="form-section">
-      <div class="section-title"><i class="ph ph-identification-badge"></i> Qualificações Especiais</div>
-
-      <!-- Switch: Empresário Individual -->
-      <div class="toggle-row">
-        <label class="switch-label">
-          <input type="checkbox" id="switchEmpresario">
-          <span class="switch-track"></span>
-          <span class="switch-text">Empresário Individual</span>
-        </label>
-      </div>
-      <div id="cnpjEmpresarioGroup" style="display:none;" class="form-row">
-        <div class="form-group">
-          <label for="cnpjInput">CNPJ <span class="hint">(Empresário Individual)</span></label>
-          <input type="text" id="cnpjInput" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off">
-        </div>
-      </div>
-
-      <!-- Switch: Advogado -->
-      <div class="toggle-row">
-        <label class="switch-label">
-          <input type="checkbox" id="switchAdvogado">
-          <span class="switch-track"></span>
-          <span class="switch-text">Advogado</span>
-        </label>
-      </div>
-      <div id="oabGroup" style="display:none;" class="form-row">
-        <div class="form-group">
-          <label for="oabInput">OAB</label>
-          <input type="text" id="oabInput" autocomplete="off">
-        </div>
-      </div>
-
-      <!-- Switch: Corretor -->
-      <div class="toggle-row">
-        <label class="switch-label">
-          <input type="checkbox" id="switchCorretor">
-          <span class="switch-track"></span>
-          <span class="switch-text">Corretor de Imóveis</span>
-        </label>
-      </div>
-      <div id="creciGroup" style="display:none;" class="form-row">
-        <div class="form-group">
-          <label for="creciInput">CRECI</label>
-          <input type="text" id="creciInput" autocomplete="off">
-        </div>
-      </div>
-
-      <!-- Switch: Falecido -->
-      <div class="toggle-row">
-        <label class="switch-label">
-          <input type="checkbox" id="switchFalecido">
-          <span class="switch-track"></span>
-          <span class="switch-text">Falecido(a)</span>
-        </label>
-      </div>
-      <div id="falecidoGroup" style="display:none;" class="form-row">
-        <div class="form-group small">
-          <label for="dataFalecimentoInput">Data de Falecimento <span class="hint">(Opcional)</span></label>
-          <input type="date" id="dataFalecimentoInput">
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Contato -->
-    <div class="form-section">
-      <div class="section-title"><i class="ph ph-phone"></i> Contato</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="telefoneInput">Telefone <span class="hint">(Opcional)</span></label>
-          <input type="text" id="telefoneInput" placeholder="(00) 00000-0000" maxlength="15" autocomplete="tel">
-        </div>
-        <div class="form-group">
-          <label for="emailInput">E-mail <span class="hint">(Opcional)</span></label>
-          <input type="text" id="emailInput" autocomplete="email">
-        </div>
-      </div>
-    </div>
-
-    <!-- Informações Complementares -->
-    <div class="form-section">
-      <div class="section-title"><i class="ph ph-note-pencil"></i> Informações Complementares</div>
-      <div class="form-row single">
-        <div class="form-group">
-          <label>Outros / Anotações <span class="hint">(Markdown)</span></label>
-          <div class="md-grid">
-            <div class="md-editor-container">
-              <div class="md-toolbar">
-                <button type="button" class="md-btn" onclick="addMarkdownOutros('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
-                <button type="button" class="md-btn" onclick="addMarkdownOutros('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
-                <button type="button" class="md-btn" onclick="addMarkdownOutros('list')" title="Lista"><i class="ph ph-list-bullets"></i></button>
-                <button type="button" class="md-btn" onclick="addMarkdownOutros('heading')" title="Título"><i class="ph ph-text-h-two"></i></button>
-                <button type="button" class="md-btn" onclick="addMarkdownOutros('code')" title="Código"><i class="ph ph-code"></i></button>
-                <button type="button" class="md-btn" onclick="addMarkdownOutros('checklist')" title="Checklist"><i class="ph ph-check-square"></i></button>
-                <button type="button" class="md-btn" onclick="addMarkdownOutros('hr')" title="Separador"><i class="ph ph-minus"></i></button>
-              </div>
-              <textarea id="outrosTextarea" placeholder="Observações adicionais..." autocomplete="off"></textarea>
-            </div>
-            <div id="outrosPreview" class="md-preview" aria-live="polite">
-              <div class="md-placeholder">Pré-visualização...</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Protocolos Vinculados (readonly) -->
-    <div class="form-section">
-      <div class="section-title"><i class="ph ph-stack"></i> Protocolos Vinculados</div>
-      <div class="protocols-list" id="protocolosList">
-        <div class="protocols-empty">Nenhum protocolo vinculado.</div>
-      </div>
-    </div>
-
-    <!-- Logs de Alterações -->
-    <div class="card log-card" id="logCard" style="display:none;">
-      <div class="card-title"><i class="ph ph-clock-counter-clockwise"></i> Histórico de Alterações</div>
-      <div id="logContent" class="log-texto"></div>
-    </div>
-
-    <!-- Botões -->
-    <div class="btn-row">
-      <button type="button" class="btn btn-secondary" id="btnLimpar">
-        <i class="ph ph-eraser"></i> Limpar
-      </button>
-      <button type="button" class="btn btn-primary" id="btnSalvar">
-        <i class="ph ph-floppy-disk"></i> Salvar Alterações
-      </button>
-    </div>
-    <div id="formMsg" class="msg-box"></div>
-  </div><!-- /#formCard -->
-  </div><!-- /#tab-dados -->
-
+  <!-- ABA 4 — Endereços -->
   <div class="tab-content" id="tab-enderecos">
     <div class="card" id="enderecosCard">
       <div class="enderecos-header">
@@ -396,6 +312,133 @@
       <div id="enderecosLista" class="enderecos-lista"></div>
     </div>
   </div>
+
+  <!-- ABA 5 — Qualificações Especiais -->
+  <div class="tab-content" id="tab-qualificacoes">
+    <div class="card">
+
+      <!-- Switch: Empresário Individual -->
+      <div class="toggle-row">
+        <label class="switch-label">
+          <input type="checkbox" id="switchEmpresario">
+          <span class="switch-track"></span>
+          <span class="switch-text">Empresário Individual</span>
+        </label>
+      </div>
+      <div id="cnpjEmpresarioGroup" style="display:none;" class="form-row">
+        <div class="form-group">
+          <label for="cnpjInput">CNPJ <span class="hint">(Empresário Individual)</span></label>
+          <input type="text" id="cnpjInput" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Switch: Advogado -->
+      <div class="toggle-row">
+        <label class="switch-label">
+          <input type="checkbox" id="switchAdvogado">
+          <span class="switch-track"></span>
+          <span class="switch-text">Advogado</span>
+        </label>
+      </div>
+      <div id="oabGroup" style="display:none;" class="form-row">
+        <div class="form-group">
+          <label for="oabInput">OAB</label>
+          <input type="text" id="oabInput" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Switch: Corretor -->
+      <div class="toggle-row">
+        <label class="switch-label">
+          <input type="checkbox" id="switchCorretor">
+          <span class="switch-track"></span>
+          <span class="switch-text">Corretor de Imóveis</span>
+        </label>
+      </div>
+      <div id="creciGroup" style="display:none;" class="form-row">
+        <div class="form-group">
+          <label for="creciInput">CRECI</label>
+          <input type="text" id="creciInput" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Switch: Falecido -->
+      <div class="toggle-row">
+        <label class="switch-label">
+          <input type="checkbox" id="switchFalecido">
+          <span class="switch-track"></span>
+          <span class="switch-text">Falecido(a)</span>
+        </label>
+      </div>
+      <div id="falecidoGroup" style="display:none;" class="form-row">
+        <div class="form-group small">
+          <label for="dataFalecimentoInput">Data de Falecimento <span class="hint">(Opcional)</span></label>
+          <input type="date" id="dataFalecimentoInput">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ABA 6 — Informações Complementares -->
+  <div class="tab-content" id="tab-complementares">
+    <div class="card">
+      <div class="form-row single">
+        <div class="form-group">
+          <label>Outros / Anotações <span class="hint">(Markdown)</span></label>
+          <div class="md-grid">
+            <div class="md-editor-container">
+              <div class="md-toolbar">
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('list')" title="Lista"><i class="ph ph-list-bullets"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('heading')" title="Título"><i class="ph ph-text-h-two"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('code')" title="Código"><i class="ph ph-code"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('checklist')" title="Checklist"><i class="ph ph-check-square"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownOutros('hr')" title="Separador"><i class="ph ph-minus"></i></button>
+              </div>
+              <textarea id="outrosTextarea" placeholder="Observações adicionais..." autocomplete="off"></textarea>
+            </div>
+            <div id="outrosPreview" class="md-preview" aria-live="polite">
+              <div class="md-placeholder">Pré-visualização...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA 7 — Protocolos Vinculados -->
+  <div class="tab-content" id="tab-protocolos">
+    <div class="card">
+      <div class="protocols-list" id="protocolosList">
+        <div class="protocols-empty">Nenhum protocolo vinculado.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA 8 — Histórico -->
+  <div class="tab-content" id="tab-historico">
+    <div class="card log-card" id="logCard" style="display:none;">
+      <div class="card-title"><i class="ph ph-clock-counter-clockwise"></i> Histórico de Alterações</div>
+      <div id="logContent" class="log-texto"></div>
+    </div>
+  </div>
+
+  <!-- Barra de ação fixa (salva o registro inteiro, independente da aba ativa) -->
+  <div class="form-actions-sticky">
+    <div id="formMsg" class="msg-box"></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-secondary" id="btnLimpar">
+        <i class="ph ph-eraser"></i> Limpar
+      </button>
+      <button type="button" class="btn btn-primary" id="btnSalvar">
+        <i class="ph ph-floppy-disk"></i> Salvar Alterações
+      </button>
+    </div>
+  </div>
+
+  </div><!-- /#cadastroWrap -->
 
   <!-- Drawer lateral — Documentos Paperless -->
   <div id="paperlessDrawer" class="paperless-drawer">
