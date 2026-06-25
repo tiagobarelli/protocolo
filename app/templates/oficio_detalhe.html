@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Ofício — Gestão Administrativa{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/oficio_detalhe.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+{% include "partials/flash_messages.html" %}
+<div class="container">
+
+  <!-- Cabeçalho -->
+  <div class="oficio-det-topbar">
+    <a href="{{ url_for('main.oficios') }}" class="oficio-det-voltar">
+      <i class="ph ph-arrow-left"></i> Voltar
+    </a>
+    <h1 id="tituloPagina"><i class="ph ph-envelope-simple"></i> Ofício</h1>
+  </div>
+
+  <div class="card">
+
+    <!-- Seção: Dados do ofício -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-identification-card"></i> Dados do ofício</div>
+
+      <div class="form-row">
+        <div class="form-group small">
+          <label for="numeroInput">Número <span class="oficio-det-req">*</span></label>
+          <input type="text" id="numeroInput" autocomplete="off" inputmode="numeric">
+        </div>
+        <div class="form-group small">
+          <label for="letraInput">Letra <span class="oficio-det-req">*</span></label>
+          <input type="text" id="letraInput" maxlength="3" autocomplete="off" value="A">
+        </div>
+        <div class="form-group">
+          <label for="dataInput" id="dataLabel">Data <span class="oficio-det-req">*</span></label>
+          <input type="date" id="dataInput">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="remetenteSelect" id="remetenteLabel">Remetente <span class="oficio-det-req">*</span></label>
+          <select id="remetenteSelect"></select>
+          <div id="remetenteNota" class="oficio-det-nota" style="display:none;"></div>
+        </div>
+        <div class="form-group" id="statusGroup">
+          <label for="dataCumprimentoInput">Data de cumprimento</label>
+          <input type="date" id="dataCumprimentoInput">
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label>Descrição <span class="hint">(Markdown)</span> <span class="oficio-det-req">*</span></label>
+          <div class="md-grid">
+            <div class="md-editor-container">
+              <div class="md-toolbar">
+                <button type="button" class="md-btn" onclick="addMarkdownDescricao('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
+                <button type="button" class="md-btn" onclick="addMarkdownDescricao('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+              </div>
+              <textarea id="descricaoInput" placeholder="Descreva o conteúdo do ofício..." autocomplete="off"></textarea>
+            </div>
+            <div id="descricaoPreview" class="md-preview" aria-live="polite">
+              <div class="md-placeholder">Pré-visualização...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção: Vínculos -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-link"></i> Vínculos</div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="clienteBusca">Cliente(s) <span class="hint">— buscar na base</span></label>
+          <div class="autocomplete-wrapper">
+            <input type="text" id="clienteBusca" placeholder="Comece a digitar o nome..." autocomplete="off">
+            <div class="autocomplete-list" id="clienteAutoList"></div>
+          </div>
+          <div id="clienteChips" class="oficio-det-chips"></div>
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="parBusca" id="parLabel">Ofício-par <span class="hint">— buscar por número</span></label>
+          <div class="autocomplete-wrapper">
+            <input type="text" id="parBusca" placeholder="Digite o número do ofício..." autocomplete="off" inputmode="numeric">
+            <div class="autocomplete-list" id="parAutoList"></div>
+          </div>
+          <div id="parSelecionado" class="oficio-det-par" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção: Outras anotações -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-note"></i> Outras anotações</div>
+      <div class="form-row single">
+        <div class="form-group">
+          <textarea id="outrasInput" placeholder="Anotações internas (texto simples)..." autocomplete="off"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção: Anexos -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-paperclip"></i> Anexos</div>
+      <div class="form-row single">
+        <div class="form-group">
+          <div id="anexoControles" class="oficio-det-anexo-controles">
+            <input type="file" id="anexoInput">
+            <button type="button" class="btn btn-secondary" id="btnEnviarAnexo">
+              <i class="ph ph-upload-simple"></i> Enviar anexo
+            </button>
+          </div>
+          <div id="anexosNota" class="oficio-det-nota" style="display:none;"></div>
+          <div id="anexosList" class="oficio-det-anexos"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.card -->
+
+  <!-- Histórico -->
+  <div class="card oficio-det-log-card" id="logCard" style="display:none;">
+    <div class="section-title"><i class="ph ph-clock-counter-clockwise"></i> Histórico de alterações</div>
+    <div id="logContent" class="oficio-det-log-texto"></div>
+  </div>
+
+  <!-- Barra de ação -->
+  <div class="form-actions-sticky" id="acoesBar">
+    <div id="formMsg" class="msg-box"></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-secondary" id="btnLimpar">
+        <i class="ph ph-eraser"></i> Limpar
+      </button>
+      <button type="button" class="btn btn-primary" id="btnSalvar">
+        <i class="ph ph-floppy-disk"></i> Salvar
+      </button>
+    </div>
+  </div>
+
+</div><!-- /.container -->
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+  window.OFICIO_TIPO = "{{ tipo }}";            /* "recebido" | "enviado" */
+  window.OFICIO_ID = {{ oficio_id or 'null' }}; /* null em modo novo */
+</script>
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/oficio_detalhe.js') }}"></script>
+{% endblock %}

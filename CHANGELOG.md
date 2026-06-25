@@ -2,10 +2,21 @@
 
 Controle de correções e melhorias do sistema
 
-## [1.4.0] 2026-06-24
+## [1.4.0] 2026-06-25
+
+### Adicionado
+
+- **Módulo de Ofícios:** novo módulo para registrar e acompanhar a correspondência oficial do cartório, dividido em **Ofícios recebidos** e **Ofícios enviados**. É acessível por todos os usuários pelo novo grupo **Gestão Administrativa** na barra lateral.
+- **Listagem de ofícios com abas e filtros:** a tela de Ofícios apresenta duas abas (Recebidos e Enviados), cada uma com filtro por **ano**, **busca** por número ou por remetente/destinatário e, nos recebidos, filtro por **situação** (Pendente ou Cumprido). Cada linha mostra o número, a data, o remetente/destinatário, uma **prévia da descrição** (formatada, em até três linhas), os clientes vinculados, a situação e um indicador quando o ofício tem um par vinculado (resposta).
+- **Cadastro e edição de ofício:** tela única para criar e editar ofícios, com número e letra, data, remetente/destinatário, descrição com formatação (negrito e itálico), clientes vinculados, anotações internas e, nos recebidos, data de cumprimento. As alterações ficam registradas em um **histórico** dentro do próprio ofício.
+- **Anexos do ofício:** cada ofício pode receber arquivos (digitalizações e documentos-fonte), guardados em pastas legíveis no servidor, organizadas por tipo, ano e número. Os anexos podem ser baixados por qualquer usuário; enviar e excluir é restrito aos perfis master e administrador. Depois que um ofício tem anexos, seu número e letra ficam travados para preservar a correspondência com a pasta de arquivos.
+- **Vínculo entre ofício recebido e enviado:** um ofício recebido pode ser associado ao ofício enviado que o respondeu (e vice-versa). O sistema só oferece para vincular ofícios que ainda não estão vinculados a nenhum outro, e o elo é mantido nos dois lados automaticamente.
+- **Aviso de número repetido:** ao salvar um ofício com número e letra já usados no mesmo ano, o sistema bloqueia e sugere a próxima letra livre (por exemplo, "15/A já existe — usar 15/B?").
+- **Cadastro de Remetentes / Destinatários:** nova aba em Configurações (perfil master) para cadastrar, editar e excluir as entidades que aparecem no seletor de remetente/destinatário dos ofícios (varas, órgãos, instituições financeiras, tabelionatos etc.), sem precisar mexer diretamente no banco. Entidades já vinculadas a algum ofício não podem ser excluídas.
 
 ### Melhorias
 
+- **Barra lateral reorganizada:** o grupo "Gestão de Atos" passou a se chamar **Gestão Notarial** e "Relatórios" passou a **Consultas**. O novo grupo **Gestão Administrativa** (com os Ofícios) aparece logo acima da Gestão Notarial.
 - **Cadastro de Pessoa Física reorganizado em abas:** a tela de Pessoa Física foi reformulada para ficar mais clara e fácil de usar. O campo de busca passou a ficar sempre visível no topo, e o restante do cadastro só aparece depois de buscar um cliente ou iniciar um novo. Os dados, antes empilhados em um formulário único e longo, foram divididos em **8 abas** — Cliente, Dados Auxiliares, Estado Civil, Endereços, Qualificações Especiais, Informações Complementares, Protocolos Vinculados e Histórico — facilitando localizar cada informação. As abas que dependem de um cliente já salvo (Endereços, Protocolos e Histórico) ficam desabilitadas até o cadastro existir.
 - **Cadastro de Pessoa Jurídica reorganizado em abas:** a tela de Pessoa Jurídica recebeu o mesmo tratamento, dividida em **6 abas** — Denominação, Contato, Endereços, Protocolos Vinculados, Histórico e Eventos Societários (esta última reservada para uma funcionalidade futura). As abas que dependem de um registro salvo (Endereços, Protocolos, Histórico e Eventos) começam desabilitadas e são liberadas após salvar.
 - **Resumo do cliente sempre à vista:** no topo da primeira aba, uma faixa de destaque mostra o nome (ou denominação) e o documento (CPF/CNPJ) do cliente em foco, para que a identificação fique visível sem precisar rolar a página.
@@ -14,6 +25,10 @@ Controle de correções e melhorias do sistema
 - **Aviso de cliente já cadastrado mais discreto:** ao localizar um cliente existente pela busca, a confirmação passou a aparecer como um aviso flutuante (toast) no canto da tela, que some sozinho, em vez de uma faixa fixa no formulário.
 - **Máscara automática de CNPJ na busca de Pessoa Jurídica:** ao digitar o CNPJ no campo de busca, a formatação `00.000.000/0000-00` é aplicada automaticamente, sem precisar digitar a pontuação, e a busca dispara ao completar os 14 dígitos.
 - **Complemento no card de endereço:** quando preenchido, o complemento do endereço (ex.: "apartamento 51") passou a ser exibido na primeira linha do card, junto do logradouro e número.
+
+### Correções
+
+- **Relatório de Certidões respeitava a data de busca:** corrigido o filtro de data do relatório de Certidões Expedidas, que retornava sempre o mesmo conjunto de certidões independentemente do ano ou período informado. Agora, trocar o ano ou o período estreita corretamente o resultado, um intervalo sem certidões volta vazio e as certidões nas datas de início e fim do intervalo passam a ser incluídas.
 
 ## [1.3.1] 2026-06-23
 

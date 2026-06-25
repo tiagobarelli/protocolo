@@ -113,8 +113,8 @@ function buscarCertidoes(pagina) {
   var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/' +
     '?user_field_names=false' +
     '&filter__' + CONFIG.fields.protoServico + '__link_row_has=' + CONFIG.servicoCertidaoId +
-    '&filter__' + CONFIG.fields.protoDataEntrada + '__date_after=' + encodeURIComponent(buscaAtual.dataInicio) +
-    '&filter__' + CONFIG.fields.protoDataEntrada + '__date_before=' + encodeURIComponent(buscaAtual.dataFim) +
+    '&filter__' + CONFIG.fields.protoDataEntrada + '__date_after_or_equal=' + encodeURIComponent(buscaAtual.dataInicio) +
+    '&filter__' + CONFIG.fields.protoDataEntrada + '__date_before_or_equal=' + encodeURIComponent(buscaAtual.dataFim) +
     '&order_by=' + CONFIG.fields.protoDataEntrada +
     '&size=' + CONFIG.itensPorPagina +
     '&page=' + pagina;

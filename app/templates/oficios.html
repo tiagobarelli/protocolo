@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Ofícios — Gestão Administrativa{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/oficios.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+{% include "partials/flash_messages.html" %}
+<div class="container">
+
+  <!-- Cabeçalho -->
+  <div class="oficios-header card">
+    <div class="oficios-header-icon"><i class="ph ph-envelope-simple"></i></div>
+    <div>
+      <h1>Ofícios</h1>
+      <p>Correspondência oficial recebida e enviada.</p>
+    </div>
+  </div>
+
+  <!-- Abas -->
+  <div class="tabs-header">
+    <button type="button" class="tab-btn active" data-tab="recebidos" onclick="ativarAba('recebidos')">
+      <i class="ph ph-tray-arrow-down"></i> Recebidos
+    </button>
+    <button type="button" class="tab-btn" data-tab="enviados" onclick="ativarAba('enviados')">
+      <i class="ph ph-tray-arrow-up"></i> Enviados
+    </button>
+  </div>
+
+  <!-- Aba Recebidos -->
+  <div class="tab-content active" id="tab-recebidos">
+    <div class="card">
+      <div class="oficios-filtros">
+        <div class="oficios-filtro-grupo">
+          <label for="anoRecebidos">Ano</label>
+          <select id="anoRecebidos"></select>
+        </div>
+        <div class="oficios-filtro-grupo">
+          <label for="statusRecebidos">Status</label>
+          <select id="statusRecebidos">
+            <option value="">Todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="cumprido">Cumprido</option>
+          </select>
+        </div>
+        <div class="oficios-filtro-grupo oficios-filtro-busca">
+          <label for="buscaRecebidos">Buscar</label>
+          <input type="text" id="buscaRecebidos" placeholder="Buscar por número ou remetente/destinatário" autocomplete="off">
+        </div>
+        {% if current_user.perfil in ['master', 'administrador'] %}
+        <div class="oficios-filtro-grupo oficios-filtro-novo">
+          <a href="{{ url_for('main.oficio_recebido') }}" class="oficios-btn-novo">
+            <i class="ph ph-plus-circle"></i> Novo Ofício
+          </a>
+        </div>
+        {% endif %}
+      </div>
+      <div id="tabelaRecebidos"></div>
+    </div>
+  </div>
+
+  <!-- Aba Enviados -->
+  <div class="tab-content" id="tab-enviados">
+    <div class="card">
+      <div class="oficios-filtros">
+        <div class="oficios-filtro-grupo">
+          <label for="anoEnviados">Ano</label>
+          <select id="anoEnviados"></select>
+        </div>
+        <div class="oficios-filtro-grupo oficios-filtro-busca">
+          <label for="buscaEnviados">Buscar</label>
+          <input type="text" id="buscaEnviados" placeholder="Buscar por número ou remetente/destinatário" autocomplete="off">
+        </div>
+        {% if current_user.perfil in ['master', 'administrador'] %}
+        <div class="oficios-filtro-grupo oficios-filtro-novo">
+          <a href="{{ url_for('main.oficio_enviado') }}" class="oficios-btn-novo">
+            <i class="ph ph-plus-circle"></i> Novo Ofício
+          </a>
+        </div>
+        {% endif %}
+      </div>
+      <div id="tabelaEnviados"></div>
+    </div>
+  </div>
+
+</div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
+<script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/oficios.js') }}"></script>
+{% endblock %}

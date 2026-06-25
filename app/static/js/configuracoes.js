@@ -44,6 +44,8 @@ function ativarAba(nomeAba) {
 
   if (nomeAba === 'mensagens') {
     carregarMensagensInternas();
+  } else if (nomeAba === 'remdest') {
+    carregarRemDest();
   }
 }
 
@@ -403,6 +405,208 @@ function verHistoricoLeitura(id) {
 }
 
 // ═══════════════════════════════════════════════════════
+// REMETENTES / DESTINATÁRIOS (tabela rem_dest_oficios = 780)
+// ═══════════════════════════════════════════════════════
+
+var TABLE_REMDEST = 780;
+var REMDEST_NOME = 'field_7483';
+var REMDEST_TIPO = 'field_7484';
+var REMDEST_CRIADO_POR = 'field_7485';
+var REMDEST_REC_VINC = 'field_7490';   // ofícios recebidos vinculados (reverso)
+var REMDEST_ENV_VINC = 'field_7499';   // ofícios enviados vinculados (reverso)
+
+var REMDEST_TIPOS = [
+  { id: 3155, label: 'Judiciário' }, { id: 3156, label: 'Executivo' },
+  { id: 3157, label: 'Legislativo' }, { id: 3158, label: 'Ministério Público' },
+  { id: 3159, label: 'Defensoria Pública' }, { id: 3160, label: 'Instituição Financeira' },
+  { id: 3161, label: 'Tabelionato de Notas' }, { id: 3162, label: 'Ofício de Registro' },
+  { id: 3163, label: 'Outros' }
+];
+
+var remdestLista = [];
+var remdestEditId = null;
+
+function remdestHeaders() {
+  return { 'Content-Type': 'application/json' };
+}
+
+function popularRemdestTipo() {
+  var sel = document.getElementById('remdestTipo');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— selecione —</option>';
+  var i;
+  for (i = 0; i < REMDEST_TIPOS.length; i++) {
+    var opt = document.createElement('option');
+    opt.value = String(REMDEST_TIPOS[i].id);
+    opt.textContent = REMDEST_TIPOS[i].label;
+    sel.appendChild(opt);
+  }
+}
+
+function carregarRemDest() {
+  var lista = document.getElementById('remdestLista');
+  if (!lista) return;
+  lista.innerHTML = '<div class="remdest-vazio">Carregando...</div>';
+  var url = '/api/baserow/database/rows/table/' + TABLE_REMDEST +
+    '/?user_field_names=false&size=200&order_by=' + REMDEST_NOME;
+  fetch(url, { headers: remdestHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      remdestLista = (data && data.results) || [];
+      renderRemDest();
+    })
+    .catch(function(e) {
+      lista.innerHTML = '<div class="remdest-vazio">Erro ao carregar: ' + escapeHtmlIM(e.message) + '</div>';
+    });
+}
+
+function renderRemDest() {
+  var lista = document.getElementById('remdestLista');
+  if (!lista) return;
+  if (!remdestLista.length) {
+    lista.innerHTML = '<div class="remdest-vazio">Nenhum remetente/destinatário cadastrado.</div>';
+    return;
+  }
+  var html = '';
+  var i;
+  for (i = 0; i < remdestLista.length; i++) {
+    var row = remdestLista[i];
+    var nome = row[REMDEST_NOME] || '';
+    var tipoObj = row[REMDEST_TIPO];
+    var tipoTxt = (tipoObj && tipoObj.value) ? tipoObj.value : '—';
+    var emUso = ((row[REMDEST_REC_VINC] || []).length) + ((row[REMDEST_ENV_VINC] || []).length);
+
+    var delAttrs = 'onclick="excluirRemDest(' + row.id + ')"';
+    if (emUso > 0) {
+      delAttrs = 'disabled title="Em uso em ' + emUso + ' ofício(s) — não pode ser excluído"';
+    }
+
+    html += '<div class="remdest-item">' +
+      '<span class="remdest-item-nome">' + escapeHtmlIM(nome) + '</span>' +
+      '<span class="remdest-tipo">' + escapeHtmlIM(tipoTxt) + '</span>' +
+      '<div class="remdest-acoes">' +
+        '<button type="button" class="remdest-btn-mini" onclick="editarRemDest(' + row.id + ')">' +
+          '<i class="ph ph-pencil-simple"></i> Editar</button>' +
+        '<button type="button" class="remdest-btn-mini remdest-del" ' + delAttrs + '>' +
+          '<i class="ph ph-trash"></i> Excluir</button>' +
+      '</div>' +
+    '</div>';
+  }
+  lista.innerHTML = html;
+}
+
+function salvarRemDest() {
+  var inputNome = document.getElementById('remdestNome');
+  var selTipo = document.getElementById('remdestTipo');
+  if (!inputNome || !selTipo) return;
+  var nome = inputNome.value.trim();
+  var tipo = selTipo.value;
+
+  if (!nome) {
+    mostrarMsg('remdestMsg', 'error', 'Informe o nome.');
+    return;
+  }
+  if (!tipo) {
+    mostrarMsg('remdestMsg', 'error', 'Selecione o tipo.');
+    return;
+  }
+
+  // Guarda contra duplicado (nome case-insensitive), exceto a entidade em edição
+  var nomeLower = nome.toLowerCase();
+  var i;
+  for (i = 0; i < remdestLista.length; i++) {
+    if (remdestEditId !== null && remdestLista[i].id === remdestEditId) continue;
+    var existente = (remdestLista[i][REMDEST_NOME] || '').toLowerCase();
+    if (existente === nomeLower) {
+      mostrarMsg('remdestMsg', 'warning', 'Já existe um remetente/destinatário com esse nome.');
+      return;
+    }
+  }
+
+  var payload = {};
+  payload[REMDEST_NOME] = nome;
+  payload[REMDEST_TIPO] = parseInt(tipo, 10);
+
+  var btn = document.getElementById('remdestBtnSalvar');
+  if (btn) btn.disabled = true;
+  esconderMsg('remdestMsg');
+
+  var url, metodo;
+  if (remdestEditId === null) {
+    payload[REMDEST_CRIADO_POR] = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
+    url = '/api/baserow/database/rows/table/' + TABLE_REMDEST + '/?user_field_names=false';
+    metodo = 'POST';
+  } else {
+    url = '/api/baserow/database/rows/table/' + TABLE_REMDEST + '/' + remdestEditId + '/?user_field_names=false';
+    metodo = 'PATCH';
+  }
+
+  fetch(url, { method: metodo, headers: remdestHeaders(), body: JSON.stringify(payload) })
+    .then(function(r) {
+      if (!r.ok) return r.json().then(function(e) { throw new Error(e.detail || 'Erro ao salvar.'); });
+      return r.json();
+    })
+    .then(function() {
+      cancelarEdicaoRemDest();
+      if (btn) btn.disabled = false;
+      mostrarMsg('remdestMsg', 'success', 'Remetente/destinatário salvo com sucesso.');
+      carregarRemDest();
+    })
+    .catch(function(e) {
+      if (btn) btn.disabled = false;
+      mostrarMsg('remdestMsg', 'error', e.message || 'Erro ao salvar.');
+    });
+}
+
+function editarRemDest(id) {
+  var i;
+  for (i = 0; i < remdestLista.length; i++) {
+    if (remdestLista[i].id === id) {
+      var row = remdestLista[i];
+      document.getElementById('remdestNome').value = row[REMDEST_NOME] || '';
+      var tipoObj = row[REMDEST_TIPO];
+      document.getElementById('remdestTipo').value = (tipoObj && tipoObj.id) ? String(tipoObj.id) : '';
+      remdestEditId = id;
+      var btn = document.getElementById('remdestBtnSalvar');
+      btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar alteração';
+      document.getElementById('remdestBtnCancelar').style.display = '';
+      esconderMsg('remdestMsg');
+      document.getElementById('remdestNome').focus();
+      return;
+    }
+  }
+}
+
+function cancelarEdicaoRemDest() {
+  remdestEditId = null;
+  var inputNome = document.getElementById('remdestNome');
+  var selTipo = document.getElementById('remdestTipo');
+  if (inputNome) inputNome.value = '';
+  if (selTipo) selTipo.value = '';
+  var btn = document.getElementById('remdestBtnSalvar');
+  if (btn) btn.innerHTML = '<i class="ph ph-plus-circle"></i> Adicionar';
+  var btnCancel = document.getElementById('remdestBtnCancelar');
+  if (btnCancel) btnCancel.style.display = 'none';
+}
+
+function excluirRemDest(id) {
+  if (!window.confirm('Excluir este remetente/destinatário?')) return;
+  var url = '/api/baserow/database/rows/table/' + TABLE_REMDEST + '/' + id + '/';
+  fetch(url, { method: 'DELETE', headers: remdestHeaders() })
+    .then(function(r) {
+      if (!r.ok && r.status !== 204) {
+        return r.json().then(function(e) { throw new Error(e.detail || 'Erro ao excluir.'); });
+      }
+      cancelarEdicaoRemDest();
+      mostrarMsg('remdestMsg', 'success', 'Remetente/destinatário excluído.');
+      carregarRemDest();
+    })
+    .catch(function(e) {
+      mostrarMsg('remdestMsg', 'error', e.message || 'Erro ao excluir.');
+    });
+}
+
+// ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
 
@@ -425,5 +629,14 @@ document.addEventListener('DOMContentLoaded', function() {
   if (document.getElementById('tab-mensagens')) {
     configurarMarkdownMensagem();
     carregarMensagensInternas();
+  }
+
+  // Remetentes / Destinatários (só existe para master)
+  if (document.getElementById('tab-remdest')) {
+    popularRemdestTipo();
+    var btnSalvarRD = document.getElementById('remdestBtnSalvar');
+    if (btnSalvarRD) btnSalvarRD.addEventListener('click', salvarRemDest);
+    var btnCancelarRD = document.getElementById('remdestBtnCancelar');
+    if (btnCancelarRD) btnCancelarRD.addEventListener('click', cancelarEdicaoRemDest);
   }
 });

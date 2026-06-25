@@ -153,6 +153,26 @@ def changelog():
     return render_template("changelog.html", changelog_html=changelog_html)
 
 
+@main_bp.route("/oficios")
+@login_required
+def oficios():
+    return render_template("oficios.html")
+
+
+@main_bp.route("/oficios/recebido")
+@main_bp.route("/oficios/recebido/<int:oficio_id>")
+@login_required
+def oficio_recebido(oficio_id=None):
+    return render_template("oficio_detalhe.html", tipo="recebido", oficio_id=oficio_id)
+
+
+@main_bp.route("/oficios/enviado")
+@main_bp.route("/oficios/enviado/<int:oficio_id>")
+@login_required
+def oficio_enviado(oficio_id=None):
+    return render_template("oficio_detalhe.html", tipo="enviado", oficio_id=oficio_id)
+
+
 @main_bp.route("/notificacoes")
 @login_required
 def notificacoes():

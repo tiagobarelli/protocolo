@@ -36,6 +36,9 @@
     <button type="button" class="tab-btn" data-tab="mensagens" onclick="ativarAba('mensagens')">
       <i class="ph ph-megaphone"></i> Mensagens Internas
     </button>
+    <button type="button" class="tab-btn" data-tab="remdest" onclick="ativarAba('remdest')">
+      <i class="ph ph-address-book"></i> Remetentes / Destinatários
+    </button>
     {% endif %}
   </div>
 
@@ -153,6 +156,35 @@
       <div class="section-title"><i class="ph ph-list-dashes"></i> Mensagens publicadas</div>
       <p class="section-desc">Mensagens ativas e desativadas, com o histórico de quem confirmou a leitura.</p>
       <div id="imLista"><div class="md-placeholder">Carregando mensagens...</div></div>
+    </div>
+  </div>
+
+  <!-- Aba Remetentes / Destinatários -->
+  <div class="tab-content" id="tab-remdest">
+    <div class="card">
+      <div class="section-title"><i class="ph ph-address-book"></i> Remetentes e destinatários de ofícios</div>
+      <p class="section-desc">Entidades que aparecem no seletor de remetente/destinatário dos ofícios.</p>
+
+      <div id="remdestMsg" class="msg-box" style="display:none;"></div>
+
+      <div class="remdest-form">
+        <div class="remdest-campos">
+          <div class="remdest-campo">
+            <label for="remdestNome">Nome</label>
+            <input type="text" id="remdestNome" placeholder="Ex.: 2ª Vara Cível de Itápolis" autocomplete="off">
+          </div>
+          <div class="remdest-campo">
+            <label for="remdestTipo">Tipo</label>
+            <select id="remdestTipo"></select>
+          </div>
+        </div>
+        <div class="remdest-form-acoes">
+          <button type="button" class="btn btn-secondary" id="remdestBtnCancelar" style="display:none;">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="remdestBtnSalvar"><i class="ph ph-plus-circle"></i> Adicionar</button>
+        </div>
+      </div>
+
+      <div id="remdestLista" class="remdest-lista"></div>
     </div>
   </div>
   {% endif %}

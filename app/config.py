@@ -32,6 +32,9 @@ class BaseConfig:
     MAX_CONTENT_LENGTH = 20 * 1024 * 1024  # 20 MB
     MAX_UPLOAD_SIZE = 20 * 1024 * 1024
 
+    # Ofícios (acervo de correspondência — pasta legível por humano)
+    OFICIOS_FOLDER = os.environ.get("OFICIOS_FOLDER", str(BASE_DIR / "data" / "oficios"))
+
     # Paperless-ngx (proxy somente leitura)
     PAPERLESS_URL = os.environ.get("PAPERLESS_URL", "http://192.168.0.31:8094").rstrip("/")
     PAPERLESS_TOKEN = os.environ.get("PAPERLESS_TOKEN", "")
