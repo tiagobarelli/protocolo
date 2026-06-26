@@ -601,3 +601,61 @@ textarea { resize: vertical; min-height: 80px; }
   padding: 32px 16px;
 }
 .aba-placeholder i { font-size: 2rem; display: block; margin-bottom: 12px; opacity: 0.5; }
+
+/* ── Eventos Societários (aba PJ) ── */
+.qs-lista { display: flex; flex-direction: column; gap: 8px; }
+.qs-empty, .evt-empty { color: var(--text-muted); font-size: 0.92rem; padding: 8px 0; }
+.qs-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface);
+}
+.qs-item-info { display: flex; flex-direction: column; gap: 2px; }
+.qs-item-nome { font-weight: 600; color: var(--text-dark); }
+.qs-item-qualif { font-size: 0.85rem; color: var(--text-muted); }
+.qs-item-perc { font-weight: 700; color: var(--accent); white-space: nowrap; }
+.qs-total { margin-top: 12px; text-align: right; font-size: 0.9rem; color: var(--text-muted); }
+.qs-total strong { color: var(--text-dark); }
+
+.evt-timeline { display: flex; flex-direction: column; gap: 14px; }
+.evt-item { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; }
+.evt-item-cab { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.evt-item-data { font-weight: 700; color: var(--text-dark); }
+.evt-item-tipo {
+  font-size: 0.78rem; font-weight: 600; color: var(--accent);
+  background: var(--accent-soft); border-radius: 999px; padding: 2px 10px;
+}
+.evt-item-desc { margin-top: 6px; font-size: 0.92rem; color: var(--text-main); }
+.evt-item-mov { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; }
+.evt-mov-entrada { color: var(--success); }
+.evt-mov-saida { color: var(--danger); }
+.evt-mov-alteracao { color: var(--warning); }
+
+.evt-notice {
+  background: var(--warning-bg); color: var(--warning);
+  border: 1px solid var(--warning); border-radius: var(--radius);
+  padding: 10px 14px; font-size: 0.88rem; margin-bottom: 12px;
+}
+
+.qs-editor { margin: 12px 0 4px; padding: 14px; border: 1px dashed var(--border); border-radius: var(--radius); background: var(--accent-soft); }
+.qs-editor-titulo { font-size: 0.85rem; font-weight: 600; color: var(--text-dark); margin-bottom: 10px; }
+.qs-editor-lista { display: flex; flex-direction: column; gap: 8px; }
+.qs-editor-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; }
+.qs-editor-nome { flex: 1; font-weight: 600; color: var(--text-dark); }
+.qs-editor-perc { width: 96px; }
+.qs-editor-qualif { width: 190px; }
+.qs-editor-remove { background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 1.1rem; line-height: 1; }
+.qs-editor-add { margin-top: 10px; position: relative; }
+.qs-editor-total { margin-top: 10px; text-align: right; font-size: 0.9rem; font-weight: 600; }
+.qs-editor-total.ok { color: var(--success); }
+.qs-editor-total.erro { color: var(--danger); }
+
+.evt-item-anexo { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.evt-anexo-btn {
+  font-size: 0.8rem; padding: 4px 10px; border: 1px solid var(--border);
+  border-radius: 999px; background: var(--surface); color: var(--text-muted);
+  cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+}
+.evt-anexo-btn:hover { color: var(--text-dark); background: var(--accent-soft); }
+.evt-anexo-excluir { color: var(--danger); }
+.evt-anexo-aviso { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }

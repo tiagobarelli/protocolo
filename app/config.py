@@ -35,6 +35,9 @@ class BaseConfig:
     # Ofícios (acervo de correspondência — pasta legível por humano)
     OFICIOS_FOLDER = os.environ.get("OFICIOS_FOLDER", str(BASE_DIR / "data" / "oficios"))
 
+    # Eventos societários (acervo de atos — pasta legível por humano)
+    EVENTOS_FOLDER = os.environ.get("EVENTOS_FOLDER", str(BASE_DIR / "data" / "eventos_societarios"))
+
     # Paperless-ngx (proxy somente leitura)
     PAPERLESS_URL = os.environ.get("PAPERLESS_URL", "http://192.168.0.31:8094").rstrip("/")
     PAPERLESS_TOKEN = os.environ.get("PAPERLESS_TOKEN", "")

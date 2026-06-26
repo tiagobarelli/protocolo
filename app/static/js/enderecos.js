@@ -313,11 +313,15 @@
       enderecoEditId = null;
     }
     el('enderecoFormWrap').style.display = 'block';
+    var btnAdd = el('btnAddEndereco');
+    if (btnAdd) btnAdd.style.display = 'none';
   }
 
   function fecharForm() {
     el('enderecoFormWrap').style.display = 'none';
     enderecoEditId = null;
+    var btnAdd = el('btnAddEndereco');
+    if (btnAdd) btnAdd.style.display = '';
   }
 
   // ── ViaCEP ────────────────────────────────────────────

@@ -42,7 +42,7 @@
         <i class="ph ph-building"></i> Nova Pessoa Jurídica
       </button>
     </div>
-    <p class="search-hint">Na busca por CNPJ, utilize o formato 00.000.000/0000-00.</p>
+
   </div>
 
   <!-- ── MENSAGEM DE RESULTADO DE BUSCA ── -->
@@ -257,14 +257,81 @@
     </div>
   </div>
 
-  <!-- ABA 6 — Eventos Societários (placeholder, função futura) -->
+  <!-- ABA 6 — Eventos Societários (Fase 1: somente leitura) -->
   <div class="tab-content" id="tab-eventos">
+
+    <!-- Quadro Societário Atual -->
     <div class="card">
-      <div class="aba-placeholder">
-        <i class="ph ph-handshake"></i>
-        Eventos Societários — funcionalidade em desenvolvimento.
+      <div class="enderecos-header">
+        <div class="section-title"><i class="ph ph-users-three"></i> Quadro Societário Atual</div>
+        <button type="button" class="btn btn-primary" id="btnRegistrarEvento">
+          <i class="ph ph-plus"></i> Registrar evento
+        </button>
+      </div>
+
+      <!-- Formulário de registro de evento (inline) -->
+      <div id="eventoFormWrap" class="endereco-form" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="evtTipo">Tipo do evento</label>
+            <select id="evtTipo"><option value="">Selecione...</option></select>
+          </div>
+          <div class="form-group small">
+            <label for="evtData">Data do ato</label>
+            <input type="date" id="evtData">
+          </div>
+        </div>
+
+        <div id="evtNotice" class="evt-notice" style="display:none;"></div>
+
+        <div id="qsEditorWrap" class="qs-editor" style="display:none;">
+          <div class="qs-editor-titulo">Quadro societário resultante</div>
+          <div id="qsEditorLista" class="qs-editor-lista"></div>
+          <div class="qs-editor-add autocomplete-wrapper">
+            <input type="text" id="qsAddSocioInput" placeholder="Adicionar sócio (buscar por nome)..." autocomplete="off">
+            <div class="autocomplete-list" id="qsAddSocioList"></div>
+          </div>
+          <div id="qsEditorTotal" class="qs-editor-total"></div>
+        </div>
+
+        <div class="form-row single">
+          <div class="form-group">
+            <label>Descrição <span class="hint">(Markdown)</span></label>
+            <div class="md-grid">
+              <div class="md-editor-container">
+                <div class="md-toolbar">
+                  <button type="button" class="md-btn" onclick="addMarkdownEvento('bold')" title="Negrito"><i class="ph ph-text-b"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownEvento('italic')" title="Itálico"><i class="ph ph-text-italic"></i></button>
+                  <button type="button" class="md-btn" onclick="addMarkdownEvento('list')" title="Lista"><i class="ph ph-list-bullets"></i></button>
+                </div>
+                <textarea id="evtDescTextarea" placeholder="Discriminação do evento, se necessário..." autocomplete="off"></textarea>
+              </div>
+              <div id="evtDescPreview" class="md-preview" aria-live="polite">
+                <div class="md-placeholder">Pré-visualização...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="eventoFormMsg" class="msg-box"></div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="btnCancelarEvento"><i class="ph ph-x"></i> Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btnSalvarEvento"><i class="ph ph-floppy-disk"></i> Salvar evento</button>
+        </div>
+      </div>
+
+      <div id="qsLista" class="qs-lista"><div class="qs-empty">Carregando...</div></div>
+      <div id="qsTotal" class="qs-total"></div>
+    </div>
+
+    <!-- Linha do Tempo -->
+    <div class="card">
+      <div class="section-title"><i class="ph ph-clock-counter-clockwise"></i> Linha do Tempo</div>
+      <div id="evtTimeline" class="evt-timeline">
+        <div class="evt-empty">Carregando...</div>
       </div>
     </div>
+
   </div>
 
   <!-- Barra de ação fixa (salva o registro inteiro, independente da aba ativa) -->
@@ -299,4 +366,5 @@
 <script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/clientes_pj.js') }}"></script>
 <script src="{{ url_for('static', filename='js/enderecos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/eventos_societarios.js') }}"></script>
 {% endblock %}

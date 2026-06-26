@@ -383,17 +383,22 @@ function ativarAbaCliente(nome) {
     }
   }
   if (nome === 'enderecos' && window.carregarEnderecos) window.carregarEnderecos();
+  if (nome === 'eventos' && window.carregarEventos) window.carregarEventos();
   atualizarVisibilidadeBarraAcoes(nome);
 }
 
 function atualizarVisibilidadeBarraAcoes(nomeAba) {
   var barra = document.querySelector('.form-actions-sticky');
   if (!barra) return;
-  barra.style.display = (nomeAba === 'enderecos') ? 'none' : '';
+  // Abas com formulário/salvamento próprio escondem a barra de ação do registro principal
+  barra.style.display = (nomeAba === 'enderecos' || nomeAba === 'eventos') ? 'none' : '';
 }
 
 function habilitarAbasDependentes(habilitar) {
   window.ENDERECO_CLIENTE_ID = (habilitar && clienteAtual) ? clienteAtual.id : null;
+  window.EVENTOS_PJ_ID       = (habilitar && clienteAtual) ? clienteAtual.id : null;
+  window.EVENTOS_PJ_CNPJ     = (habilitar && clienteAtual) ? (clienteAtual[FIELDS.cnpj] || '') : '';
+  window.EVENTOS_PJ_NOME     = (habilitar && clienteAtual) ? (clienteAtual[FIELDS.nome] || '') : '';
   if (habilitar && window.carregarEnderecos) window.carregarEnderecos();
 
   var ids = ['tabBtnEnderecos', 'tabBtnProtocolos', 'tabBtnHistorico', 'tabBtnEventos'];
