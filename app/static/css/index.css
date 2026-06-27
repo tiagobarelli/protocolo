@@ -1,24 +1,5 @@
 /* Página Index — Dashboard com sidebar + cards de protocolo */
-:root {
-  --primary: #2f3e46;
-  --primary-hover: #52796f;
-  --accent: #84a98c;
-  --accent-hover: #cad2c5;
-  --accent-soft: #f5f5f4;
-  --bg-body: #fafaf9;
-  --surface: #ffffff;
-  --text-main: #343A40;
-  --text-dark: #212529;
-  --text-muted: #495057;
-  --border: #e7e5e4;
-  --radius: 12px;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --danger: #b91c1c;
-  --success: #15803d;
-  --warning: #d97706;
-}
+/* Tokens base centralizados em design-system.css */
 
 /* ==================== FILTROS ==================== */
 .filters-bar {

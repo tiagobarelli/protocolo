@@ -1,23 +1,8 @@
 /* Página To Do */
 .main-content {
-  --primary: #2f3e46;
-  --accent: #2F3E46;
-  --accent-soft: #F8F9FA;
-  --bg-body: #fafaf9;
-  --surface: #ffffff;
-  --text-main: #343A40;
-  --text-dark: #212529;
-  --text-muted: #495057;
-  --border: #F8F9FA;
-  --border-focus: #84a98c;
-  --radius: 12px;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --success: #15803d;
-  --success-bg: #f0f5f1;
-  --danger: #b91c1c;
-  --danger-bg: #faf0ed;
-  --today-highlight: #5b21b6;       /* roxo escuro */
+  /* Tokens próprios da página To Do — destaque do pill "hoje".
+     Os demais tokens herdam do design-system.css (paleta Fluent). */
+  --today-highlight: #5C2E91;       /* roxo Fluent do pill "hoje" */
   --today-highlight-soft: #ede9fe;  /* fundo suave do pill */
 }
 

@@ -6,7 +6,7 @@ main { max-width: none; padding: 0; margin: 0; }
 
 .sidebar {
   width: 260px;
-  background: var(--primary);
+  background: var(--sidebar-bg);
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -38,8 +38,8 @@ main { max-width: none; padding: 0; margin: 0; }
 .sidebar-logo {
   width: 40px;
   height: 40px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--sidebar-accent);
+  color: var(--sidebar-text-strong);
   border-radius: var(--radius, 6px);
   display: flex;
   align-items: center;
@@ -78,7 +78,7 @@ main { max-width: none; padding: 0; margin: 0; }
   gap: 10px;
   padding: 10px 12px;
   border-radius: var(--radius, 6px); /* Alterado */
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--sidebar-text);
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
@@ -86,14 +86,14 @@ main { max-width: none; padding: 0; margin: 0; }
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-text-strong);
 }
 
 .nav-item.active {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border-left: 3px solid var(--accent);
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-text-strong);
+  border-left: 3px solid var(--sidebar-accent);
   padding-left: 9px;
 }
 
@@ -115,7 +115,7 @@ main { max-width: none; padding: 0; margin: 0; }
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--sidebar-text);
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 500;
@@ -124,8 +124,8 @@ main { max-width: none; padding: 0; margin: 0; }
 }
 
 .nav-group-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-text-strong);
 }
 
 .nav-group.open .nav-group-toggle {
@@ -179,7 +179,7 @@ main { max-width: none; padding: 0; margin: 0; }
 
 .sidebar-footer {
   padding: 16px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -234,7 +234,7 @@ main { max-width: none; padding: 0; margin: 0; }
 
 .notification-badge {
   position: static;
-  background: var(--danger); /* Puxa o vermelho fechado do :root */
+  background: var(--sidebar-badge-notif);
   color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
@@ -250,7 +250,7 @@ main { max-width: none; padding: 0; margin: 0; }
 
 /* Badge do To Do em verde, para diferenciar das notificações (vermelho) */
 #todoBadge {
-  background: var(--primary-hover); /* Verde fechado do projeto (#52796f) */
+  background: var(--sidebar-badge-todo); /* verde de sucesso — diferencia das notificações (vermelho) */
 }
 
 .main-content {
@@ -268,7 +268,7 @@ main { max-width: none; padding: 0; margin: 0; }
   z-index: 200;
   width: 40px;
   height: 40px;
-  background: var(--primary);
+  background: var(--sidebar-bg);
   color: #fff;
   border: none;
   border-radius: var(--radius, 6px);
@@ -304,7 +304,7 @@ main { max-width: none; padding: 0; margin: 0; }
 /* ==================== NAV SECTION LABELS ==================== */
 
 .nav-section-block {
-  background: rgba(132, 169, 140, 0.10);
+  background: var(--sidebar-section-bg);
   border-radius: 8px;
   padding: 6px 0 4px 0;
   margin-bottom: 4px;
@@ -319,7 +319,7 @@ main { max-width: none; padding: 0; margin: 0; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.09em;
-  color: var(--accent);
+  color: var(--sidebar-accent);
   padding: 4px 12px 2px 12px;
   pointer-events: none;
   user-select: none;
