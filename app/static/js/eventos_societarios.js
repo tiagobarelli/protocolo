@@ -25,6 +25,7 @@
   var E_REV_ENTRADAS = 'field_7538';
   var E_REV_SAIDAS   = 'field_7540';
   var E_TEM_ANEXO    = 'field_7548';
+  var E_EXCLUIDO     = 'field_7549';
   var EVENTOS_API    = '/api/eventos-arquivos';
 
   // Campos da tabela 785 (participacao_societaria)
@@ -56,6 +57,8 @@
   // Tabela de clientes (sócios PF/PJ)
   var TABLE_CLIENTES = 754;
   var C_NOME = 'field_7237';
+  var C_CPF  = 'field_7238';
+  var C_CNPJ = 'field_7239';
 
   // Campos da tabela 783 (tipos_eventos_societarios)
   var T_NOME   = 'field_7519';
@@ -224,53 +227,107 @@
       });
   }
 
+  // Ordena: percentual desc; empate → sócio-administrador primeiro; depois alfabética
+  function compararSocios(a, b) {
+    if (a.perc !== b.perc) return b.perc - a.perc;
+    var ra = (a.qualif === 'Sócio-administrador') ? 0 : 1;
+    var rb = (b.qualif === 'Sócio-administrador') ? 0 : 1;
+    if (ra !== rb) return ra - rb;
+    return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+  }
+
+  // Busca CPF/CNPJ do sócio na 754 (degrada para '' em qualquer falha)
+  function buscarDocumentoSocio(socioId) {
+    return fetch(API_BASE + '/database/rows/table/' + TABLE_CLIENTES + '/' + socioId + '/?user_field_names=false',
+      { headers: apiHeaders() })
+      .then(function(r) { if (!r.ok) throw new Error('x'); return r.json(); })
+      .then(function(row) {
+        var cpf = (row[C_CPF] || '').toString().trim();
+        var cnpj = (row[C_CNPJ] || '').toString().trim();
+        if (cpf) return 'CPF ' + cpf;
+        if (cnpj) return 'CNPJ ' + cnpj;
+        return '';
+      })
+      .catch(function() { return ''; });
+  }
+
   function renderQuadro(rows) {
     var lista = el('qsLista');
     var total = el('qsTotal');
     if (!lista) return;
 
-    // Mantém apenas as participações ativas (filtro no cliente, robusto)
     var ativos = [];
     for (var i = 0; i < rows.length; i++) {
       if (valorSelect(rows[i][P_STATUS]) === 'Ativo') ativos.push(rows[i]);
     }
-
     if (ativos.length === 0) {
       lista.innerHTML = '<div class="qs-empty">Nenhum sócio ativo registrado.</div>';
       if (total) total.innerHTML = '';
       return;
     }
 
-    lista.innerHTML = '';
+    var socios = [];
     var soma = 0;
     for (var j = 0; j < ativos.length; j++) {
       var row = ativos[j];
-      var nome = primeiroVinculo(row[P_SOCIO]) || '(sócio sem nome)';
-      var qualif = valorSelect(row[P_QUALIFICACAO]);
+      var socio = (row[P_SOCIO] && row[P_SOCIO][0]) ? row[P_SOCIO][0] : null;
       var perc = parseFloat(row[P_PERCENTUAL]) || 0;
       soma += perc;
+      socios.push({
+        socioId: socio ? socio.id : null,
+        nome: (socio && socio.value) ? socio.value : '(sócio sem nome)',
+        qualif: valorSelect(row[P_QUALIFICACAO]) || '',
+        perc: perc
+      });
+    }
+    socios.sort(compararSocios);
+
+    // documentos (CPF/CNPJ) por sócio, em paralelo
+    var ids = [], vistos = {};
+    for (j = 0; j < socios.length; j++) {
+      var sid = socios[j].socioId;
+      if (sid != null && !vistos[sid]) { vistos[sid] = true; ids.push(sid); }
+    }
+    var promessas = [];
+    for (j = 0; j < ids.length; j++) promessas.push(buscarDocumentoSocio(ids[j]));
+
+    Promise.all(promessas).then(function(docs) {
+      var docMap = {};
+      for (var k = 0; k < ids.length; k++) docMap[ids[k]] = docs[k];
+      desenharQuadro(socios, docMap, soma);
+    });
+  }
+
+  function desenharQuadro(socios, docMap, soma) {
+    var lista = el('qsLista');
+    var total = el('qsTotal');
+    if (!lista) return;
+    lista.innerHTML = '';
+    for (var j = 0; j < socios.length; j++) {
+      var s = socios[j];
+      var doc = (s.socioId != null && docMap[s.socioId]) ? docMap[s.socioId] : '';
 
       var item = document.createElement('div');
       item.className = 'qs-item';
 
       var info = document.createElement('div');
       info.className = 'qs-item-info';
-      var htmlInfo = '<span class="qs-item-nome">' + escapar(nome) + '</span>';
-      if (qualif) htmlInfo += '<span class="qs-item-qualif">' + escapar(qualif) + '</span>';
+      var htmlInfo = '<span class="qs-item-nome">' + escapar(s.nome) + '</span>';
+      var meta = [];
+      if (s.qualif) meta.push(escapar(s.qualif));
+      if (doc) meta.push(escapar(doc));
+      if (meta.length) htmlInfo += '<span class="qs-item-qualif">' + meta.join(' · ') + '</span>';
       info.innerHTML = htmlInfo;
 
       var pct = document.createElement('div');
       pct.className = 'qs-item-perc';
-      pct.textContent = formatarPercentual(perc);
+      pct.textContent = formatarPercentual(s.perc);
 
       item.appendChild(info);
       item.appendChild(pct);
       lista.appendChild(item);
     }
-
-    if (total) {
-      total.innerHTML = 'Total: <strong>' + formatarPercentual(soma) + '</strong>';
-    }
+    if (total) total.innerHTML = 'Total: <strong>' + formatarPercentual(soma) + '</strong>';
   }
 
   // ── Linha do Tempo ────────────────────────────────────
@@ -384,14 +441,23 @@
     var timeline = el('evtTimeline');
     if (!timeline) return;
     eventosPorId = {};
-    if (!rows || rows.length === 0) {
+
+    // Filtra os eventos logicamente excluídos (robusto, no cliente)
+    var visiveis = [];
+    if (rows) {
+      for (var v = 0; v < rows.length; v++) {
+        if (rows[v][E_EXCLUIDO] === true) continue;
+        visiveis.push(rows[v]);
+      }
+    }
+    if (visiveis.length === 0) {
       timeline.innerHTML = '<div class="evt-empty">Nenhum evento registrado.</div>';
       return;
     }
 
     timeline.innerHTML = '';
-    for (var i = 0; i < rows.length; i++) {
-      var row = rows[i];
+    for (var i = 0; i < visiveis.length; i++) {
+      var row = visiveis[i];
       eventosPorId[row.id] = row;
       var data = formatarData(row[E_DATA_ATO]);
       var tipo = primeiroVinculo(row[E_TIPO]);
@@ -400,50 +466,59 @@
 
       var item = document.createElement('div');
       item.className = 'evt-item';
+      item.setAttribute('data-evento-id', row.id);
+      item.setAttribute('data-tipo', tipo || '');
+      item.setAttribute('data-data', row[E_DATA_ATO] || '');
 
-      var html = '<div class="evt-item-cab">';
-      html += '<span class="evt-item-data">' + escapar(data || '—') + '</span>';
-      if (tipo) html += '<span class="evt-item-tipo">' + escapar(tipo) + '</span>';
-      if (perfilPodeEditarEvento()) {
-        html += '<button type="button" class="evt-evento-editar" data-evento-id="' + row.id +
-                '" title="Editar evento"><i class="ph ph-pencil-simple"></i></button>';
-      }
-      html += '</div>';
+      var corpo = '<div class="evt-item-cab">';
+      corpo += '<span class="evt-item-data">' + escapar(data || '—') + '</span>';
+      if (tipo) corpo += '<span class="evt-item-tipo">' + escapar(tipo) + '</span>';
+      corpo += '</div>';
       if (descricao && descricao.trim() !== '') {
-        html += '<div class="evt-item-desc">' + renderMarkdown(descricao) + '</div>';
+        corpo += '<div class="evt-item-desc">' + renderMarkdown(descricao) + '</div>';
       }
-      html += htmlMovimentos(movs);
-      html += htmlAnexo(row);
+      corpo += htmlMovimentos(movs);
+      corpo += htmlAcoes(row);
 
-      item.innerHTML = html;
+      item.innerHTML = '<div class="evt-item-corpo">' + corpo + '</div>' + htmlVerAnexo(row);
       timeline.appendChild(item);
     }
   }
 
   // ── Anexos de evento (Fase C) ─────────────────────────
-  function htmlAnexo(row) {
-    var temAnexo   = !!row[E_TEM_ANEXO];
-    var temCnpj    = cnpjPj().length === 14;
+  // Linha de ações (ícone só + tooltip): editar, substituir, excluir
+  function htmlAcoes(row) {
+    var temAnexo = !!row[E_TEM_ANEXO];
+    var temCnpj = cnpjPj().length === 14;
+    var tipoId = (row[E_TIPO] && row[E_TIPO][0]) ? row[E_TIPO][0].id : null;
+    // Documental = tipo conhecido E que NÃO altera o quadro. Tipo desconhecido → fail-closed (não exclui).
+    var ehDocumental = !!(tipoId && tiposMap[tipoId] && tiposMap[tipoId].alteraQuadro === false);
     var partes = [];
-    if (temAnexo) {
-      partes.push('<button type="button" class="evt-anexo-btn evt-anexo-ver"><i class="ph ph-eye"></i> Ver anexo</button>');
+
+    if (perfilPodeEditarEvento()) {
+      partes.push('<button type="button" class="evt-acao-btn evt-evento-editar" title="Editar evento"><i class="ph ph-pencil-simple"></i></button>');
     }
     if (perfilPodeAnexar() && temCnpj) {
-      partes.push('<button type="button" class="evt-anexo-btn evt-anexo-enviar"><i class="ph ph-paperclip"></i> ' +
-                  (temAnexo ? 'Substituir' : 'Anexar') + '</button>');
+      partes.push('<button type="button" class="evt-acao-btn evt-anexo-enviar" title="' +
+                  (temAnexo ? 'Substituir anexo' : 'Anexar arquivo') + '"><i class="ph ph-paperclip"></i></button>');
     }
     if (temAnexo && perfilPodeExcluir() && temCnpj) {
-      partes.push('<button type="button" class="evt-anexo-btn evt-anexo-excluir"><i class="ph ph-trash"></i> Excluir</button>');
+      partes.push('<button type="button" class="evt-acao-btn evt-anexo-excluir" title="Excluir anexo"><i class="ph ph-trash"></i></button>');
+    }
+    if (perfilPodeExcluir() && ehDocumental) {
+      partes.push('<button type="button" class="evt-acao-btn evt-evento-excluir" title="Excluir evento"><i class="ph ph-x-circle"></i></button>');
     }
     if (!temCnpj && perfilPodeAnexar()) {
       partes.push('<span class="evt-anexo-aviso">Cadastre o CNPJ da PJ para anexar.</span>');
     }
     if (!partes.length) return '';
-    var data = row[E_DATA_ATO] || '';
-    var tipo = primeiroVinculo(row[E_TIPO]);
-    return '<div class="evt-item-anexo" data-evento-id="' + row.id +
-           '" data-tipo="' + escapar(tipo) + '" data-data="' + escapar(data) + '">' +
-           partes.join(' ') + '</div>';
+    return '<div class="evt-item-acoes">' + partes.join('') + '</div>';
+  }
+
+  // Botão "Ver anexo" (ícone só) na extremidade direita do ato
+  function htmlVerAnexo(row) {
+    if (!row[E_TEM_ANEXO]) return '';
+    return '<button type="button" class="evt-ver-lateral evt-anexo-ver" title="Ver anexo"><i class="ph ph-eye"></i></button>';
   }
 
   function garantirInputAnexo() {
@@ -458,14 +533,16 @@
 
   function onTimelineClick(e) {
     var alvo = e.target;
-    var btnEditar = acharAncestral(alvo, 'evt-evento-editar');
-    if (btnEditar) { abrirFormEventoEdicao(btnEditar.getAttribute('data-evento-id')); return; }
-    var box = acharAncestral(alvo, 'evt-item-anexo');
-    if (!box) return;
-    var eventoId = box.getAttribute('data-evento-id');
-    if (acharAncestral(alvo, 'evt-anexo-ver'))          verAnexo(eventoId);
-    else if (acharAncestral(alvo, 'evt-anexo-enviar'))  enviarAnexo(eventoId, box.getAttribute('data-tipo'), box.getAttribute('data-data'));
-    else if (acharAncestral(alvo, 'evt-anexo-excluir')) excluirAnexo(eventoId);
+    var item = acharAncestral(alvo, 'evt-item');
+    if (!item) return;
+    var eventoId = item.getAttribute('data-evento-id');
+    var tipo = item.getAttribute('data-tipo');
+    var data = item.getAttribute('data-data');
+    if (acharAncestral(alvo, 'evt-evento-editar'))  { abrirFormEventoEdicao(eventoId); return; }
+    if (acharAncestral(alvo, 'evt-anexo-ver'))      { verAnexo(eventoId); return; }
+    if (acharAncestral(alvo, 'evt-anexo-enviar'))   { enviarAnexo(eventoId, tipo, data); return; }
+    if (acharAncestral(alvo, 'evt-anexo-excluir'))  { excluirAnexo(eventoId); return; }
+    if (acharAncestral(alvo, 'evt-evento-excluir')) { excluirEvento(eventoId); return; }
   }
 
   function verAnexo(eventoId) {
@@ -555,6 +632,30 @@
         overlayOff();
         console.error(e);
         if (window.mostrarToast) mostrarToast(e.message || 'Erro ao excluir.', 'error');
+      });
+  }
+
+  // Exclusão lógica de evento documental (só master): marca o booleano excluido.
+  function excluirEvento(eventoId) {
+    if (!confirm('Excluir este evento? Ele deixará de aparecer na linha do tempo. O registro e o eventual anexo são mantidos e podem ser recuperados.')) return;
+
+    var body = {};
+    body[E_EXCLUIDO] = true;
+    body[E_ATUALIZADO] = new Date().toISOString();
+
+    overlayOn();
+    fetch(API_BASE + '/database/rows/table/' + TABLE_EVENTOS + '/' + eventoId + '/?user_field_names=false',
+      { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(body) })
+      .then(function(r) { if (!r.ok) return r.json().then(function(e){ throw new Error(e.detail || 'Erro ao excluir o evento.'); }); return r.json(); })
+      .then(function() {
+        overlayOff();
+        carregarEventos();
+        if (window.mostrarToast) mostrarToast('Evento excluído.', 'success');
+      })
+      .catch(function(e) {
+        overlayOff();
+        console.error(e);
+        if (window.mostrarToast) mostrarToast(e.message || 'Erro ao excluir o evento.', 'error');
       });
   }
 
@@ -1451,7 +1552,12 @@
     }
 
     carregarQuadro(pjId);
-    carregarTimeline(pjId);
+    if (!tiposCarregados) {
+      carregarTipos().then(function() { carregarTimeline(pjId); })
+                     .catch(function() { carregarTimeline(pjId); });
+    } else {
+      carregarTimeline(pjId);
+    }
   }
 
   // ── Inicialização ─────────────────────────────────────

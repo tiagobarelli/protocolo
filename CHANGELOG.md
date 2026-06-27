@@ -2,6 +2,23 @@
 
 Controle de correções e melhorias do sistema
 
+## [1.5.2] 2026-06-28
+
+### Adicionado
+
+- **Módulo de Eventos Societários (Pessoa Jurídica):** a aba **Eventos Societários** da tela de Pessoa Jurídica, antes reservada, passou a ser um módulo completo para acompanhar a vida societária da empresa — quem são os sócios, suas cotas e qualificações, e o histórico de atos (contrato social, alterações, certidões etc.). A aba fica disponível depois que a pessoa jurídica está salva.
+- **Quadro Societário Atual:** painel que lista os sócios ativos da empresa, cada um com a sua participação (percentual), a qualificação (Sócio, Sócio-administrador ou Administrador não sócio) e o documento (CPF/CNPJ), além do **total das cotas**. Os sócios são exibidos da maior para a menor participação; em caso de empate, o sócio-administrador aparece primeiro e, persistindo o empate, segue a ordem alfabética. Funciona também quando o sócio é outra pessoa jurídica (aparece com o CNPJ).
+- **Linha do Tempo de eventos:** histórico cronológico (do mais recente para o mais antigo) de todos os atos da empresa, com data, tipo, descrição formatada e, nos atos que mexem na composição societária, as **movimentações de sócios** classificadas em entradas, saídas e alterações.
+- **Registro de eventos documentais:** é possível registrar atos que **não** alteram o quadro societário (comprovante de CNPJ, certidão, ficha da junta comercial, procuração outorgada etc.), informando tipo, data do ato e uma descrição com formatação (negrito, itálico e listas).
+- **Registro de atos que alteram o quadro:** ao registrar um **Contrato Social Inicial** ou uma **Alteração de Contrato Social**, abre-se um editor do quadro societário onde se define o resultado — sócios, cotas e qualificações, com busca de sócios já cadastrados. Ao salvar, o sistema calcula automaticamente as entradas, saídas e alterações de cota e atualiza o Quadro Atual. O salvamento só é liberado quando a soma das cotas fecha **100%**.
+- **Anexo por evento:** cada ato pode receber um arquivo (PDF ou imagem), guardado em pastas legíveis no servidor, organizadas pelo CNPJ da empresa e pelo evento. Ver e baixar o anexo é liberado a todos os usuários; **anexar** é restrito aos perfis master e administrador, e **excluir o anexo**, somente ao master. Cada evento mantém um único arquivo — um novo envio substitui o anterior.
+- **Edição de eventos (perfil master):** o master pode corrigir o **tipo, a data e a descrição** de qualquer evento. No ato **mais recente** que altera o quadro, é possível também reeditar o **efeito no quadro societário**, refazendo as movimentações de sócios; nos atos anteriores que alteram o quadro, o efeito permanece travado para preservar o histórico.
+- **Exclusão de eventos documentais (perfil master):** o master pode excluir um evento documental, que deixa de aparecer na linha do tempo. A exclusão é **reversível** — o registro e o eventual anexo são preservados e podem ser recuperados.
+
+### Melhorias
+
+- **Limite de anexos ampliado:** o tamanho máximo de cada arquivo enviado ao sistema (anexos de eventos societários, de ofícios e de protocolos) passou de 20 MB para **100 MB**, acomodando atos e documentos digitalizados maiores.
+
 ## [1.4.0] 2026-06-25
 
 ### Adicionado

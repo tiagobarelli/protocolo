@@ -618,7 +618,14 @@ textarea { resize: vertical; min-height: 80px; }
 .qs-total strong { color: var(--text-dark); }
 
 .evt-timeline { display: flex; flex-direction: column; gap: 14px; }
-.evt-item { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; }
+.evt-item {
+  border-left: 3px solid var(--accent);
+  padding: 4px 8px 4px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.evt-item-corpo { flex: 1; min-width: 0; }
 .evt-item-cab { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .evt-item-data { font-weight: 700; color: var(--text-dark); }
 .evt-item-tipo {
@@ -650,18 +657,34 @@ textarea { resize: vertical; min-height: 80px; }
 .qs-editor-total.ok { color: var(--success); }
 .qs-editor-total.erro { color: var(--danger); }
 
-.evt-item-anexo { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.evt-anexo-btn {
-  font-size: 0.8rem; padding: 4px 10px; border: 1px solid var(--border);
-  border-radius: 999px; background: var(--surface); color: var(--text-muted);
-  cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
-}
-.evt-anexo-btn:hover { color: var(--text-dark); background: var(--accent-soft); }
-.evt-anexo-excluir { color: var(--danger); }
 .evt-anexo-aviso { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
 
-.evt-evento-editar {
-  margin-left: auto; background: transparent; border: none; color: var(--text-muted);
-  cursor: pointer; font-size: 1rem; padding: 2px 6px; border-radius: 6px; line-height: 1;
+.evt-item-acoes {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
 }
-.evt-evento-editar:hover { color: var(--accent); background: var(--accent-soft); }
+.evt-acao-btn {
+  width: 30px; height: 30px; padding: 0;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-muted);
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+.evt-acao-btn:hover { color: var(--text-dark); background: var(--accent-soft); }
+.evt-acao-btn.evt-evento-editar:hover { color: var(--accent); }
+.evt-acao-btn.evt-anexo-excluir { color: var(--danger); }
+.evt-acao-btn.evt-evento-excluir { color: var(--danger); }
+.evt-acao-btn.evt-evento-excluir:hover { color: var(--danger); background: var(--accent-soft); }
+
+.evt-ver-lateral {
+  flex-shrink: 0; align-self: center;
+  width: 34px; height: 34px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-muted);
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.evt-ver-lateral:hover { color: var(--accent); background: var(--accent-soft); }
