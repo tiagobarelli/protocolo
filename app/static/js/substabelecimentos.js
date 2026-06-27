@@ -88,6 +88,15 @@ function esconderMsg(id) {
   el.innerHTML = '';
 }
 
+function esconderCamposBusca() {
+  var card = document.getElementById('searchCard');
+  if (!card) return;
+  var secoes = card.querySelectorAll('.form-section');
+  for (var i = 0; i < secoes.length; i++) {
+    secoes[i].style.display = 'none';
+  }
+}
+
 function mostrarOverlay() {
   document.getElementById('overlay').classList.add('active');
 }
@@ -290,6 +299,7 @@ function executarBusca(livro, pagina) {
       }
       document.getElementById('formCard').style.display = 'block';
       document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
+      esconderCamposBusca();
     })
     .catch(function(e) {
       mostrarMsg('searchMsg', 'error', e.message || 'Erro ao buscar registro.');
@@ -887,18 +897,6 @@ function construirPayloadSubstabelecimento() {
   payload[CONFIG.fields.clientes] = clienteIds;
 
   return payload;
-}
-
-// ═══════════════════════════════════════════════════════
-// LIMPAR FORMULARIO
-// ═══════════════════════════════════════════════════════
-function limparFormulario() {
-  resetarEstadoFormulario();
-  document.getElementById('formCard').style.display = 'none';
-  document.getElementById('buscaLivro').value = '';
-  document.getElementById('buscaPagina').value = '';
-  esconderMsg('searchMsg');
-  document.getElementById('buscaLivro').focus();
 }
 
 // ═══════════════════════════════════════════════════════

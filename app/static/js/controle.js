@@ -180,6 +180,15 @@ function esconderMsg(id) {
   el.innerHTML = '';
 }
 
+function esconderCamposBusca() {
+  var card = document.getElementById('searchCard');
+  if (!card) return;
+  var secoes = card.querySelectorAll('.form-section');
+  for (var i = 0; i < secoes.length; i++) {
+    secoes[i].style.display = 'none';
+  }
+}
+
 function mostrarOverlay() {
   document.getElementById('overlay').classList.add('active');
 }
@@ -429,6 +438,7 @@ function executarBusca(livro, pagina) {
         mostrarMsg('formMsg', 'info', 'Novo registro — L_' + livro + '_P_' + pagina);
       }
       document.getElementById('formCard').style.display = 'block';
+      esconderCamposBusca();
     })
     .catch(function(e) {
       mostrarMsg('searchMsg', 'error', e.message || 'Erro ao buscar registro.');
@@ -1346,18 +1356,6 @@ function construirPayloadControle(imoveisIds) {
   // payload[CONFIG.fields.imoveis] = imoveisIds || [];
 
   return payload;
-}
-
-// ═══════════════════════════════════════════════════════
-// LIMPAR FORMULARIO
-// ═══════════════════════════════════════════════════════
-function limparFormulario() {
-  resetarEstadoFormulario();
-  document.getElementById('formCard').style.display = 'none';
-  document.getElementById('buscaLivro').value = '';
-  document.getElementById('buscaPagina').value = '';
-  esconderMsg('searchMsg');
-  document.getElementById('buscaLivro').focus();
 }
 
 // ═══════════════════════════════════════════════════════

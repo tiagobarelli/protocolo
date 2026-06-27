@@ -91,6 +91,15 @@ function esconderMsg(id) {
   el.innerHTML = '';
 }
 
+function esconderCamposBusca() {
+  var card = document.getElementById('searchCard');
+  if (!card) return;
+  var secoes = card.querySelectorAll('.form-section');
+  for (var i = 0; i < secoes.length; i++) {
+    secoes[i].style.display = 'none';
+  }
+}
+
 function mostrarOverlay() {
   document.getElementById('overlay').classList.add('active');
 }
@@ -195,6 +204,7 @@ function buscarPorProtocolo() {
 
           document.getElementById('formCard').style.display = 'block';
           document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
+          esconderCamposBusca();
         });
     })
     .catch(function(e) {
@@ -859,17 +869,6 @@ function construirPayloadCertidao() {
   payload[CONFIG.fields.linkControle] = escriturasIds;
 
   return payload;
-}
-
-// ═══════════════════════════════════════════════════════
-// LIMPAR FORMULARIO
-// ═══════════════════════════════════════════════════════
-function limparFormulario() {
-  resetarEstadoFormulario();
-  document.getElementById('formCard').style.display = 'none';
-  document.getElementById('buscaProtocolo').value = '';
-  esconderMsg('searchMsg');
-  document.getElementById('buscaProtocolo').focus();
 }
 
 // ═══════════════════════════════════════════════════════

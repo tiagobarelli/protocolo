@@ -76,6 +76,15 @@ function esconderMsg(id) {
   el.innerHTML = '';
 }
 
+function esconderCamposBusca() {
+  var card = document.getElementById('searchCard');
+  if (!card) return;
+  var secoes = card.querySelectorAll('.form-section');
+  for (var i = 0; i < secoes.length; i++) {
+    secoes[i].style.display = 'none';
+  }
+}
+
 function mostrarOverlay() {
   document.getElementById('overlay').classList.add('active');
 }
@@ -347,6 +356,7 @@ function verificarRegistroExistente(row) {
     coafRowId = null;
     limparFormulario();
     document.getElementById('formCard').style.display = '';
+    esconderCamposBusca();
     atualizarCamposCondicionais();
     esconderOverlay();
     return;
@@ -366,6 +376,7 @@ function verificarRegistroExistente(row) {
       preencherFormulario(coafRow);
       atualizarInfoComCoaf(coafRow);
       document.getElementById('formCard').style.display = '';
+      esconderCamposBusca();
       esconderOverlay();
     })
     .catch(function(e) {
