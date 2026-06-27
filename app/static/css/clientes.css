@@ -473,10 +473,6 @@ textarea { resize: vertical; min-height: 80px; }
   transition: border-color 0.3s ease;
 }
 
-.alert-card.alerta-ativo {
-  border: 2px solid #dc2626;
-}
-
 .alerta-texto {
   font-size: 0.9rem;
   color: var(--text-main);
@@ -584,6 +580,20 @@ textarea { resize: vertical; min-height: 80px; }
 .cliente-resumo .resumo-cpf {
   font-size: 0.9rem;
   color: var(--text-muted);
+}
+
+/* ── Faixa de resumo: estado de alerta cadastrado (vermelho suave) ── */
+.cliente-resumo.tem-alerta {
+  background: #fef2f2;                      /* mesmo soft-red das mensagens de erro do sistema */
+  border-color: var(--danger, #b91c1c);    /* tinge também a barra lateral de 3px em vermelho */
+}
+.cliente-resumo .resumo-alerta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--danger, #b91c1c);
 }
 
 /* ── Acabamento responsivo (Fase 3) ── */

@@ -677,13 +677,10 @@ function novoCliente() {
 // FORMULÁRIO — visibilidade e preenchimento
 // ═══════════════════════════════════════════════════════
 function mostrarFormulario() {
+  document.getElementById('buscaCard').style.display = 'none';
   document.getElementById('cadastroWrap').style.display = 'block';
   var ativo = document.querySelector('.tab-btn.active');
   atualizarVisibilidadeBarraAcoes(ativo ? ativo.getAttribute('data-tab') : 'cliente');
-}
-
-function esconderFormulario() {
-  document.getElementById('cadastroWrap').style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -865,6 +862,21 @@ function atualizarResumoCliente() {
   box.style.display = 'flex';
 }
 
+function aplicarDestaqueAlerta(temAlerta) {
+  var box = document.getElementById('resumoCliente');
+  var aviso = document.getElementById('resumoAlerta');
+  if (box) {
+    if (temAlerta) {
+      box.classList.add('tem-alerta');
+    } else {
+      box.classList.remove('tem-alerta');
+    }
+  }
+  if (aviso) {
+    aviso.style.display = temAlerta ? '' : 'none';
+  }
+}
+
 function preencherFormulario(cli) {
   document.getElementById('nomeInput').value      = cli[FIELDS.nome]      || '';
   document.getElementById('cpfInput').value       = cli[FIELDS.cpf]       || '';
@@ -965,11 +977,7 @@ function preencherFormulario(cli) {
     alertaCard.style.display = 'none';
   }
 
-  if (alertaVal.trim()) {
-    alertaCard.classList.add('alerta-ativo');
-  } else {
-    alertaCard.classList.remove('alerta-ativo');
-  }
+  aplicarDestaqueAlerta(!!alertaVal.trim());
 
   // Capturar snapshot para detecção de alterações
   snapshotCliente = capturarSnapshot(cli);
@@ -1029,27 +1037,12 @@ function limparCamposFormulario() {
   document.getElementById('alertaTextarea').value = '';
   document.getElementById('alertaReadonly').textContent = '';
   document.getElementById('alertaCard').style.display = 'none';
-  document.getElementById('alertaCard').classList.remove('alerta-ativo');
+  aplicarDestaqueAlerta(false);
   snapshotCliente = null;
   document.getElementById('logContent').textContent = '';
   document.getElementById('logCard').style.display = 'none';
   esconderMsg('buscaMsg');
   atualizarResumoCliente();
-}
-
-function limparFormulario() {
-  clienteAtual = null;
-  modoNovo = false;
-  clienteCarregadoPorBusca = false;
-  conjugeId = null;
-  limparCamposFormulario();
-  document.getElementById('buscaInput').value = '';
-  esconderMsg('formMsg');
-  esconderFormulario();
-  fecharDrawer();
-  cacheDocsPaperless = {};
-  atualizarVisibilidadeDocumentos();
-  habilitarAbaEnderecos(false);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2102,9 +2095,16 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('nomeInput').addEventListener('input', atualizarResumoCliente);
   document.getElementById('cpfInput').addEventListener('input', atualizarResumoCliente);
 
+  // Destaque de alerta na faixa de resumo — acende/apaga ao vivo enquanto edita
+  var alertaTextareaEl = document.getElementById('alertaTextarea');
+  if (alertaTextareaEl) {
+    alertaTextareaEl.addEventListener('input', function() {
+      aplicarDestaqueAlerta(!!alertaTextareaEl.value.trim());
+    });
+  }
+
   document.getElementById('btnNovoCliente').addEventListener('click', novoCliente);
   document.getElementById('btnSalvar').addEventListener('click', salvarCliente);
-  document.getElementById('btnLimpar').addEventListener('click', limparFormulario);
   document.getElementById('cpfInput').addEventListener('blur', function() {
     validarDuplicataOnBlur('cpf');
   });

@@ -462,13 +462,10 @@ function novaPessoaJuridica() {
 // FORMULÁRIO — visibilidade e preenchimento
 // ═══════════════════════════════════════════════════════
 function mostrarFormulario() {
+  document.getElementById('buscaCard').style.display = 'none';
   document.getElementById('cadastroWrap').style.display = 'block';
   var ativo = document.querySelector('.tab-btn.active');
   atualizarVisibilidadeBarraAcoes(ativo ? ativo.getAttribute('data-tab') : 'denominacao');
-}
-
-function esconderFormulario() {
-  document.getElementById('cadastroWrap').style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -568,6 +565,21 @@ function atualizarResumoCliente() {
   box.style.display = 'flex';
 }
 
+function aplicarDestaqueAlerta(temAlerta) {
+  var box = document.getElementById('resumoCliente');
+  var aviso = document.getElementById('resumoAlerta');
+  if (box) {
+    if (temAlerta) {
+      box.classList.add('tem-alerta');
+    } else {
+      box.classList.remove('tem-alerta');
+    }
+  }
+  if (aviso) {
+    aviso.style.display = temAlerta ? '' : 'none';
+  }
+}
+
 function preencherFormulario(cli) {
   document.getElementById('denominacaoInput').value = cli[FIELDS.nome] || '';
   document.getElementById('cnpjInput').value      = cli[FIELDS.cnpj] || '';
@@ -621,11 +633,7 @@ function atualizarVisibilidadeAlerta(cli) {
     alertaCard.style.display = 'none';
   }
 
-  if (alertaVal.trim()) {
-    alertaCard.classList.add('alerta-ativo');
-  } else {
-    alertaCard.classList.remove('alerta-ativo');
-  }
+  aplicarDestaqueAlerta(!!alertaVal.trim());
 }
 
 function limparCamposFormulario() {
@@ -640,23 +648,12 @@ function limparCamposFormulario() {
   document.getElementById('alertaTextarea').value = '';
   document.getElementById('alertaReadonly').textContent = '';
   document.getElementById('alertaCard').style.display = 'none';
-  document.getElementById('alertaCard').classList.remove('alerta-ativo');
+  aplicarDestaqueAlerta(false);
   snapshotCliente = null;
   document.getElementById('logContent').textContent = '';
   document.getElementById('logCard').style.display = 'none';
   esconderMsg('buscaMsg');
   atualizarResumoCliente();
-}
-
-function limparFormulario() {
-  clienteAtual = null;
-  modoNovo = false;
-  clienteCarregadoPorBusca = false;
-  limparCamposFormulario();
-  document.getElementById('buscaInput').value = '';
-  esconderMsg('formMsg');
-  esconderFormulario();
-  habilitarAbaEnderecos(false);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -892,9 +889,16 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('denominacaoInput').addEventListener('input', atualizarResumoCliente);
   document.getElementById('cnpjInput').addEventListener('input', atualizarResumoCliente);
 
+  // Destaque de alerta na faixa de resumo — acende/apaga ao vivo enquanto edita
+  var alertaTextareaEl = document.getElementById('alertaTextarea');
+  if (alertaTextareaEl) {
+    alertaTextareaEl.addEventListener('input', function() {
+      aplicarDestaqueAlerta(!!alertaTextareaEl.value.trim());
+    });
+  }
+
   document.getElementById('btnNovoCliente').addEventListener('click', novaPessoaJuridica);
   document.getElementById('btnSalvar').addEventListener('click', salvar);
-  document.getElementById('btnLimpar').addEventListener('click', limparFormulario);
 
   document.getElementById('cnpjInput').addEventListener('blur', function() {
     validarDuplicataOnBlur();

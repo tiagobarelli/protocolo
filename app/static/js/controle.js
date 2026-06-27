@@ -378,30 +378,6 @@ function padPagina(valor) {
   return valor;
 }
 
-function buscarPorMascara() {
-  var input = document.getElementById('buscaMascara');
-  var val = input.value.trim();
-  esconderMsg('searchMsg');
-
-  var regex = /^L_(\d+)_P_(\d{1,3})$/i;
-  var match = val.match(regex);
-  if (!match) {
-    mostrarMsg('searchMsg', 'error', 'Formato inválido. Use L_XXX_P_YYY (ex: L_150_P_025).');
-    return;
-  }
-
-  var livro = match[1];
-  var pagina = match[2];
-
-  if (parseInt(pagina, 10) > 400) {
-    mostrarMsg('searchMsg', 'error', 'A página não pode exceder 400.');
-    return;
-  }
-
-  pagina = padPagina(pagina);
-  executarBusca(livro, pagina);
-}
-
 function buscarPorLivroPagina() {
   var livro = document.getElementById('buscaLivro').value.trim();
   var pagina = document.getElementById('buscaPagina').value.trim();
@@ -1376,11 +1352,10 @@ function construirPayloadControle(imoveisIds) {
 function limparFormulario() {
   resetarEstadoFormulario();
   document.getElementById('formCard').style.display = 'none';
-  document.getElementById('buscaMascara').value = '';
   document.getElementById('buscaLivro').value = '';
   document.getElementById('buscaPagina').value = '';
   esconderMsg('searchMsg');
-  document.getElementById('buscaMascara').focus();
+  document.getElementById('buscaLivro').focus();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1549,9 +1524,6 @@ document.addEventListener('DOMContentLoaded', function() {
   configurarAutocompleteClientes();
 
   // Busca por Enter
-  document.getElementById('buscaMascara').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); buscarPorMascara(); }
-  });
   document.getElementById('buscaLivro').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); buscarPorLivroPagina(); }
   });
@@ -1560,7 +1532,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Botoes de busca
-  document.getElementById('btnBuscarMascara').addEventListener('click', buscarPorMascara);
   document.getElementById('btnBuscarLP').addEventListener('click', buscarPorLivroPagina);
 
   // Fechar autocompletes em click externo
@@ -1608,6 +1579,6 @@ document.addEventListener('DOMContentLoaded', function() {
     executarBusca(livroParam, paginaParam);
   } else {
     // Foco inicial
-    document.getElementById('buscaMascara').focus();
+    document.getElementById('buscaLivro').focus();
   }
 });

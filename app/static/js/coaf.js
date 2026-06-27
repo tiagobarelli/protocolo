@@ -195,29 +195,6 @@ function toggleNavGroup(btn) {
 // ═══════════════════════════════════════════════════════
 // BUSCA
 // ═══════════════════════════════════════════════════════
-function buscarPorMascara() {
-  var input = document.getElementById('buscaMascara');
-  var val = input.value.trim();
-  esconderMsg('searchMsg');
-
-  var regex = /^L_(\d+)_P_(\d{1,3})$/i;
-  var match = val.match(regex);
-  if (!match) {
-    mostrarMsg('searchMsg', 'error', 'Formato inválido. Use L_XXX_P_YYY (ex: L_150_P_025).');
-    return;
-  }
-
-  var livro = match[1];
-  var pagina = match[2];
-
-  if (parseInt(pagina, 10) > 400) {
-    mostrarMsg('searchMsg', 'error', 'A página não pode exceder 400.');
-    return;
-  }
-
-  pagina = padPagina(pagina);
-  executarBusca(livro, pagina);
-}
 
 function buscarPorLivroPagina() {
   var livro = document.getElementById('buscaLivro').value.trim();
@@ -636,7 +613,6 @@ function finalizarSalvamento() {
   // Lock campos de busca
   document.getElementById('buscaLivro').readOnly = true;
   document.getElementById('buscaPagina').readOnly = true;
-  document.getElementById('buscaMascara').readOnly = true;
 
   // Zerar estado de arquivo
   arquivoPdfPendente = null;
@@ -695,12 +671,6 @@ function popularAnaliseSelect() {
 // EVENTOS
 // ═══════════════════════════════════════════════════════
 function configurarEventos() {
-  // Busca por máscara — Enter + botão
-  document.getElementById('buscaMascara').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); buscarPorMascara(); }
-  });
-  document.getElementById('btnBuscarMascara').addEventListener('click', buscarPorMascara);
-
   // Busca por Livro + Página — Enter + botão
   document.getElementById('buscaLivro').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); buscarPorLivroPagina(); }
@@ -763,5 +733,5 @@ document.addEventListener('DOMContentLoaded', function() {
     buscarPorLivroPagina();
   }
 
-  document.getElementById('buscaMascara').focus();
+  document.getElementById('buscaLivro').focus();
 });

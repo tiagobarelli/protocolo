@@ -80,17 +80,9 @@
   <div class="cliente-resumo" id="resumoCliente" style="display:none;">
     <span class="resumo-nome" id="resumoNome"></span>
     <span class="resumo-cpf" id="resumoCpf"></span>
-  </div>
-
-  <!-- ── ALERTA DO CLIENTE (visível conforme regras de permissão) ── -->
-  <div class="card docs-top-card alert-card" id="alertaCard" style="display:none;">
-    <div class="section-title">
-      <i class="ph ph-warning-circle"></i> Alerta do Cliente
-    </div>
-    <div id="alertaReadonly" class="alerta-texto" style="display:none;"></div>
-    <div id="alertaEditavel" style="display:none;">
-      <textarea id="alertaTextarea" rows="3" autocomplete="off"></textarea>
-    </div>
+    <span class="resumo-alerta" id="resumoAlerta" style="display:none;">
+      <i class="ph ph-warning-circle"></i> Há alerta cadastrado para este cliente
+    </span>
   </div>
 
   <!-- ── DADOS DE IDENTIFICAÇÃO + ANOTAÇÕES ── -->
@@ -134,6 +126,17 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── ALERTA DO CLIENTE (visível conforme regras de permissão) ── -->
+  <div class="card docs-top-card alert-card" id="alertaCard" style="display:none;">
+    <div class="section-title">
+      <i class="ph ph-warning-circle"></i> Alerta do Cliente
+    </div>
+    <div id="alertaReadonly" class="alerta-texto" style="display:none;"></div>
+    <div id="alertaEditavel" style="display:none;">
+      <textarea id="alertaTextarea" rows="3" autocomplete="off"></textarea>
     </div>
   </div>
   </div><!-- /#tab-denominacao -->
@@ -338,9 +341,6 @@
   <div class="form-actions-sticky">
     <div id="formMsg" class="msg-box"></div>
     <div class="btn-row">
-      <button type="button" class="btn btn-secondary" id="btnLimpar">
-        <i class="ph ph-eraser"></i> Limpar
-      </button>
       <button type="button" class="btn btn-primary" id="btnSalvar">
         <i class="ph ph-floppy-disk"></i> Salvar
       </button>
