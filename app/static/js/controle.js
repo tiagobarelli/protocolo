@@ -1340,8 +1340,10 @@ function construirPayloadControle(imoveisIds) {
   }
   payload[CONFIG.fields.clientes] = clienteIds;
 
-  // Imoveis (link_row multiplo)
-  payload[CONFIG.fields.imoveis] = imoveisIds || [];
+  // Imoveis (link_row multiplo) — DESATIVADO no front-end (decisão jun/2026).
+  // A gravação do vínculo de imóveis foi suspensa: impede novas inserções e evita
+  // sobrescrever o campo ao salvar. Reversível: descomentar a linha abaixo.
+  // payload[CONFIG.fields.imoveis] = imoveisIds || [];
 
   return payload;
 }

@@ -21,7 +21,6 @@ var CONFIG = {
     revogacaoReverso: 'field_7439',
     protocolo: 'field_7377',
     clientes: 'field_7379',
-    imoveis: 'field_7384',
     pendencias: 'field_7203'
   }
 };
@@ -154,7 +153,6 @@ function renderizarResultados(results, livro) {
   html += '<th>Substab.</th>';
   html += '<th>Revog.</th>';
   html += '<th>Clientes</th>';
-  html += '<th>Im\u00f3veis</th>';
   html += '<th>A\u00e7\u00f5es</th>';
   html += '</tr></thead>';
   html += '<tbody>';
@@ -175,7 +173,6 @@ function renderizarResultados(results, livro) {
     html += '<td>' + badgeSimNao(row[CONFIG.fields.substabelecimentoReverso]) + '</td>';
     html += '<td>' + badgeSimNao(row[CONFIG.fields.revogacaoReverso]) + '</td>';
     html += '<td>' + badgeSimNao(row[CONFIG.fields.clientes]) + '</td>';
-    html += '<td>' + badgeSimNao(row[CONFIG.fields.imoveis]) + '</td>';
     html += '<td><button type="button" class="btn-action" onclick="abrirControle(\'' + livro + '\', \'' + pagina.replace(/'/g, "\\'") + '\')" title="Editar no Controle"><i class="ph ph-arrow-square-out"></i></button></td>';
     html += '</tr>';
 
@@ -184,7 +181,7 @@ function renderizarResultados(results, livro) {
     var pendenciasTexto = stripMarkdown(pendenciasRaw).replace(/^\s+|\s+$/g, '');
     if (pendenciasTexto) {
       html += '<tr class="pendencia-row">';
-      html += '<td colspan="13"><div class="pendencia-content"><i class="ph ph-warning-circle"></i>' + pendenciasTexto + '</div></td>';
+      html += '<td colspan="12"><div class="pendencia-content"><i class="ph ph-warning-circle"></i>' + pendenciasTexto + '</div></td>';
       html += '</tr>';
     }
   }
