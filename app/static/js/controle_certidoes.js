@@ -99,13 +99,6 @@ function esconderOverlay() {
   document.getElementById('overlay').classList.remove('active');
 }
 
-function padPagina(valor) {
-  while (valor.length < 3) {
-    valor = '0' + valor;
-  }
-  return valor;
-}
-
 // ═══════════════════════════════════════════════════════
 // SIDEBAR
 // ═══════════════════════════════════════════════════════
@@ -128,82 +121,6 @@ function popularSelectOpcoes(selectId, opcoes) {
     opt.textContent = opcoes[i].label;
     sel.appendChild(opt);
   }
-}
-
-// ═══════════════════════════════════════════════════════
-// BUSCA POR LIVRO E PAGINA (Secao A)
-// ═══════════════════════════════════════════════════════
-function buscarPorLivroPagina() {
-  var livro = document.getElementById('buscaLivro').value.trim();
-  var pagina = document.getElementById('buscaPagina').value.trim();
-  esconderMsg('searchMsg');
-
-  if (!livro || !pagina) {
-    mostrarMsg('searchMsg', 'error', 'Preencha o Livro e a Página.');
-    return;
-  }
-
-  if (!/^\d+$/.test(livro) || !/^\d+$/.test(pagina)) {
-    mostrarMsg('searchMsg', 'error', 'Livro e Página devem ser números.');
-    return;
-  }
-
-  if (parseInt(pagina, 10) > 400) {
-    mostrarMsg('searchMsg', 'error', 'A página não pode exceder 400.');
-    return;
-  }
-
-  pagina = padPagina(pagina);
-  mostrarOverlay();
-
-  // Passo 1: buscar na tabela Controle (745) pelo livro e pagina
-  var url745 = API_BASE + '/database/rows/table/' + CONFIG.tables.controle +
-    '/?user_field_names=false' +
-    '&filter__' + CONFIG.fields.ctrlLivro + '__equal=' + encodeURIComponent(livro) +
-    '&filter__' + CONFIG.fields.ctrlPagina + '__equal=' + encodeURIComponent(pagina) +
-    '&size=1';
-
-  fetch(url745, { headers: apiHeaders() })
-    .then(function(r) {
-      if (!r.ok) throw new Error('Erro na busca');
-      return r.json();
-    })
-    .then(function(data) {
-      var results = data.results || [];
-      if (results.length === 0) {
-        throw new Error('Escritura L_' + livro + '_P_' + pagina + ' não encontrada na tabela de controle.');
-      }
-      var rowId745 = results[0].id;
-
-      // Passo 2: buscar na tabela Controle_Certidao (776) vinculada a este registro
-      var url776 = API_BASE + '/database/rows/table/' + CONFIG.tables.certidoes +
-        '/?user_field_names=false' +
-        '&filter__' + CONFIG.fields.linkControle + '__link_row_has=' + rowId745 +
-        '&size=10';
-
-      return fetch(url776, { headers: apiHeaders() })
-        .then(function(r2) {
-          if (!r2.ok) throw new Error('Erro na busca de certidões');
-          return r2.json();
-        })
-        .then(function(data776) {
-          var results776 = data776.results || [];
-          if (results776.length > 0) {
-            preencherFormularioExistente(results776[0]);
-            mostrarMsg('formStatusMsg', 'info', 'Registro encontrado para L_' + livro + '_P_' + pagina);
-            document.getElementById('formCard').style.display = 'block';
-            document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
-          } else {
-            mostrarMsg('searchMsg', 'info', 'Nenhuma certidão cadastrada para L_' + livro + '_P_' + pagina + '.');
-          }
-        });
-    })
-    .catch(function(e) {
-      mostrarMsg('searchMsg', 'error', e.message || 'Erro ao buscar.');
-    })
-    .then(function() {
-      esconderOverlay();
-    });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -950,11 +867,9 @@ function construirPayloadCertidao() {
 function limparFormulario() {
   resetarEstadoFormulario();
   document.getElementById('formCard').style.display = 'none';
-  document.getElementById('buscaLivro').value = '';
-  document.getElementById('buscaPagina').value = '';
   document.getElementById('buscaProtocolo').value = '';
   esconderMsg('searchMsg');
-  document.getElementById('buscaLivro').focus();
+  document.getElementById('buscaProtocolo').focus();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -971,16 +886,9 @@ document.addEventListener('DOMContentLoaded', function() {
   configurarAutocompleteEscrituras();
 
   // Botoes de busca
-  document.getElementById('btnBuscarLP').addEventListener('click', buscarPorLivroPagina);
   document.getElementById('btnBuscarProtocolo').addEventListener('click', buscarPorProtocolo);
 
   // Enter nos campos de busca
-  document.getElementById('buscaLivro').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); buscarPorLivroPagina(); }
-  });
-  document.getElementById('buscaPagina').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); buscarPorLivroPagina(); }
-  });
   document.getElementById('buscaProtocolo').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); buscarPorProtocolo(); }
   });
@@ -1005,5 +913,5 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Foco inicial
-  document.getElementById('buscaLivro').focus();
+  document.getElementById('buscaProtocolo').focus();
 });
