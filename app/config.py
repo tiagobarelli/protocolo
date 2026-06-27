@@ -29,8 +29,8 @@ class BaseConfig:
 
     # Upload de arquivos
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", str(BASE_DIR / "data" / "uploads"))
-    MAX_CONTENT_LENGTH = 20 * 1024 * 1024  # 20 MB
-    MAX_UPLOAD_SIZE = 20 * 1024 * 1024
+    MAX_CONTENT_LENGTH = 105 * 1024 * 1024  # ~100 MB + folga (envelope multipart) — Flask corta antes da view
+    MAX_UPLOAD_SIZE = 100 * 1024 * 1024      # 100 MB por arquivo (checagem amigável na view)
 
     # Ofícios (acervo de correspondência — pasta legível por humano)
     OFICIOS_FOLDER = os.environ.get("OFICIOS_FOLDER", str(BASE_DIR / "data" / "oficios"))

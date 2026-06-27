@@ -21,6 +21,7 @@
   var E_DESCRICAO    = 'field_7527';
   var E_CRIADO_POR   = 'field_7528';
   var E_CRIADO_EM    = 'field_7529';
+  var E_ATUALIZADO   = 'field_7530';
   var E_REV_ENTRADAS = 'field_7538';
   var E_REV_SAIDAS   = 'field_7540';
   var E_TEM_ANEXO    = 'field_7548';
@@ -71,6 +72,15 @@
   // Estado dos anexos de evento (Fase C)
   var anexoInput = null;   // <input type=file> reutilizável
   var anexoAlvo  = null;   // { eventoId, tipo, data } do upload em curso
+
+  // Estado da edição de evento (Edição Fase 1 — só master)
+  var editandoEventoId = null;
+  var eventosPorId = {};   // id -> row (preenchido em renderTimeline)
+
+  // Edição do efeito no quadro (Edição Fase 2 — só o ato mais recente que altera o quadro)
+  var editandoEfeitoQuadro = false;   // true só ao editar o efeito do ato mais recente
+  var editAbertasPorEvento = [];      // participacaoIds abertas pelo ato (apagar no desfazer)
+  var editFechadasPorEvento = [];     // participacaoIds fechadas pelo ato (reabrir no desfazer)
 
   // ── Helpers ───────────────────────────────────────────
   function apiHeaders() {
@@ -153,6 +163,10 @@
     return p === 'master' || p === 'administrador';
   }
   function perfilPodeExcluir() {
+    var p = window.CURRENT_USER && window.CURRENT_USER.perfil;
+    return p === 'master';
+  }
+  function perfilPodeEditarEvento() {
     var p = window.CURRENT_USER && window.CURRENT_USER.perfil;
     return p === 'master';
   }
@@ -369,6 +383,7 @@
   function renderTimeline(rows) {
     var timeline = el('evtTimeline');
     if (!timeline) return;
+    eventosPorId = {};
     if (!rows || rows.length === 0) {
       timeline.innerHTML = '<div class="evt-empty">Nenhum evento registrado.</div>';
       return;
@@ -377,6 +392,7 @@
     timeline.innerHTML = '';
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i];
+      eventosPorId[row.id] = row;
       var data = formatarData(row[E_DATA_ATO]);
       var tipo = primeiroVinculo(row[E_TIPO]);
       var descricao = row[E_DESCRICAO] || '';
@@ -388,6 +404,10 @@
       var html = '<div class="evt-item-cab">';
       html += '<span class="evt-item-data">' + escapar(data || '—') + '</span>';
       if (tipo) html += '<span class="evt-item-tipo">' + escapar(tipo) + '</span>';
+      if (perfilPodeEditarEvento()) {
+        html += '<button type="button" class="evt-evento-editar" data-evento-id="' + row.id +
+                '" title="Editar evento"><i class="ph ph-pencil-simple"></i></button>';
+      }
       html += '</div>';
       if (descricao && descricao.trim() !== '') {
         html += '<div class="evt-item-desc">' + renderMarkdown(descricao) + '</div>';
@@ -438,6 +458,8 @@
 
   function onTimelineClick(e) {
     var alvo = e.target;
+    var btnEditar = acharAncestral(alvo, 'evt-evento-editar');
+    if (btnEditar) { abrirFormEventoEdicao(btnEditar.getAttribute('data-evento-id')); return; }
     var box = acharAncestral(alvo, 'evt-item-anexo');
     if (!box) return;
     var eventoId = box.getAttribute('data-evento-id');
@@ -586,8 +608,38 @@
       });
   }
 
+  // Popula o #evtTipo a partir do tiposMap; filtroAlteraQuadro (boolean) restringe
+  // à mesma natureza (usado na edição). Sem argumento → lista completa.
+  function popularSelectTipos(filtroAlteraQuadro) {
+    var sel = el('evtTipo');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Selecione...</option>';
+    var ids = [];
+    for (var id in tiposMap) { if (tiposMap.hasOwnProperty(id)) ids.push(id); }
+    ids.sort(function(a, b) {
+      var na = tiposMap[a].nome.toLowerCase(), nb = tiposMap[b].nome.toLowerCase();
+      return na < nb ? -1 : (na > nb ? 1 : 0);
+    });
+    for (var i = 0; i < ids.length; i++) {
+      var t = tiposMap[ids[i]];
+      if (typeof filtroAlteraQuadro === 'boolean' && t.alteraQuadro !== filtroAlteraQuadro) continue;
+      var opt = document.createElement('option');
+      opt.value = ids[i];
+      opt.textContent = t.nome;
+      sel.appendChild(opt);
+    }
+  }
+
   function abrirFormEvento() {
-    if (!tiposCarregados) carregarTipos();
+    editandoEventoId = null;
+    editandoEfeitoQuadro = false;
+    editAbertasPorEvento = [];
+    editFechadasPorEvento = [];
+    if (!tiposCarregados) {
+      carregarTipos();
+    } else {
+      popularSelectTipos();   // restaura a lista completa (uma edição pode tê-la filtrado)
+    }
     var sel = el('evtTipo');
     if (sel) sel.value = '';
     el('evtData').value = '';
@@ -617,9 +669,325 @@
     el('eventoFormWrap').style.display = 'none';
     var btnReg = el('btnRegistrarEvento');
     if (btnReg) btnReg.style.display = '';
+    editandoEventoId = null;
+    editandoEfeitoQuadro = false;
+    editAbertasPorEvento = [];
+    editFechadasPorEvento = [];
+    var btnSalvar = el('btnSalvarEvento');
+    if (btnSalvar) btnSalvar.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar evento';
+  }
+
+  // ── Edição de evento (Edição Fase 1: campos documentais; só master) ──
+  // Id do ato mais recente que altera o quadro (maior data; desempate pelo maior id)
+  function eventoQuadroMaisRecenteId() {
+    var melhorId = null, melhorData = '';
+    for (var id in eventosPorId) {
+      if (!eventosPorId.hasOwnProperty(id)) continue;
+      var row = eventosPorId[id];
+      var tId = (row[E_TIPO] && row[E_TIPO][0]) ? row[E_TIPO][0].id : null;
+      if (!tId || !tiposMap[tId] || tiposMap[tId].alteraQuadro !== true) continue;
+      var d = row[E_DATA_ATO] || '';
+      if (d > melhorData || (d === melhorData && Number(row.id) > Number(melhorId))) {
+        melhorData = d; melhorId = row.id;
+      }
+    }
+    return melhorId;
+  }
+
+  function abrirFormEventoEdicao(eventoId) {
+    var row = eventosPorId[eventoId];
+    if (!row) return;
+    var prosseguir = function() { preencherEdicao(eventoId, row); };
+    if (!tiposCarregados) { carregarTipos().then(prosseguir); } else { prosseguir(); }
+  }
+
+  function preencherEdicao(eventoId, row) {
+    editandoEventoId = eventoId;
+    editandoEfeitoQuadro = false;
+    editAbertasPorEvento = [];
+    editFechadasPorEvento = [];
+
+    var tipoId = (row[E_TIPO] && row[E_TIPO][0]) ? row[E_TIPO][0].id : null;
+    var natureza = (tipoId && tiposMap[tipoId]) ? tiposMap[tipoId].alteraQuadro : false;
+
+    popularSelectTipos(natureza);
+    el('evtTipo').value = tipoId ? String(tipoId) : '';
+    el('evtData').value = row[E_DATA_ATO] || '';
+    el('evtDescTextarea').value = row[E_DESCRICAO] || '';
+    atualizarPreviewEvento();
+
+    var editor = el('qsEditorWrap');
+    var notice = el('evtNotice');
+    if (notice) { notice.style.display = 'none'; notice.textContent = ''; }
+    esconderFormMsg();
+
+    if (natureza === true && String(eventoId) === String(eventoQuadroMaisRecenteId())) {
+      // Ato mais recente que altera o quadro → editar o efeito
+      editandoEfeitoQuadro = true;
+      if (editor) editor.style.display = 'block';
+      carregarEditorQuadroEdicao(eventoId);
+    } else if (natureza === true) {
+      // Ato que altera o quadro, mas não é o mais recente → efeito travado
+      if (editor) editor.style.display = 'none';
+      if (notice) {
+        notice.style.display = 'block';
+        notice.textContent = 'O efeito no quadro só pode ser editado no ato societário mais recente. Aqui você altera apenas tipo, data e descrição.';
+      }
+    } else {
+      // Documental
+      if (editor) editor.style.display = 'none';
+    }
+
+    var btn = el('btnSalvarEvento');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Salvar alterações'; }
+
+    el('eventoFormWrap').style.display = 'block';
+    var btnReg = el('btnRegistrarEvento'); if (btnReg) btnReg.style.display = 'none';
+  }
+
+  function salvarEdicaoEvento(idTipo, dataAto) {
+    var nomeTipo = (tiposMap[idTipo] && tiposMap[idTipo].nome) ? tiposMap[idTipo].nome : 'Evento';
+
+    var body = {};
+    body[E_ROTULO]     = nomeTipo + ' — ' + formatarData(dataAto);
+    body[E_TIPO]       = [Number(idTipo)];
+    body[E_DATA_ATO]   = dataAto;
+    body[E_DESCRICAO]  = el('evtDescTextarea').value;
+    body[E_ATUALIZADO] = new Date().toISOString();
+
+    var btn = el('btnSalvarEvento'); if (btn) btn.disabled = true;
+    overlayOn();
+    fetch(API_BASE + '/database/rows/table/' + TABLE_EVENTOS + '/' + editandoEventoId + '/?user_field_names=false',
+      { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(body) })
+      .then(function(r) { if (!r.ok) return r.json().then(function(e){ throw new Error(e.detail || 'Erro ao salvar.'); }); return r.json(); })
+      .then(function() {
+        overlayOff(); if (btn) btn.disabled = false;
+        fecharFormEvento();
+        carregarEventos();
+        if (window.mostrarToast) mostrarToast('Evento atualizado.', 'success');
+      })
+      .catch(function(e) {
+        overlayOff(); if (btn) btn.disabled = false;
+        mostrarFormMsg('error', e.message || 'Erro ao salvar.');
+        console.error(e);
+      });
+  }
+
+  // ── Edição do efeito no quadro (Edição Fase 2: só o ato mais recente) ──
+  // Carrega o editor pré-preenchido com o quadro atual e particiona o pré-evento.
+  function carregarEditorQuadroEdicao(eventoId) {
+    var pjId = window.EVENTOS_PJ_ID;
+    editorOriginais = {};
+    editAbertasPorEvento = [];
+    editFechadasPorEvento = [];
+    var listaEl = el('qsEditorLista'); if (listaEl) listaEl.innerHTML = '';
+    var totalEl = el('qsEditorTotal'); if (totalEl) { totalEl.textContent = ''; totalEl.className = 'qs-editor-total'; }
+    if (!pjId) { recalcularTotalEditor(); return; }
+
+    var url = API_BASE + '/database/rows/table/' + TABLE_PART +
+      '/?user_field_names=false&filter__' + P_PJ + '__link_row_has=' +
+      encodeURIComponent(pjId) + '&size=200';
+    fetch(url, { headers: apiHeaders() })
+      .then(function(r) { if (!r.ok) throw new Error('Falha ao listar participações.'); return r.json(); })
+      .then(function(data) { popularEditorEdicao(data.results || [], eventoId); })
+      .catch(function(e) {
+        console.error('Erro ao carregar o editor de edição:', e);
+        fetch(API_BASE + '/database/rows/table/' + TABLE_PART + '/?user_field_names=false&size=200', { headers: apiHeaders() })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            var todos = data.results || [], filtrados = [], i;
+            for (i = 0; i < todos.length; i++) { if (vinculoContem(todos[i][P_PJ], pjId)) filtrados.push(todos[i]); }
+            popularEditorEdicao(filtrados, eventoId);
+          })
+          .catch(function(e2) { console.error(e2); mostrarFormMsg('error', 'Não foi possível carregar o quadro para edição.'); });
+      });
+  }
+
+  // Particiona as participações:
+  //  - editor (linhas) = ativas (resultado atual do ato)
+  //  - editorOriginais = estado PRÉ-evento (ativas não abertas por este ato + as fechadas por ele)
+  //  - editAbertasPorEvento = ativas abertas por este ato (apagar no desfazer)
+  //  - editFechadasPorEvento = inativas fechadas por este ato (reabrir no desfazer)
+  function popularEditorEdicao(rows, eventoId) {
+    editorOriginais = {};
+    editAbertasPorEvento = [];
+    editFechadasPorEvento = [];
+    var listaEl = el('qsEditorLista'); if (listaEl) listaEl.innerHTML = '';
+    var evId = String(eventoId);
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var socio = (row[P_SOCIO] && row[P_SOCIO][0]) ? row[P_SOCIO][0] : null;
+      if (!socio) continue;
+      var socioId = socio.id;
+      var socioNome = socio.value || '';
+      var perc = parseFloat(row[P_PERCENTUAL]) || 0;
+      var qualifId = (row[P_QUALIFICACAO] && row[P_QUALIFICACAO].id) || '';
+      var status = valorSelect(row[P_STATUS]);
+      var entradaId = (row[P_EV_ENTRADA] && row[P_EV_ENTRADA][0]) ? String(row[P_EV_ENTRADA][0].id) : '';
+      var saidaId = (row[P_EV_SAIDA] && row[P_EV_SAIDA][0]) ? String(row[P_EV_SAIDA][0].id) : '';
+
+      if (status === 'Ativo') {
+        addEditorRow({ socioId: socioId, socioNome: socioNome, participacaoId: row.id, percentual: perc, qualifId: qualifId });
+        if (entradaId === evId) {
+          editAbertasPorEvento.push(row.id);            // aberta por este ato → apagar no desfazer
+        } else {
+          editorOriginais[socioId] = { participacaoId: row.id, percentual: perc, qualifId: qualifId }; // pré-evento
+        }
+      } else {
+        if (saidaId === evId) {
+          editFechadasPorEvento.push(row.id);           // fechada por este ato → reabrir no desfazer
+          editorOriginais[socioId] = { participacaoId: row.id, percentual: perc, qualifId: qualifId }; // pré-evento
+        }
+      }
+    }
+    recalcularTotalEditor();
+  }
+
+  // Salva a edição que refaz o efeito no quadro (desfazer → refazer → PATCH do evento).
+  function salvarEdicaoEventoComQuadro(idTipo, dataAto) {
+    // 1) Ler o quadro alvo + validar (igual ao salvarEventoComQuadro)
+    var linhas = el('qsEditorLista').querySelectorAll('.qs-editor-row');
+    var alvo = [], soma = 0, i;
+    for (i = 0; i < linhas.length; i++) {
+      var lin = linhas[i];
+      var perc = parseFloat(lin.querySelector('.qs-editor-perc').value) || 0;
+      var qualifId = lin.querySelector('.qs-editor-qualif').value;
+      var socioId = lin.getAttribute('data-socio-id');
+      if (perc <= 0) { return mostrarFormMsg('error', 'Há sócio com quota inválida (deve ser > 0).'); }
+      if (!qualifId) { return mostrarFormMsg('error', 'Selecione a qualificação de todos os sócios.'); }
+      alvo.push({
+        socioId: socioId, socioNome: lin.getAttribute('data-socio-nome'),
+        participacaoId: lin.getAttribute('data-participacao-id') || '', percentual: perc, qualifId: qualifId
+      });
+      soma += perc;
+    }
+    if (alvo.length === 0) { return mostrarFormMsg('error', 'Inclua ao menos um sócio.'); }
+    if (Math.abs(soma - 100) > 0.005) {
+      return mostrarFormMsg('error', 'A soma das quotas deve ser 100% (atual: ' + formatarPercentual(soma) + ').');
+    }
+
+    // 2) Diff: alvo vs editorOriginais (estado pré-evento)
+    var alvoPorSocio = {};
+    for (i = 0; i < alvo.length; i++) alvoPorSocio[alvo[i].socioId] = alvo[i];
+    var saidas = [], alteracoes = [], entradas = [], sid;
+    for (sid in editorOriginais) {
+      if (editorOriginais.hasOwnProperty(sid) && !alvoPorSocio[sid]) saidas.push(editorOriginais[sid].participacaoId);
+    }
+    for (i = 0; i < alvo.length; i++) {
+      var item = alvo[i];
+      var orig = editorOriginais[item.socioId];
+      if (!orig) { entradas.push(item); continue; }
+      var mudouPerc = (Math.round(orig.percentual * 100) !== Math.round(item.percentual * 100));
+      var mudouQualif = (Number(orig.qualifId) !== Number(item.qualifId));
+      if (mudouPerc || mudouQualif) alteracoes.push({ antiga: orig.participacaoId, nova: item });
+    }
+
+    if (!confirm('Editar este ato vai refazer o quadro societário que ele produziu. Deseja continuar?')) { return; }
+
+    // 3) Payloads e helpers (eventoId = o próprio evento editado)
+    var pjId = window.EVENTOS_PJ_ID;
+    var agora = new Date().toISOString();
+    var nomeUser = (window.CURRENT_USER && window.CURRENT_USER.nome) || '';
+    var nomeTipo = (tiposMap[idTipo] && tiposMap[idTipo].nome) ? tiposMap[idTipo].nome : 'Evento';
+    var eventoId = editandoEventoId;
+
+    function montarNovaParticipacao(item) {
+      var p = {};
+      p[P_ROTULO] = item.socioNome;
+      p[P_PJ] = [Number(pjId)];
+      p[P_SOCIO] = [Number(item.socioId)];
+      p[P_EV_ENTRADA] = [Number(eventoId)];
+      p[P_STATUS] = OPT_STATUS_ATIVO;
+      p[P_PERCENTUAL] = Number(item.percentual);
+      p[P_QUALIFICACAO] = Number(item.qualifId);
+      p[P_CRIADO_POR] = nomeUser;
+      p[P_CRIADO_EM] = agora;
+      return p;
+    }
+    function fecharParticipacao(motivoId) {
+      var p = {};
+      p[P_EV_SAIDA] = [Number(eventoId)];
+      p[P_STATUS] = OPT_STATUS_INATIVO;
+      p[P_MOTIVO] = motivoId;
+      p[P_ATUALIZADO] = agora;
+      return p;
+    }
+    function reabrirParticipacao() {
+      var p = {};
+      p[P_STATUS] = OPT_STATUS_ATIVO;
+      p[P_EV_SAIDA] = [];     // limpa o vínculo de saída
+      p[P_MOTIVO] = null;     // limpa o motivo
+      p[P_ATUALIZADO] = agora;
+      return p;
+    }
+    function postPart(payload) {
+      return fetch(API_BASE + '/database/rows/table/' + TABLE_PART + '/?user_field_names=false',
+        { method: 'POST', headers: apiHeaders(), body: JSON.stringify(payload) });
+    }
+    function patchPart(idLinha, payload) {
+      return fetch(API_BASE + '/database/rows/table/' + TABLE_PART + '/' + idLinha + '/?user_field_names=false',
+        { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(payload) });
+    }
+    function deletePart(idLinha) {
+      return fetch(API_BASE + '/database/rows/table/' + TABLE_PART + '/' + idLinha + '/?user_field_names=false',
+        { method: 'DELETE', headers: apiHeaders() });
+    }
+
+    var btn = el('btnSalvarEvento');
+    if (btn) btn.disabled = true;
+    overlayOn();
+    esconderFormMsg();
+
+    // 4) DESFAZER (apaga abertas, reabre fechadas) → precisa terminar antes do refazer
+    var undoOps = [], k;
+    for (k = 0; k < editAbertasPorEvento.length; k++) undoOps.push(deletePart(editAbertasPorEvento[k]));
+    for (k = 0; k < editFechadasPorEvento.length; k++) undoOps.push(patchPart(editFechadasPorEvento[k], reabrirParticipacao()));
+
+    Promise.all(undoOps)
+      .then(function() {
+        // 5) REFAZER (amarrado ao mesmo evento)
+        var applyOps = [], j;
+        for (j = 0; j < saidas.length; j++) applyOps.push(patchPart(saidas[j], fecharParticipacao(OPT_MOTIVO_SAIDA)));
+        for (j = 0; j < alteracoes.length; j++) {
+          applyOps.push(patchPart(alteracoes[j].antiga, fecharParticipacao(OPT_MOTIVO_ALTERACAO)));
+          applyOps.push(postPart(montarNovaParticipacao(alteracoes[j].nova)));
+        }
+        for (j = 0; j < entradas.length; j++) applyOps.push(postPart(montarNovaParticipacao(entradas[j])));
+        return Promise.all(applyOps);
+      })
+      .then(function() {
+        // 6) PATCH do evento (rótulo/tipo/data/descrição/atualizado_em)
+        var body = {};
+        body[E_ROTULO] = nomeTipo + ' — ' + formatarData(dataAto);
+        body[E_TIPO] = [Number(idTipo)];
+        body[E_DATA_ATO] = dataAto;
+        body[E_DESCRICAO] = el('evtDescTextarea').value;
+        body[E_ATUALIZADO] = agora;
+        return fetch(API_BASE + '/database/rows/table/' + TABLE_EVENTOS + '/' + eventoId + '/?user_field_names=false',
+          { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(body) });
+      })
+      .then(function() {
+        overlayOff(); if (btn) btn.disabled = false;
+        fecharFormEvento();
+        carregarEventos();
+        if (window.mostrarToast) window.mostrarToast('Evento e quadro atualizados.', 'success');
+      })
+      .catch(function(e) {
+        overlayOff(); if (btn) btn.disabled = false;
+        mostrarFormMsg('error', (e.message || 'Erro ao salvar.') + ' Algumas alterações podem ter sido aplicadas; confira o quadro.');
+        carregarEventos();
+        console.error(e);
+      });
   }
 
   function onEvtTipoChange() {
+    if (editandoEventoId) {
+      if (!editandoEfeitoQuadro) {
+        var ed = el('qsEditorWrap'); if (ed) ed.style.display = 'none';
+      }
+      var b = el('btnSalvarEvento'); if (b) b.disabled = false;
+      return;
+    }
     var id = el('evtTipo').value;
     var editor = el('qsEditorWrap');
     var notice = el('evtNotice');
@@ -698,6 +1066,11 @@
     if (!dataAto) {
       mostrarFormMsg('error', 'Informe a data do ato.');
       return;
+    }
+    // Modo edição: efeito no quadro (ato mais recente) ou só documental
+    if (editandoEventoId) {
+      if (editandoEfeitoQuadro) { salvarEdicaoEventoComQuadro(id, dataAto); return; }
+      salvarEdicaoEvento(id, dataAto); return;
     }
     // Tipo que altera o quadro → fluxo declarativo do quadro societário
     if (tiposMap[id] && tiposMap[id].alteraQuadro === true) {

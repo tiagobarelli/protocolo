@@ -118,7 +118,16 @@ def _subpasta_nome(tipo, data, id_evento):
 
 
 def _pasta_evento_construir(cnpj, denominacao, tipo, data, id_evento, criar=False):
-    """Monta {mae}/{ano}/{tipo-slug}-{data}__{id_evento}/ (para upload)."""
+    """Monta {mae}/{ano}/{tipo-slug}-{data}__{id_evento}/ (para upload).
+
+    Se o evento já tem pasta (localizada por id), reutiliza-a — evita duplicar
+    quando tipo/data mudaram após uma edição e houve reenvio do anexo.
+    """
+    # Reutiliza a pasta já existente do evento (localizada por id), se houver.
+    existente = _pasta_evento_localizar(cnpj, id_evento)
+    if existente:
+        return existente
+
     mae = _pasta_mae(cnpj, denominacao, criar=criar)
     if mae is None:
         return None
@@ -235,7 +244,7 @@ def upload_arquivo(cnpj, id_evento):
     conteudo = arquivo.read()
     max_size = current_app.config.get("MAX_UPLOAD_SIZE", 20 * 1024 * 1024)
     if len(conteudo) > max_size:
-        return jsonify({"erro": "Arquivo excede o tamanho máximo de 20 MB."}), 400
+        return jsonify({"erro": "Arquivo excede o tamanho máximo de 100 MB."}), 400
 
     nome = _sanitizar_nome(arquivo.filename)
     if not nome or "." not in nome:
