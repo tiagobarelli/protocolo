@@ -46,18 +46,7 @@ main {
 /* Campos consolidados em components.css */
 
 /* Tabela de usuários */
-.user-table { width: 100%; border-collapse: collapse; }
-.user-table th {
-  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.05em; color: var(--text-muted);
-  padding: 10px 12px; text-align: left;
-  border-bottom: 2px solid var(--border);
-}
-.user-table td {
-  padding: 14px 12px; border-bottom: 1px solid var(--border);
-  font-size: 0.9rem; color: var(--text-main); vertical-align: middle;
-}
-.user-table tbody tr:hover { background: #fafaf9; }
+/* Tabela consolidada em components.css */
 .user-table .actions { white-space: nowrap; }
 .empty-state {
   text-align: center; color: var(--text-muted); padding: 40px 12px;

@@ -49,26 +49,7 @@ main {
 }
 
 /* Table */
-.table-wrapper { overflow-x: auto; }
-
-.report-table {
-  width: 100%; border-collapse: collapse; font-size: 0.85rem;
-}
-
-.report-table th {
-  background: var(--accent-soft); color: var(--text-dark);
-  font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
-  font-size: 0.72rem; padding: 10px 8px; text-align: left;
-  border-bottom: 2px solid var(--border); white-space: nowrap;
-}
-
-.report-table td {
-  padding: 8px; border-bottom: 1px solid var(--border);
-  color: var(--text-main); vertical-align: middle;
-}
-
-.report-table tbody tr:hover { background: #fafaf9; }
-.report-table tbody tr:last-child td { border-bottom: none; }
+/* Tabela consolidada em components.css */
 
 /* Badges */
 /* Badges consolidados em components.css.

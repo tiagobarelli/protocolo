@@ -2,10 +2,6 @@
    Não redeclara :root; reutiliza os tokens globais do base.html. Tokens próprios,
    se necessários, ficam escopados em .main-content. */
 
-.main-content {
-  --oficios-hover: #fafaf9;
-}
-
 .container { max-width: 1280px; margin: 0 auto; padding: 30px 32px; width: 100%; }
 
 /* ── Card base (replicado para não depender de CSS de outra página) ── */
@@ -127,33 +123,7 @@
 /* Foco dos filtros via components.css (bottom-stroke) */
 
 /* ── Tabela ──────────────────────────────────────────── */
-.oficios-table-wrapper { overflow-x: auto; }
-
-.oficios-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-}
-.oficios-table th {
-  background: var(--accent-soft);
-  color: var(--text-dark);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-size: 0.72rem;
-  padding: 10px 8px;
-  text-align: left;
-  border-bottom: 2px solid var(--border);
-  white-space: nowrap;
-}
-.oficios-table td {
-  padding: 8px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-main);
-  vertical-align: middle;
-}
-.oficios-table tbody tr:hover { background: var(--oficios-hover); }
-.oficios-table tbody tr:last-child td { border-bottom: none; }
+/* Tabela consolidada em components.css; mantém só os quirks de ofícios */
 .oficios-table tbody tr.oficios-row { cursor: pointer; }
 
 .oficios-num { font-weight: 600; white-space: nowrap; }

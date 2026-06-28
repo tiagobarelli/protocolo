@@ -381,3 +381,61 @@
 .oficios-badge--pendente    { background: var(--grey-94);    color: var(--text-muted); }
 
 .badge-retificada           { background: var(--accent-soft); color: var(--accent); }
+
+/* =====================================================================
+   Tabelas de dados (relatórios, ofícios, admin)
+   Cabeçalho cinza sutil + hairline; linhas com hover; sem zebra.
+   ===================================================================== */
+
+/* Wrapper de rolagem horizontal */
+.table-wrapper,
+.oficios-table-wrapper { overflow-x: auto; }
+
+/* Base */
+.report-table,
+.oficios-table,
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+/* Cabeçalho — cinza neutro sutil, hairline embaixo */
+.report-table th,
+.oficios-table th,
+.user-table th {
+  background: var(--grey-94);
+  color: var(--text-dark);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.72rem;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+/* Corpo */
+.report-table td,
+.oficios-table td,
+.user-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+/* Hover de linha (tokenizado, dark-aware) */
+.report-table tbody tr:hover,
+.oficios-table tbody tr:hover,
+.user-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+/* Última linha sem hairline */
+.report-table tbody tr:last-child td,
+.oficios-table tbody tr:last-child td,
+.user-table tbody tr:last-child td {
+  border-bottom: none;
+}
