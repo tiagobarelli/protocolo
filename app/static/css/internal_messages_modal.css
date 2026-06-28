@@ -3,7 +3,7 @@
 .im-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(47, 62, 70, 0.45);
+  background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(2px);
   z-index: 1000;
   display: flex;
@@ -14,8 +14,8 @@
 
 .im-modal {
   background: var(--surface, #ffffff);
-  border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-28);
   width: 100%;
   max-width: 560px;
   max-height: 85vh;
@@ -35,13 +35,13 @@
   align-items: center;
   gap: 10px;
   padding: 18px 22px;
-  background: var(--primary, #2f3e46);
-  color: #fff;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text-strong);
 }
 
 .im-modal-header i {
   font-size: 1.4rem;
-  color: var(--accent, #84a98c);
+  color: var(--sidebar-accent);
 }
 
 .im-modal-header h2 {
@@ -67,7 +67,7 @@
 .im-modal-body ol { margin: 0 0 0.7em; padding-left: 1.3em; }
 .im-modal-body a { color: var(--accent, #84a98c); }
 .im-modal-body code {
-  background: #f5f5f4;
+  background: var(--bg-body);
   padding: 1px 5px;
   border-radius: 4px;
   font-size: 0.88em;
@@ -101,26 +101,9 @@
   cursor: pointer;
 }
 
-.im-modal-ok {
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  padding: 10px 22px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  background: var(--accent, #84a98c);
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-}
-
-.im-modal-ok:hover { background: var(--primary-hover, #52796f); }
-.im-modal-ok:disabled { opacity: 0.6; cursor: not-allowed; }
+/* Botão "Ok" usa o .btn .btn-primary canônico (components.css) */
 
 @media (max-width: 600px) {
   .im-modal-footer { flex-direction: column; align-items: stretch; }
-  .im-modal-ok { justify-content: center; }
+  #imBtnOk { justify-content: center; }
 }

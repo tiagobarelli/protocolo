@@ -68,6 +68,8 @@
   --accent:        var(--brand-primary);
   --accent-hover:  var(--brand-hover);
   --accent-soft:   var(--brand-tint-80);
+  --surface-hover:  var(--grey-96);     /* hover de superfícies neutras (btn secondary/icon) */
+  --accent-pressed: var(--brand-pressed); /* estado :active do primário */
 
   /* Bordas */
   --border:        var(--grey-88);
@@ -165,6 +167,8 @@
   --accent:        var(--brand-tint-20);
   --accent-hover:  var(--brand-tint-10);
   --accent-soft:   #082338;
+  --surface-hover:  #333333;
+  --accent-pressed: var(--brand-tint-10);
 
   --border:        var(--grey-26);
   --border-strong: var(--grey-38);

@@ -9,14 +9,7 @@
 .container { max-width: 1280px; margin: 0 auto; padding: 30px 32px; width: 100%; }
 
 /* ── Card base (replicado para não depender de CSS de outra página) ── */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 24px;
-}
+/* Card consolidado em components.css */
 
 /* ── Cabeçalho ───────────────────────────────────────── */
 .oficios-header {
@@ -131,11 +124,7 @@
   border-radius: 8px;
 }
 .oficios-filtro-grupo input { width: 100%; }
-.oficios-filtro-grupo select:focus,
-.oficios-filtro-grupo input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
+/* Foco dos filtros via components.css (bottom-stroke) */
 
 /* ── Tabela ──────────────────────────────────────────── */
 .oficios-table-wrapper { overflow-x: auto; }
@@ -190,22 +179,9 @@
 .oficios-muted { color: var(--text-muted); }
 
 /* ── Badges de status ────────────────────────────────── */
-.oficios-badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.oficios-badge--cumprido {
-  background: #f0f5f1;
-  color: var(--success);
-}
-.oficios-badge--pendente {
-  background: var(--accent-soft);
-  color: var(--text-muted);
-}
+/* Badges consolidados em components.css (forma + cores).
+   Mantém só o layout próprio. */
+.oficios-badge { white-space: nowrap; }
 
 /* ── Estado vazio ────────────────────────────────────── */
 .oficios-vazio {

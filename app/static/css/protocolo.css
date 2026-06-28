@@ -29,14 +29,7 @@ main {
   letter-spacing: -0.025em;
 }
 
-.status-badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 6px 14px; border-radius: 6px;
-  font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
-}
-.status-badge.andamento { background: #f0f5f1; color: #2f3e46; border: 1px solid #c1d5c4; }
-.status-badge.finalizado { background: #f0f5f1; color: #15803d; border: 1px solid #c1d5c4; }
-.status-badge.cancelado { background: #eeac92; color: #4b5563; border: 1px solid #d1d5db; }
+/* Status badges consolidados em components.css */
 
 /* Barra de ações */
 .action-bar {
@@ -45,26 +38,7 @@ main {
   flex-wrap: wrap;
   margin-bottom: 24px;
 }
-.btn-outline {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 10px 20px;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--accent);
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-outline:hover {
-  background: var(--accent-soft);
-  transform: translateY(-1px);
-}
+/* .btn-outline consolidado em components.css */
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -72,18 +46,7 @@ main {
 }
 
 /* Card de informações */
-.card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 28px; box-shadow: var(--shadow-md);
-  margin-bottom: 20px;
-}
-
-.card-title {
-  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 20px;
-  padding-bottom: 10px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 8px;
-}
+/* .card e .card-title consolidados em components.css */
 
 /* Grid de informações */
 .info-grid {
@@ -295,23 +258,7 @@ main {
   color: var(--text-muted);
 }
 
-.andamento-data-wrapper input[type="date"] {
-  font-family: inherit;
-  font-size: 0.9rem;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-dark);
-  max-width: 220px;
-  transition: border-color 0.2s;
-}
-
-.andamento-data-wrapper input[type="date"]:focus {
-  outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
+.andamento-data-wrapper input[type="date"] { max-width: 220px; }
 
 /* Formulário de novo andamento */
 .andamento-form {
@@ -320,27 +267,7 @@ main {
   margin-top: 8px;
 }
 
-.andamento-form textarea {
-  font-family: inherit;
-  font-size: 0.95rem;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-dark);
-  width: 100%;
-  min-height: 100px;
-  resize: vertical;
-  transition: border-color 0.2s;
-  box-shadow: var(--shadow-sm);
-  box-sizing: border-box;
-}
-
-.andamento-form textarea:focus {
-  outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
+.andamento-form textarea { padding: 12px; min-height: 100px; }
 
 .andamento-md-toolbar {
   display: flex;
@@ -405,23 +332,7 @@ main {
   cursor: not-allowed;
 }
 
-/* Badge de sucesso para botão */
-.btn-success {
-  background: var(--success-bg);
-  color: var(--success);
-  border: 1px solid var(--success);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-success:hover { background: var(--success); color: #fff; }
+/* .btn-success consolidado em components.css */
 
 .btn-row {
   display: flex;
@@ -430,15 +341,7 @@ main {
   align-items: center;
 }
 
-.btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: inherit; font-size: 0.9rem; font-weight: 600;
-  padding: 10px 20px; border: none; border-radius: var(--radius);
-  cursor: pointer; transition: all 0.2s;
-}
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+/* Botões consolidados em components.css */
 
 /* Mensagem de feedback */
 .msg-box {
@@ -563,22 +466,11 @@ main {
 }
 
 /* ==================== DROPDOWN DE STATUS ==================== */
-.status-select {
-  font-family: inherit;
+.main-content .status-select {
   font-size: 0.85rem;
   font-weight: 600;
   padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-main);
   cursor: pointer;
-  transition: border-color 0.2s;
-}
-.status-select:focus {
-  outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .status-select:disabled {
   opacity: 0.5;
@@ -596,46 +488,8 @@ main {
   white-space: pre-wrap;
   word-break: break-word;
 }
-.justificativa-textarea {
-  font-family: inherit;
-  font-size: 0.9rem;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-dark);
-  width: 100%;
-  resize: vertical;
-  min-height: 80px;
-  transition: border-color 0.2s;
-}
-.justificativa-textarea:focus {
-  outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-.btn-danger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 10px 20px;
-  border: none;
-  border-radius: var(--radius);
-  background: var(--danger);
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-danger:hover { background: #dc2626; }
-.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.btn-sm {
-  padding: 6px 14px;
-  font-size: 0.82rem;
-}
+.main-content .justificativa-textarea { min-height: 80px; }
+/* .btn-danger e .btn-sm consolidados em components.css */
 
 /* ==================== CARD DE VINCULAÇÃO AO ATO ==================== */
 .card-vinculacao {
@@ -715,26 +569,12 @@ main {
   gap: 6px;
   margin-top: 6px;
 }
-.inline-input {
-  font-family: inherit;
-  font-size: 0.9rem;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-dark);
-  flex: 1;
-  transition: border-color 0.2s;
-}
+.main-content .inline-input { padding: 6px 10px; flex: 1; }
 .inline-input[type="time"] {
   max-width: 110px;
   flex: none;
 }
-.inline-input:focus {
-  outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
+/* foco via components.css (bottom-stroke) */
 .btn-inline-save,
 .btn-inline-cancel {
   display: inline-flex;
@@ -759,24 +599,7 @@ main {
 .btn-edit-texto { position: static; opacity: 0.5; flex-shrink: 0; }
 .andamento-texto-wrap:hover .btn-edit-texto { opacity: 1; }
 .inline-edit-texto { align-items: flex-start; }
-.inline-textarea {
-  font-family: inherit;
-  font-size: 0.9rem;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-dark);
-  flex: 1;
-  min-height: 60px;
-  resize: vertical;
-  line-height: 1.5;
-}
-.inline-textarea:focus {
-  outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
+.main-content .inline-textarea { padding: 6px 10px; flex: 1; min-height: 60px; line-height: 1.5; }
 
 /* ==================== ALERTA INLINE DE CLIENTE ==================== */
 .alerta-inline-proto {
@@ -873,23 +696,7 @@ main {
   margin-bottom: 8px;
 }
 
-.comment-textarea {
-  font-family: inherit;
-  font-size: 0.9rem;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  width: 100%;
-  resize: vertical;
-  min-height: 80px;
-  box-sizing: border-box;
-}
-
-.comment-textarea:focus {
-  outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
+.main-content .comment-textarea { min-height: 80px; }
 
 .mention-dropdown {
   position: absolute;

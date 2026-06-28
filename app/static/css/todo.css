@@ -30,28 +30,7 @@ main {
   color: var(--accent);
 }
 
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px;
-  box-shadow: var(--shadow-md);
-  margin-bottom: 20px;
-}
-
-.card-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+/* .card e .card-title consolidados em components.css */
 
 /* Cabeçalho do card com seletor de ordenação */
 .card-title-row {
@@ -80,10 +59,7 @@ main {
   cursor: pointer;
 }
 
-.todo-ordenacao:focus {
-  outline: none;
-  border-color: var(--accent);
-}
+/* Foco via components.css (bottom-stroke) */
 
 /* Quadro de contadores */
 .todo-stats {
@@ -445,25 +421,7 @@ a.todo-group-num:hover { text-decoration: underline; }
 
 .inline-edit-texto { align-items: flex-start; }
 
-.inline-textarea {
-  font-family: inherit;
-  font-size: 0.9rem;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-dark);
-  flex: 1;
-  min-height: 60px;
-  resize: vertical;
-  line-height: 1.5;
-}
-
-.inline-textarea:focus {
-  outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
+.main-content .inline-textarea { padding: 6px 10px; flex: 1; min-height: 60px; line-height: 1.5; }
 
 .btn-inline-save,
 .btn-inline-cancel {

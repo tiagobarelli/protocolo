@@ -46,41 +46,16 @@ main {
 .tab-content.active { display: block; }
 
 /* ── Card ─────────────────────────────────────────────── */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-  box-shadow: var(--shadow-sm);
-}
+/* Card consolidado em components.css */
 
-.section-title {
-  font-size: 1rem; font-weight: 700; color: var(--text-dark);
-  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
-}
+/* .section-title consolidado em components.css (vira eyebrow) */
 .section-desc {
   font-size: 0.85rem; color: var(--text-muted); margin: 0 0 20px;
 }
 
 /* ── Formulário ───────────────────────────────────────── */
-.form-group { margin-bottom: 16px; }
-.form-group label {
-  display: block; font-size: 0.82rem; font-weight: 600;
-  color: var(--text-dark); margin-bottom: 6px;
-}
-.form-group input[type="text"],
-.form-group input[type="number"] {
-  width: 100%; padding: 10px 12px;
-  border: 1px solid var(--border); border-radius: 8px;
-  font-size: 0.9rem; color: var(--text-main);
-  background: var(--surface); transition: border-color 0.2s;
-  box-sizing: border-box;
-}
-.form-group input[type="text"]:focus,
-.form-group input[type="number"]:focus {
-  outline: none; border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(132, 169, 140, 0.15);
-}
+/* .form-group e label consolidados em components.css */
+/* Campos consolidados em components.css */
 .form-group input[type="number"] { max-width: 140px; }
 
 /* ── Alertas grid ─────────────────────────────────────── */
@@ -123,18 +98,7 @@ main {
   align-items: flex-start;
   gap: 12px;
 }
-.btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 10px 20px; font-size: 0.9rem; font-weight: 600;
-  border: none; border-radius: 8px; cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-}
-.btn:active { transform: scale(0.98); }
-.btn-primary {
-  background: var(--accent); color: #fff;
-}
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+/* Botões consolidados em components.css */
 
 /* ── Mensagem de feedback ─────────────────────────────── */
 .msg-box {
@@ -185,19 +149,7 @@ main {
 .remdest-campo label {
   font-size: 0.85rem; font-weight: 600; color: var(--text-dark); margin-bottom: 6px;
 }
-.remdest-campo input[type="text"],
-.remdest-campo select {
-  width: 100%; padding: 10px 12px;
-  border: 1px solid var(--border); border-radius: 8px;
-  font-size: 0.9rem; color: var(--text-main);
-  background: var(--surface); transition: border-color 0.2s;
-  box-sizing: border-box; font-family: inherit;
-}
-.remdest-campo input[type="text"]:focus,
-.remdest-campo select:focus {
-  outline: none; border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(132, 169, 140, 0.15);
-}
+/* Campos consolidados em components.css */
 .remdest-form-acoes { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 
 .remdest-lista { display: flex; flex-direction: column; gap: 8px; }

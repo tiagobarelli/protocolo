@@ -172,14 +172,7 @@ main {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ── Cards ── */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: var(--shadow-md);
-  margin-bottom: 24px;
-}
+/* Card consolidado em components.css */
 .docs-top-card { padding-top: 24px; padding-bottom: 24px; }
 
 /* ── Search bar ── */
@@ -194,21 +187,10 @@ main {
 /* ── Form sections ── */
 .form-section { margin-bottom: 32px; }
 .form-section:last-child { margin-bottom: 0; }
-.section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-.form-row { display: flex; gap: 20px; margin-bottom: 20px; }
-.form-row.single { flex-direction: column; }
-.form-group { flex: 1; display: flex; flex-direction: column; }
-.form-group.small { flex: 0 0 200px; }
+/* .form-row, .form-group, .section-title consolidados em components.css */
 
-/* ── Form elements ── */
-label { font-size: 0.9rem; font-weight: 500; color: var(--text-dark); margin-bottom: 6px; }
-label .hint { font-weight: 400; color: var(--text-muted); font-size: 0.85rem; }
-input[type="text"], input[type="date"], input[type="email"], select, textarea {
-  font-family: inherit; font-size: 0.95rem; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text-dark); transition: all 0.2s; width: 100%; box-sizing: border-box; box-shadow: var(--shadow-sm);
-}
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-soft); }
-input[readonly] { background: #fafaf9; color: var(--text-muted); cursor: not-allowed; border-color: var(--border); box-shadow: none; }
-textarea { resize: vertical; min-height: 80px; }
+/* label consolidado em components.css */
+/* Campos consolidados em components.css */
 
 /* ── Autocomplete ── */
 .autocomplete-wrapper { position: relative; }
@@ -251,12 +233,7 @@ textarea { resize: vertical; min-height: 80px; }
 
 /* ── Buttons ── */
 .btn-row { margin-top: 32px; display: flex; gap: 12px; justify-content: flex-end; padding-top: 20px; border-top: 1px solid var(--border); }
-.btn { font-family: inherit; font-size: 0.95rem; font-weight: 600; padding: 12px 24px; border: none; border-radius: var(--radius); cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
-.btn-primary:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
-.btn-secondary { background: white; color: var(--text-main); border: 1px solid var(--border); }
-.btn-secondary:hover { background: #fafaf9; border-color: #d6d3d1; }
+/* Botões consolidados em components.css */
 
 /* ── Botão "Consultar" na seção Documentos ── */
 .btn-docs {
@@ -468,11 +445,7 @@ textarea { resize: vertical; min-height: 80px; }
   transition: border-color 0.2s;
 }
 
-#alertaTextarea:focus {
-  outline: none;
-  border-color: var(--border-focus, var(--accent));
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
+/* foco via components.css (bottom-stroke) */
 
 /* ==================== LOGS DE ALTERAÇÕES ==================== */
 .log-card .card-title {
