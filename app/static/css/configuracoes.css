@@ -85,7 +85,7 @@ main {
 .color-preview-card {
   width: 80px; height: 48px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-strong);
   border-left-width: 3px;
   transition: all 0.2s;
 }
@@ -107,20 +107,20 @@ main {
   display: flex; align-items: center; gap: 6px;
   width: 100%; box-sizing: border-box;
 }
-.msg-box.success { background: var(--success-bg); color: var(--success); border: 1px solid #c1d5c4; }
-.msg-box.error { background: var(--danger-bg); color: var(--danger); border: 1px solid #e8c4b8; }
-.msg-box.warning { background: var(--warning-bg); color: var(--warning); border: 1px solid #e8d4b0; }
-.msg-box.info { background: #f0f5f1; color: #0369a1; border: 1px solid #c1d5c4; }
+.msg-box.success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+.msg-box.error { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); }
+.msg-box.warning { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning); }
+.msg-box.info { background: var(--info-bg); color: var(--info); border: 1px solid var(--info); }
 
 /* ── Editor Markdown (Mensagens Internas) ─────────────── */
 .md-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .md-editor-container { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); }
-.md-toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: #fafaf9; border-bottom: 1px solid var(--border); }
+.md-toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: var(--grey-98); border-bottom: 1px solid var(--border); }
 .md-btn { background: transparent; border: 1px solid transparent; border-radius: 4px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; }
-.md-btn:hover { background: #fff; color: var(--accent); box-shadow: var(--shadow-sm); border-color: #d6d3d1; }
+.md-btn:hover { background: var(--surface); color: var(--accent); box-shadow: var(--shadow-sm); border-color: var(--border-strong); }
 .md-editor-container textarea { min-height: 160px; border: none; box-shadow: none; border-radius: 0; padding: 12px; font-family: inherit; font-size: 0.95rem; resize: vertical; outline: none; }
 .md-editor-container textarea:focus { box-shadow: none; }
-.md-preview { min-height: 180px; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: #fafaf9; overflow: auto; font-size: 0.95rem; }
+.md-preview { min-height: 180px; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: var(--grey-98); overflow: auto; font-size: 0.95rem; }
 .md-placeholder { color: var(--text-muted); font-style: italic; opacity: 0.7; }
 
 /* ── Lista de mensagens internas ──────────────────────── */
@@ -131,12 +131,12 @@ main {
 .im-item-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .im-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }
 .im-badge.ativa { background: var(--success-bg); color: var(--success); }
-.im-badge.inativa { background: #f1f0ef; color: var(--text-muted); }
+.im-badge.inativa { background: var(--grey-94); color: var(--text-muted); }
 .im-item-corpo { margin-top: 10px; font-size: 0.9rem; color: var(--text-main); }
 .im-item-acoes { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-.im-btn-mini { font-family: inherit; font-size: 0.82rem; font-weight: 500; padding: 6px 12px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); background: #fff; color: var(--text-main); display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
-.im-btn-mini:hover { background: #fafaf9; border-color: #d6d3d1; }
-.im-btn-mini.danger { color: var(--danger); border-color: #e8c4b8; }
+.im-btn-mini { font-family: inherit; font-size: 0.82rem; font-weight: 500; padding: 6px 12px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+.im-btn-mini:hover { background: var(--grey-98); border-color: var(--border-strong); }
+.im-btn-mini.danger { color: var(--danger); border-color: var(--danger); }
 .im-btn-mini.danger:hover { background: var(--danger-bg); }
 .im-historico { margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 10px; font-size: 0.85rem; }
 .im-historico-linha { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; color: var(--text-muted); }
@@ -164,22 +164,22 @@ main {
   display: inline-flex; align-items: center;
   padding: 2px 10px; border-radius: 999px;
   font-size: 0.72rem; font-weight: 600;
-  background: #f0f5f1; color: var(--success);
+  background: var(--success-bg); color: var(--success);
   white-space: nowrap;
 }
 .remdest-acoes { display: flex; gap: 6px; }
 .remdest-btn-mini {
   font-family: inherit; font-size: 0.82rem; font-weight: 500;
   padding: 6px 10px; border-radius: 8px; cursor: pointer;
-  border: 1px solid var(--border); background: #fff; color: var(--text-main);
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-main);
   display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;
 }
-.remdest-btn-mini:hover { background: #fafaf9; border-color: #d6d3d1; }
-.remdest-del { color: var(--danger); border-color: #e8c4b8; }
+.remdest-btn-mini:hover { background: var(--grey-98); border-color: var(--border-strong); }
+.remdest-del { color: var(--danger); border-color: var(--danger); }
 .remdest-del:hover { background: var(--danger-bg); }
 .remdest-del:disabled {
   opacity: 0.45; cursor: not-allowed;
-  color: var(--text-muted); border-color: var(--border); background: #fff;
+  color: var(--text-muted); border-color: var(--border); background: var(--surface);
 }
 .remdest-vazio { font-size: 0.85rem; color: var(--text-muted); font-style: italic; padding: 8px 0; }
 

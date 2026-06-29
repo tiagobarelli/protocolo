@@ -41,8 +41,8 @@ main {
   font-size: 0.85rem; display: none; align-items: center; gap: 6px;
   margin-top: 12px;
 }
-.msg-box.error { background: var(--danger-bg); border: 1px solid var(--danger); color: #991b1b; display: flex; }
-.msg-box.info { background: var(--accent-soft); border: 1px solid var(--accent); color: #2f3e46; display: flex; }
+.msg-box.error { background: var(--danger-bg); border: 1px solid var(--danger); color: var(--danger); display: flex; }
+.msg-box.info { background: var(--info-bg); border: 1px solid var(--info); color: var(--info); display: flex; }
 
 /* No results */
 .no-results {
@@ -69,17 +69,17 @@ main {
 .pendencia-row td { border-top: none !important; padding-top: 0; }
 .pendencia-row:hover { background: transparent !important; }
 .pendencia-content {
-  background: #fff7ed;
-  border-left: 3px solid #c2410c;
+  background: var(--warning-bg);
+  border-left: 3px solid var(--warning);
   border-radius: 4px;
   padding: 6px 12px;
   font-size: 0.82rem;
-  color: #9a3412;
+  color: var(--warning);
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.pendencia-content i { color: #c2410c; font-size: 1rem; flex-shrink: 0; }
+.pendencia-content i { color: var(--warning); font-size: 1rem; flex-shrink: 0; }
 
 /* Overlay / Spinner */
 .overlay {

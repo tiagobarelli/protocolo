@@ -17,7 +17,7 @@
 .page-header-notif h1 {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--text-dark, #2f3e46);
+  color: var(--text-dark);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -48,7 +48,7 @@
 }
 
 .notif-tab:hover {
-  color: var(--text-dark, #2f3e46);
+  color: var(--text-dark);
 }
 
 .notif-tab.active {
@@ -118,7 +118,7 @@
 
 .notification-sender {
   font-weight: 700;
-  color: var(--text-dark, #2f3e46);
+  color: var(--text-dark);
 }
 
 .notification-protocol {
@@ -206,7 +206,7 @@
 
 .pagination-btn.active {
   background: var(--accent, #84a98c);
-  color: #fff;
+  color: var(--accent-foreground);
   border-color: var(--accent, #84a98c);
 }
 

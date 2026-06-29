@@ -4,7 +4,7 @@
    base.html. Classes próprias prefixadas com oficio-det-. */
 
 .main-content {
-  --oficio-det-muted-log: #94a3b8;
+  --oficio-det-muted-log: var(--text-muted);
 }
 
 .container { max-width: 1280px; margin: 0 auto; padding: 30px 32px; width: 100%; }
@@ -73,7 +73,7 @@
   flex-wrap: wrap;
   gap: 6px;
   padding: 8px;
-  background: #fafaf9;
+  background: var(--grey-98);
   border-bottom: 1px solid var(--border);
 }
 .md-btn {
@@ -89,7 +89,7 @@
   color: var(--text-muted);
   transition: all 0.2s;
 }
-.md-btn:hover { background: #fff; color: var(--accent); box-shadow: var(--shadow-sm); border-color: #d6d3d1; }
+.md-btn:hover { background: var(--surface); color: var(--accent); box-shadow: var(--shadow-sm); border-color: var(--border-strong); }
 .md-editor-container textarea {
   border: none;
   box-shadow: none;
@@ -103,7 +103,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
-  background: #fafaf9;
+  background: var(--grey-98);
   overflow: auto;
   font-size: 0.95rem;
   word-break: break-word;
@@ -264,10 +264,10 @@
   align-items: center;
   gap: 8px;
 }
-.msg-box.success { background: #f0f5f1; border: 1px solid var(--success); color: #15803d; display: flex; }
-.msg-box.warning { background: #fff7ed; border: 1px solid var(--warning); color: #92400e; display: flex; }
-.msg-box.error { background: #fef2f2; border: 1px solid var(--danger); color: #b91c1c; display: flex; }
-.msg-box.info { background: var(--accent-soft); border: 1px solid var(--border); color: var(--text-dark); display: flex; }
+.msg-box.success { background: var(--success-bg); border: 1px solid var(--success); color: var(--success); display: flex; }
+.msg-box.warning { background: var(--warning-bg); border: 1px solid var(--warning); color: var(--warning); display: flex; }
+.msg-box.error { background: var(--danger-bg); border: 1px solid var(--danger); color: var(--danger); display: flex; }
+.msg-box.info { background: var(--info-bg); border: 1px solid var(--info); color: var(--info); display: flex; }
 
 /* ── Botões — consolidados em components.css ─────────── */
 
@@ -276,7 +276,7 @@
   position: sticky;
   bottom: 0;
   z-index: 100;
-  background: rgba(47, 62, 70, 0.92); /* var(--primary) a 92% — baixar p/ ~0.80 dá mais "vidro" */
+  background: rgba(24, 24, 27, 0.92); /* var(--primary) a 92% — baixar p/ ~0.80 dá mais "vidro" */
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   border: 1px solid var(--border);

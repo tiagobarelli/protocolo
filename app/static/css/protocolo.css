@@ -55,7 +55,7 @@ main {
   gap: 20px;
 }
 
-.info-item { padding-bottom: 12px; border-bottom: 1px dotted #d6d3d1; }
+.info-item { padding-bottom: 12px; border-bottom: 1px dotted var(--border-strong); }
 .info-item.full-width { grid-column: span 2; }
 
 .info-label {
@@ -76,7 +76,7 @@ main {
 .detalhamentos-content p { margin-bottom: 8px; }
 .detalhamentos-content ul, .detalhamentos-content ol { margin-left: 20px; margin-bottom: 8px; }
 .detalhamentos-content h2, .detalhamentos-content h3 { margin-top: 16px; margin-bottom: 8px; color: var(--text-dark); }
-.detalhamentos-content code { background: #fafaf9; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+.detalhamentos-content code { background: var(--grey-98); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
 
 /* ==================== ANDAMENTOS ==================== */
 
@@ -123,7 +123,7 @@ main {
   border: 2px solid var(--text-muted);
   border-radius: 50%;
   background: transparent;
-  color: #fff;
+  color: var(--accent-foreground);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -160,7 +160,7 @@ main {
 .andamento-item.concluindo .andamento-check i {
   opacity: 1;
   transform: scale(1);
-  color: #fff;
+  color: var(--accent-foreground);
 }
 
 /* Risco do texto durante a animação (estado concluido já tratado acima) */
@@ -275,7 +275,7 @@ main {
   gap: 6px;
   padding: 6px 8px;
   margin-bottom: 8px;
-  background: #fafaf9;
+  background: var(--grey-98);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
@@ -293,10 +293,10 @@ main {
   transition: all 0.2s;
 }
 .andamento-md-toolbar .md-btn:hover {
-  background: #fff;
+  background: var(--surface);
   color: var(--accent);
   box-shadow: var(--shadow-sm);
-  border-color: #d6d3d1;
+  border-color: var(--border-strong);
 }
 
 .andamento-checks {
@@ -348,8 +348,8 @@ main {
   padding: 10px 14px; border-radius: var(--radius);
   font-size: 0.85rem; display: none; align-items: center; gap: 6px;
 }
-.msg-box.success { background: var(--success-bg); border: 1px solid var(--success); color: #15803d; display: flex; }
-.msg-box.error { background: var(--danger-bg); border: 1px solid var(--danger); color: #991b1b; display: flex; }
+.msg-box.success { background: var(--success-bg); border: 1px solid var(--success); color: var(--success); display: flex; }
+.msg-box.error { background: var(--danger-bg); border: 1px solid var(--danger); color: var(--danger); display: flex; }
 
 /* Loading e overlay */
 .overlay {
@@ -394,7 +394,7 @@ main {
   align-items: center;
   gap: 12px;
   padding: 10px 4px;
-  border-bottom: 1px dotted #d6d3d1;
+  border-bottom: 1px dotted var(--border-strong);
   transition: background 0.15s;
 }
 .file-item:last-child { border-bottom: none; }
@@ -493,8 +493,8 @@ main {
 
 /* ==================== CARD DE VINCULAÇÃO AO ATO ==================== */
 .card-vinculacao {
-  background: #f0fdf4;
-  border: 1px solid #c1d5c4;
+  background: var(--success-bg);
+  border: 1px solid var(--success);
   padding: 16px 20px;
 }
 
@@ -503,7 +503,7 @@ main {
   align-items: center;
   gap: 10px;
   font-size: 0.9rem;
-  color: #15803d;
+  color: var(--success);
   line-height: 1.5;
 }
 
@@ -513,20 +513,20 @@ main {
 }
 
 .vinc-icon-success {
-  color: #16a34a;
+  color: var(--success);
 }
 
 .vinc-icon-info {
-  color: #84a98c;
+  color: var(--info);
 }
 
 .card-vinculacao.certidao {
-  background: #f5f5f4;
-  border-color: #bfdbfe;
+  background: var(--info-bg);
+  border-color: var(--info);
 }
 
 .card-vinculacao.certidao .card-vinculacao-content {
-  color: #2f3e46;
+  color: var(--info);
 }
 
 /* ==================== LOGS DE ALTERAÇÕES ==================== */
@@ -535,7 +535,7 @@ main {
 }
 .log-texto {
   font-size: 0.82rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
@@ -589,9 +589,9 @@ main {
   transition: all 0.2s;
 }
 .btn-inline-save { background: var(--success-bg); color: var(--success); }
-.btn-inline-save:hover { background: var(--success); color: #fff; }
+.btn-inline-save:hover { background: var(--success); color: var(--accent-foreground); }
 .btn-inline-cancel { background: var(--danger-bg); color: var(--danger); }
-.btn-inline-cancel:hover { background: var(--danger); color: #fff; }
+.btn-inline-cancel:hover { background: var(--danger); color: var(--accent-foreground); }
 
 /* Edição inline do texto da nota */
 .andamento-texto-wrap { display: flex; align-items: flex-start; gap: 6px; }
@@ -604,7 +604,7 @@ main {
 /* ==================== ALERTA INLINE DE CLIENTE ==================== */
 .alerta-inline-proto {
   font-size: 0.8rem;
-  color: #991b1b;
+  color: var(--danger);
   line-height: 1.4;
   padding: 2px 0;
 }

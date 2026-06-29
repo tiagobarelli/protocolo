@@ -200,7 +200,7 @@ a.todo-group-num:hover { text-decoration: underline; }
   padding: 1px 8px;
   font-size: 0.7rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--accent-foreground);
   background: var(--today-highlight);
   border-radius: 999px;
   vertical-align: middle;
@@ -217,7 +217,7 @@ a.todo-group-num:hover { text-decoration: underline; }
   padding: 1px 8px;
   font-size: 0.7rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--accent-foreground);
   background: var(--danger);
   border-radius: 999px;
   vertical-align: middle;
@@ -244,7 +244,7 @@ a.todo-group-num:hover { text-decoration: underline; }
   border: 2px solid var(--text-muted);
   border-radius: 50%;
   background: transparent;
-  color: #fff;
+  color: var(--accent-foreground);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -279,7 +279,7 @@ a.todo-group-num:hover { text-decoration: underline; }
 .todo-item.concluindo .todo-check i {
   opacity: 1;
   transform: scale(1);
-  color: #fff;
+  color: var(--accent-foreground);
 }
 
 .todo-item.concluindo .todo-texto {
@@ -381,7 +381,7 @@ a.todo-group-num:hover { text-decoration: underline; }
 .msg-box.error {
   background: var(--danger-bg);
   border: 1px solid var(--danger);
-  color: #991b1b;
+  color: var(--danger);
   display: flex;
 }
 
@@ -438,6 +438,6 @@ a.todo-group-num:hover { text-decoration: underline; }
 }
 
 .btn-inline-save { background: var(--success-bg); color: var(--success); }
-.btn-inline-save:hover { background: var(--success); color: #fff; }
+.btn-inline-save:hover { background: var(--success); color: var(--accent-foreground); }
 .btn-inline-cancel { background: var(--danger-bg); color: var(--danger); }
-.btn-inline-cancel:hover { background: var(--danger); color: #fff; }
+.btn-inline-cancel:hover { background: var(--danger); color: var(--accent-foreground); }

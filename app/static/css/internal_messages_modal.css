@@ -61,7 +61,7 @@
 
 .im-modal-body h1,
 .im-modal-body h2,
-.im-modal-body h3 { color: var(--primary, #2f3e46); margin: 0.6em 0 0.3em; }
+.im-modal-body h3 { color: var(--primary); margin: 0.6em 0 0.3em; }
 .im-modal-body p { margin: 0 0 0.7em; }
 .im-modal-body ul,
 .im-modal-body ol { margin: 0 0 0.7em; padding-left: 1.3em; }
@@ -81,7 +81,7 @@
   gap: 14px;
   padding: 16px 22px;
   border-top: 1px solid var(--border, #e7e5e4);
-  background: var(--bg-body, #fafaf9);
+  background: var(--bg-body, var(--grey-98));
 }
 
 .im-modal-check {

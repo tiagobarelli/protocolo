@@ -35,7 +35,7 @@
 /* ── Primary (marca) ─────────────────────────────────── */
 .btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-foreground);
   border-color: var(--accent);
 }
 .btn-primary:hover {
@@ -176,7 +176,7 @@
   appearance: none;
   -webkit-appearance: none;
   padding-right: 32px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23616161' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2352525B' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
 }
@@ -206,7 +206,7 @@
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);   /* 4px — uniforme com botões/inputs */
+  border-radius: var(--radius-lg);   /* 12px — cards shadcn (maior que botões/inputs) */
   padding: 24px;
   box-shadow: var(--shadow-2);       /* elevação sutil */
   margin-bottom: 20px;
@@ -325,23 +325,39 @@
 .badge-danger  { background: var(--danger-bg);  color: var(--danger); }
 .badge-warning { background: var(--warning-bg); color: var(--warning); }
 .badge-neutral { background: var(--grey-94);    color: var(--text-muted); }
-.badge-info    { background: var(--accent-soft); color: var(--accent); }
+.badge-info    { background: var(--info-bg); color: var(--info); }
 
 /* ---- Status de protocolo (com ícone, MAIÚSCULAS) — unificado ---- */
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: var(--radius-md);
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
 }
-.status-badge.andamento  { background: var(--grey-94);    color: var(--text-muted); }
-.status-badge.finalizado { background: var(--success-bg); color: var(--success); }
-.status-badge.cancelado  { background: var(--danger-bg);  color: var(--danger); }
+
+/* esconde o ícone Phosphor herdado (clock/check/x) — substituído pela bolinha */
+.status-badge i { display: none; }
+
+/* bolinha de estado */
+.status-badge::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+.status-badge.andamento::before  { background: var(--warning); }  /* âmbar */
+.status-badge.finalizado::before { background: var(--success); }  /* verde */
+.status-badge.cancelado::before  { background: var(--danger); }   /* vermelho */
 
 /* ---- Etiquetas de domínio (geradas por templates/JS) -------------
    Mesma forma do .badge; cada classe aponta para uma variante.
@@ -380,7 +396,7 @@
 .badge-nao,
 .oficios-badge--pendente    { background: var(--grey-94);    color: var(--text-muted); }
 
-.badge-retificada           { background: var(--accent-soft); color: var(--accent); }
+.badge-retificada           { background: var(--info-bg); color: var(--info); }
 
 /* =====================================================================
    Tabelas de dados (relatórios, ofícios, admin)

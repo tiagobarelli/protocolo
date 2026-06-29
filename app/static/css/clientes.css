@@ -49,7 +49,7 @@ main {
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 .enderecos-placeholder {
-  color: var(--muted, #6b7280);
+  color: var(--text-muted);
   font-size: 0.95rem;
   padding: 1rem 0;
 }
@@ -67,7 +67,7 @@ main {
 .endereco-form {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #fbfbfa;
+  background: var(--grey-98);
   padding: 20px;
   margin-bottom: 20px;
 }
@@ -105,7 +105,7 @@ main {
   padding: 14px 16px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.endereco-item:hover { border-color: #d6d3d1; box-shadow: var(--shadow-sm); }
+.endereco-item:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
 
 .endereco-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .endereco-tag {
@@ -130,10 +130,10 @@ main {
   gap: 0.5rem;
   margin-top: 0.5rem;
   padding: 0.6rem 0.75rem;
-  background: #fef9c3;            /* amarelo suave (post-it) */
-  border: 1px solid #fde68a;
+  background: var(--warning-bg);            /* amarelo suave (post-it) */
+  border: 1px solid var(--warning);
   border-radius: 6px;
-  color: #713f12;
+  color: var(--warning);
   font-size: 0.9rem;
 }
 .endereco-anotacao .ph-note {
@@ -149,7 +149,7 @@ main {
 .endereco-acoes { display: flex; gap: 6px; flex-shrink: 0; }
 .endereco-btn-acao {
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface);
   color: var(--text-muted);
   width: 34px;
   height: 34px;
@@ -204,25 +204,25 @@ main {
 
 /* ── Messages ── */
 .msg-box { padding: 12px 16px; border-radius: var(--radius); font-size: 0.9rem; margin-bottom: 20px; display: none; align-items: center; gap: 8px; }
-.msg-box.success { background: var(--success-bg); border: 1px solid var(--success); color: #15803d; display: flex; }
-.msg-box.warning { background: var(--warning-bg); border: 1px solid var(--warning); color: #92400e; display: flex; }
-.msg-box.error   { background: var(--danger-bg);  border: 1px solid var(--danger);  color: #b91c1c; display: flex; }
+.msg-box.success { background: var(--success-bg); border: 1px solid var(--success); color: var(--success); display: flex; }
+.msg-box.warning { background: var(--warning-bg); border: 1px solid var(--warning); color: var(--warning); display: flex; }
+.msg-box.error   { background: var(--danger-bg);  border: 1px solid var(--danger);  color: var(--danger); display: flex; }
 
 /* ── Markdown editor ── */
 .md-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .md-editor-container { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); }
-.md-toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: #fafaf9; border-bottom: 1px solid var(--border); }
+.md-toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: var(--grey-98); border-bottom: 1px solid var(--border); }
 .md-btn { background: transparent; border: 1px solid transparent; border-radius: 4px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; }
-.md-btn:hover { background: #fff; color: var(--accent); box-shadow: var(--shadow-sm); border-color: #d6d3d1; }
+.md-btn:hover { background: var(--surface); color: var(--accent); box-shadow: var(--shadow-sm); border-color: var(--border-strong); }
 .md-editor-container textarea { border: none; box-shadow: none; border-radius: 0; padding: 12px; min-height: 160px; }
 .md-editor-container textarea:focus { box-shadow: none; }
-.md-preview { min-height: 180px; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: #fafaf9; overflow: auto; font-size: 0.95rem; }
+.md-preview { min-height: 180px; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; background: var(--grey-98); overflow: auto; font-size: 0.95rem; }
 .md-placeholder { color: var(--text-muted); font-style: italic; opacity: 0.7; }
 
 /* ── Overlay / spinner ── */
 .overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(2px); z-index: 100; align-items: center; justify-content: center; }
 .overlay.active { display: flex; }
-.spinner { width: 48px; height: 48px; border: 4px solid #d6d3d1; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.spinner { width: 48px; height: 48px; border: 4px solid var(--border-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Protocolos vinculados ── */
@@ -254,7 +254,7 @@ main {
   text-transform: none;
   letter-spacing: 0;
 }
-.btn-docs:hover { background: #fafaf9; border-color: #d6d3d1; color: var(--accent); }
+.btn-docs:hover { background: var(--grey-98); border-color: var(--border-strong); color: var(--accent); }
 
 /* ── Resumo inline dos documentos ── */
 .docs-resumo {
@@ -347,7 +347,7 @@ main {
   display: block;
   cursor: pointer;
   border-bottom: 1px solid var(--border);
-  background: #fafaf9;
+  background: var(--grey-98);
 }
 
 .doc-info {
@@ -399,12 +399,12 @@ main {
 .switch-label { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
 .switch-label input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
 .switch-track {
-  position: relative; width: 40px; height: 22px; background: #d6d3d1; border-radius: 11px;
+  position: relative; width: 40px; height: 22px; background: var(--border-strong); border-radius: 11px;
   transition: background 0.2s; flex-shrink: 0;
 }
 .switch-track::after {
   content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
-  background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: var(--shadow-sm);
+  background: var(--surface); border-radius: 50%; transition: transform 0.2s; box-shadow: var(--shadow-sm);
 }
 .switch-label input[type="checkbox"]:checked + .switch-track { background: var(--accent); }
 .switch-label input[type="checkbox"]:checked + .switch-track::after { transform: translateX(18px); }
@@ -454,7 +454,7 @@ main {
 
 .log-texto {
   font-size: 0.82rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
@@ -479,14 +479,14 @@ main {
   line-height: 1.4;
 }
 .msg-inline.aviso-falecido {
-  background: var(--status-warning-bg, #fff3cd);
-  color: var(--status-warning-text, #856404);
-  border: 1px solid var(--status-warning-border, #ffc107);
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning);
 }
 .msg-inline.aviso-conflito {
-  background: var(--status-info-bg, #d1ecf1);
-  color: var(--status-info-text, #0c5460);
-  border: 1px solid var(--status-info-border, #bee5eb);
+  background: var(--info-bg);
+  color: var(--info);
+  border: 1px solid var(--info);
 }
 
 /* ── Barra de ação sticky (Salvar/Limpar) ── */
@@ -494,7 +494,7 @@ main {
   position: sticky;
   bottom: 0;
   z-index: 100;
-  background: rgba(47, 62, 70, 0.92); /* var(--primary) a 92% — baixar p/ ~0.80 dá mais "vidro" */
+  background: rgba(24, 24, 27, 0.92); /* var(--primary) a 92% — baixar p/ ~0.80 dá mais "vidro" */
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   border: 1px solid var(--border);
@@ -531,8 +531,8 @@ main {
 
 /* ── Faixa de resumo: estado de alerta cadastrado (vermelho suave) ── */
 .cliente-resumo.tem-alerta {
-  background: #fef2f2;                      /* mesmo soft-red das mensagens de erro do sistema */
-  border-color: var(--danger, #b91c1c);    /* tinge também a barra lateral de 3px em vermelho */
+  background: var(--danger-bg);                      /* mesmo soft-red das mensagens de erro do sistema */
+  border-color: var(--danger);    /* tinge também a barra lateral de 3px em vermelho */
 }
 .cliente-resumo .resumo-alerta {
   display: inline-flex;
@@ -540,7 +540,7 @@ main {
   gap: 4px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--danger, #b91c1c);
+  color: var(--danger);
 }
 
 /* ── Acabamento responsivo (Fase 3) ── */

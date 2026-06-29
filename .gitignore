@@ -1,6 +1,7 @@
 # Ambiente virtual
 venv/
 p/
+design-reference/
 
 # Python
 __pycache__/

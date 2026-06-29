@@ -1,6 +1,12 @@
 /* Página Index — Dashboard com sidebar + cards de protocolo */
 /* Tokens base centralizados em design-system.css */
 
+.main-content {
+  /* Cor-ilha do dashboard (acento de serviço "certidão notarial"). Significado próprio,
+     tokenizada e escopada na página — nunca em :root. */
+  --teal: #0F766E;  /* teal-700 — acento de seção */
+}
+
 /* ==================== FILTROS ==================== */
 .filters-bar {
   display: flex;
@@ -61,12 +67,12 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 16px;
   text-decoration: none;
   color: inherit;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   transition: all 0.2s;
   position: relative;
   overflow: hidden;
@@ -108,7 +114,7 @@
 
 /* Card de Certidão notarial — serviço em verde */
 .protocol-card.card-certidao .card-field-servico {
-  color: #0f766e;
+  color: var(--teal);
   font-weight: 600;
 }
 
@@ -155,11 +161,16 @@
   font-size: 0.8rem;
 }
 
+/* Interessado (1º card-field do corpo) em negrito */
+.protocol-card .card-body .card-field:first-child {
+  font-weight: 600;
+}
+
 .card-footer {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid var(--border);
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -258,7 +269,7 @@
 .pagination-btn:hover:not([disabled]) {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-foreground);
 }
 
 .pagination-btn[disabled] {

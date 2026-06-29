@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Thṓth - Sistema Notarial{% endblock %}</title>
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-  <meta name="theme-color" content="#2f3e46">
+  <meta name="theme-color" content="#FFFFFF">
   <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-512.png') }}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -30,9 +30,9 @@
     .topbar a:hover { text-decoration: underline; }
     .flash { padding: 12px 24px; margin: 0; list-style: none; }
     .flash li { padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; }
-    .flash .success { background: #f0f5f1; color: #15803d; }
-    .flash .error { background: #faf0ed; color: #991b1b; }
-    .flash .info { background: #f0f5f1; color: #0369a1; }
+    .flash .success { background: var(--success-bg); color: var(--success); }
+    .flash .error { background: var(--danger-bg); color: var(--danger); }
+    .flash .info { background: var(--info-bg); color: var(--info); }
     main { padding: 20px; max-width: 960px; margin: 0 auto; }
     /* Flash messages (partial) */
     .flash-container { padding: 0 0 12px; }
@@ -42,9 +42,9 @@
       font-size: 0.9rem; font-weight: 500;
       animation: flashFadeIn 0.3s ease-out, flashFadeOut 0.4s ease-in 4.6s forwards;
     }
-    .flash-item.success { background: #f0f5f1; color: #15803d; border: 1px solid #c1d5c4; }
-    .flash-item.error { background: #faf0ed; color: #991b1b; border: 1px solid #e8c4b8; }
-    .flash-item.info { background: #f0f5f1; color: #0369a1; border: 1px solid #c1d5c4; }
+    .flash-item.success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+    .flash-item.error { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); }
+    .flash-item.info { background: var(--info-bg); color: var(--info); border: 1px solid var(--info); }
     @keyframes flashFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes flashFadeOut { from { opacity: 1; } to { opacity: 0; } }
 
@@ -80,11 +80,12 @@
     .toast .toast-icon { font-size: 1.1rem; flex-shrink: 0; }
     .toast .toast-msg { flex: 1; }
     .toast .toast-close { flex-shrink: 0; opacity: 0.6; font-size: 1rem; }
-    .toast.success { border-color: #c1d5c4; }
+    .toast.success { border-color: var(--success); }
     .toast.success .toast-icon { color: var(--success); }
-    .toast.error   { border-color: #e8c4b8; }
+    .toast.error   { border-color: var(--danger); }
     .toast.error   .toast-icon { color: var(--danger); }
-    .toast.info    .toast-icon { color: var(--primary-hover); }
+    .toast.info    { border-color: var(--info); }
+    .toast.info    .toast-icon { color: var(--info); }
     @keyframes toastIn  { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
     @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(20px); } }
     @media (max-width: 640px) {

@@ -32,10 +32,10 @@ main { max-width: none; padding: 0; margin: 0; }
 
 /* ==================== MSG BOX ==================== */
 .msg-box { padding: 12px 16px; border-radius: var(--radius); font-size: 0.9rem; margin-bottom: 16px; display: none; align-items: center; gap: 8px; }
-.msg-box.success { background: var(--success-bg); border: 1px solid var(--success); color: #15803d; display: flex; }
-.msg-box.warning { background: var(--warning-bg); border: 1px solid var(--warning); color: #92400e; display: flex; }
-.msg-box.error { background: var(--danger-bg); border: 1px solid var(--danger); color: #b91c1c; display: flex; }
-.msg-box.info { background: var(--accent-soft); border: 1px solid var(--accent); color: #2f3e46; display: flex; }
+.msg-box.success { background: var(--success-bg); border: 1px solid var(--success); color: var(--success); display: flex; }
+.msg-box.warning { background: var(--warning-bg); border: 1px solid var(--warning); color: var(--warning); display: flex; }
+.msg-box.error { background: var(--danger-bg); border: 1px solid var(--danger); color: var(--danger); display: flex; }
+.msg-box.info { background: var(--info-bg); border: 1px solid var(--info); color: var(--info); display: flex; }
 
 /* ==================== AUTOCOMPLETE ==================== */
 .autocomplete-wrapper { position: relative; }
@@ -55,7 +55,7 @@ main { max-width: none; padding: 0; margin: 0; }
 /* ==================== OVERLAY / SPINNER ==================== */
 .overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(2px); z-index: 200; align-items: center; justify-content: center; }
 .overlay.active { display: flex; }
-.spinner { width: 48px; height: 48px; border: 4px solid #d6d3d1; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.spinner { width: 48px; height: 48px; border: 4px solid var(--border-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 
 /* ==================== CHIPS ==================== */
 /* Chips consolidados em components.css */
@@ -63,7 +63,7 @@ main { max-width: none; padding: 0; margin: 0; }
 /* ==================== REQUERENTE (read-only display) ==================== */
 .requerente-display {
   padding: 10px 12px;
-  background: #fafaf9;
+  background: var(--grey-98);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 0.95rem;
@@ -114,7 +114,7 @@ main { max-width: none; padding: 0; margin: 0; }
   z-index: 200;
   width: 40px; height: 40px;
   background: var(--sidebar-bg);
-  color: #fff;
+  color: var(--accent-foreground);
   border: none;
   border-radius: 8px;
   font-size: 1.2rem;

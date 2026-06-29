@@ -29,27 +29,32 @@
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 6px; color: var(--text-main); }
     .form-group input {
-      width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md);
       font-size: 1rem;
     }
     .form-group input:focus { outline: none; border-color: var(--accent); }
     button[type="submit"] {
       width: 100%; padding: 12px; background: var(--accent); color: white;
-      border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
+      border: none; border-radius: var(--radius-md); font-size: 1rem; font-weight: 600; cursor: pointer;
     }
     button[type="submit"]:hover { background: var(--accent-hover); }
-    .flash { margin-bottom: 16px; padding: 10px; border-radius: 8px; font-size: 0.9rem; }
-    .flash.error { background: #faf0ed; color: #991b1b; }
-    .flash.success { background: #f0f5f1; color: #15803d; }
+    .flash { margin-bottom: 16px; padding: 10px; border-radius: var(--radius-md); font-size: 0.9rem; }
+    .flash.error { background: var(--danger-bg); color: var(--danger); }
+    .flash.success { background: var(--success-bg); color: var(--success); }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div class="header-logo" style="margin-bottom: 24px;">
-        <img src="{{ url_for('static', filename='img/Logo_dark_2.png') }}" alt="Thṓth" style="width: 140px; height: auto;">
-      </div>
-      <h1>Thṓth - Sistema Notarial</h1>
+<div class="header-logo" style="margin-bottom: 24px; display: flex; justify-content: center;">
+  <div style="width: 96px; height: 96px; border-radius: 20px;
+              background: var(--accent); color: var(--accent-foreground);
+              display: grid; place-items: center;">
+    <i class="ph ph-feather" style="font-size: 46px;"></i>
+  </div>
+</div>
+      <h1>Thṓth</h1>
+      <h4>Sistema de Gestão Notarial</h4>
       <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 6px;">Entre com seu e-mail e senha. A senha é a mesma usada no ODIN.</p>
     </div>
     <div class="card">

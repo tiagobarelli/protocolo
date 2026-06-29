@@ -60,7 +60,7 @@ main {
 /* .btn-icon consolidado em components.css */
 
 /* Linha inline de edição */
-.edit-row td { background: #fafaf9; padding: 20px 12px; }
+.edit-row td { background: var(--grey-98); padding: 20px 12px; }
 .inline-form { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
 .inline-form .form-group { min-width: 140px; }
 .inline-form .form-group.small { flex: 0 0 140px; min-width: auto; }

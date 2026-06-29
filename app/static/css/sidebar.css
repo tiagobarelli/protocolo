@@ -7,7 +7,7 @@ main { max-width: none; padding: 0; margin: 0; }
 .sidebar {
   width: 260px;
   background: var(--sidebar-bg);
-  color: #fff;
+  color: var(--sidebar-text);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -17,14 +17,6 @@ main { max-width: none; padding: 0; margin: 0; }
   z-index: 100;
   overflow-y: auto;
 }
-
-/* .sidebar-header {
-  padding: 24px 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-} */
 
 .sidebar-header {
   display: flex;
@@ -58,7 +50,7 @@ main { max-width: none; padding: 0; margin: 0; }
   margin: 0;
   font-size: 0.60rem;     /* Tamanho menor para parecer secundário */
   font-weight: 400;       /* Menos negrito que o h1 */
-  color: #888;            /* Uma cor mais suave (cinza) para dar menos destaque */
+  color: var(--sidebar-muted);   /* cor suave (cinza) para dar menos destaque */
   /*text-transform: uppercase;*/ /* Opcional: deixa em caixa alta para um visual clean */
   letter-spacing: 1px;    /* Opcional: um pouco de espaço entre letras */
 }
@@ -76,7 +68,7 @@ main { max-width: none; padding: 0; margin: 0; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 7px 12px;
   border-radius: var(--radius, 6px); /* Alterado */
   color: var(--sidebar-text);
   text-decoration: none;
@@ -111,7 +103,7 @@ main { max-width: none; padding: 0; margin: 0; }
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 12px;
+  padding: 7px 12px;
   border: none;
   border-radius: 6px;
   background: transparent;
@@ -129,7 +121,7 @@ main { max-width: none; padding: 0; margin: 0; }
 }
 
 .nav-group.open .nav-group-toggle {
-  color: #fff;
+  color: var(--sidebar-text-strong);
 }
 
 .nav-group-label {
@@ -157,7 +149,7 @@ main { max-width: none; padding: 0; margin: 0; }
   transition: max-height 0.25s ease;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .nav-group.open .nav-group-items {
@@ -187,7 +179,7 @@ main { max-width: none; padding: 0; margin: 0; }
 
 .sidebar-footer .user-info {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--sidebar-muted);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -195,7 +187,7 @@ main { max-width: none; padding: 0; margin: 0; }
 
 .sidebar-footer a {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--sidebar-text);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -203,22 +195,22 @@ main { max-width: none; padding: 0; margin: 0; }
   transition: color 0.2s;
 }
 
-.sidebar-footer a:hover { color: #fff; }
+.sidebar-footer a:hover { color: var(--sidebar-text-strong); }
 
 .sidebar-footer a.version-link {
   font-size: 0.5rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--sidebar-muted);
   text-decoration: none;
   margin-bottom: 4px;
 }
 
 .sidebar-footer a.version-link:hover {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--sidebar-text);
 }
 
 .notification-bell {
   position: relative;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--sidebar-text);
   font-size: 0.85rem;
   text-decoration: none;
   display: flex;
@@ -229,13 +221,13 @@ main { max-width: none; padding: 0; margin: 0; }
 
 .notification-bell:hover,
 .notification-bell.active {
-  color: #fff;
+  color: var(--sidebar-text-strong);
 }
 
 .notification-badge {
   position: static;
   background: var(--sidebar-badge-notif);
-  color: #fff;
+  color: var(--accent-foreground);
   font-size: 0.65rem;
   font-weight: 700;
   min-width: 16px;
@@ -269,8 +261,8 @@ main { max-width: none; padding: 0; margin: 0; }
   width: 40px;
   height: 40px;
   background: var(--sidebar-bg);
-  color: #fff;
-  border: none;
+  color: var(--sidebar-text-strong);
+  border: 1px solid var(--sidebar-border);
   border-radius: var(--radius, 6px);
   font-size: 1.2rem;
   cursor: pointer;
@@ -311,7 +303,7 @@ main { max-width: none; padding: 0; margin: 0; }
   margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .nav-section-label {
