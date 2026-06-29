@@ -67,81 +67,21 @@ main {
 /* Botões consolidados em components.css */
 
 /* ══════════════════════════════════════════════════
-   DADOS CADASTRAIS — grid de label/valor
+   IDENTIFICAÇÃO DO CLIENTE — cabeçalho enxuto
    ══════════════════════════════════════════════════ */
-.dados-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px 24px;
-}
-.dado-item {
+.cliente-identificacao {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin-bottom: 16px;
 }
-.dado-item.full-width {
-  grid-column: 1 / -1;
-}
-.dado-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
-.dado-valor {
-  font-size: 0.93rem;
-  color: var(--text-dark);
-  word-break: break-word;
-}
-.dado-valor.pendente {
-  color: var(--warning);
-  font-style: italic;
-}
-.badge-falecido {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--danger-bg);
-  color: var(--danger);
-  margin-left: 8px;
-  vertical-align: middle;
-}
+.cliente-identificacao .ci-nome { font-weight: 600; color: var(--text-dark); }
+.cliente-identificacao .ci-doc  { color: var(--text-muted); font-size: 0.9rem; }
 
 /* ══════════════════════════════════════════════════
-   SEÇÕES DE ATOS — mini-cards empilhados
+   TAG DE STATUS (Protocolos) — usada na coluna Status
    ══════════════════════════════════════════════════ */
-.ato-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px 20px;
-  margin-bottom: 12px;
-  background: var(--bg-body);
-}
-.ato-card:last-child {
-  margin-bottom: 0;
-}
-.ato-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 20px;
-}
-.ato-grid .dado-item.full-width {
-  grid-column: 1 / -1;
-}
-.ato-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
-.ato-valor {
-  font-size: 0.88rem;
-  color: var(--text-dark);
-}
 .ato-tag {
   display: inline-block;
   font-size: 0.72rem;
@@ -164,23 +104,11 @@ main {
   color: var(--danger);
 }
 
-/* Sub-card para retificações dentro de escritura */
-.retificacao-sub {
-  margin-top: 10px;
-  padding: 10px 14px;
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-}
-.retificacao-sub .ato-grid {
-  gap: 6px 16px;
-}
-.retificacao-titulo {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--warning);
-  margin-bottom: 6px;
+/* Refs de retificação inline na célula "Retificada?" */
+.retif-refs { margin-top: 4px; }
+.retif-ref {
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
 
 /* Seção vazia */
@@ -198,8 +126,6 @@ main {
 @media (max-width: 768px) {
   .search-bar { flex-direction: column; }
   .search-bar .btn { width: 100%; justify-content: center; }
-  .dados-grid { grid-template-columns: 1fr; }
-  .ato-grid { grid-template-columns: 1fr; }
 }
 
 /* ══════════════════════════════════════════════════
@@ -235,7 +161,7 @@ main {
     break-inside: avoid;
     page-break-inside: avoid;
   }
-  .ato-card {
+  .report-table tbody tr {
     break-inside: avoid;
     page-break-inside: avoid;
   }

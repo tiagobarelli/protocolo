@@ -297,131 +297,22 @@ function renderizarRelatorio(row) {
 // ═══════════════════════════════════════════════════════
 function renderizarDadosCadastrais(row, isPJ) {
   var f = CONFIG.fields;
-  var html = '<div class="dados-grid">';
+  var nome = row[f.nome] || '—';
+  var cnpj = row[f.cnpj] || '';
+  var cpf = row[f.cpf] || '';
 
-  if (isPJ) {
-    html += dadoItem('Denominação', row[f.nome] || '\u2014');
-    html += dadoItem('CNPJ', row[f.cnpj] || '\u2014');
-    if (row[f.telefone]) html += dadoItem('Telefone', row[f.telefone]);
-    if (row[f.email]) html += dadoItem('E-mail', row[f.email]);
-    if (row[f.outros]) html += dadoItem('Outros', row[f.outros], true);
-  } else {
-    // 1. Nome
-    html += dadoItem('Nome', row[f.nome] || '\u2014');
-    // 2. CPF
-    html += dadoItem('CPF', row[f.cpf] || '\u2014');
-    // 3. Falecido?
-    var isFalecido = row[f.falecidoTF] === true;
-    html += dadoItem('Falecido?', isFalecido ? 'Sim' : 'Não');
-    // 4. Data de falecimento (só se falecido)
-    if (isFalecido && row[f.dataFalecimento]) {
-      html += dadoItem('Data de Falecimento', formatarData(row[f.dataFalecimento]));
-    }
-    // 5. Empresário individual?
-    var isEmpresario = row[f.empresarioTF] === true;
-    html += dadoItem('Empresário Individual?', isEmpresario ? 'Sim' : 'Não');
-    // 6. CNPJ (só se empresário)
-    if (isEmpresario) {
-      var cnpjVal = row[f.cnpj] || '';
-      html += dadoItem('CNPJ', cnpjVal ? cnpjVal : 'CNPJ pendente de cadastro', false, !cnpjVal);
-    }
-    // 7. Advogado?
-    var isAdvogado = row[f.advogadoTF] === true;
-    html += dadoItem('Advogado?', isAdvogado ? 'Sim' : 'Não');
-    // 8. OAB (só se advogado)
-    if (isAdvogado) {
-      var oabVal = row[f.oab] || '';
-      html += dadoItem('OAB', oabVal ? oabVal : 'OAB pendente de cadastro', false, !oabVal);
-    }
-    // 9. Corretor?
-    var isCorretor = row[f.corretorTF] === true;
-    html += dadoItem('Corretor?', isCorretor ? 'Sim' : 'Não');
-    // 10. CRECI (só se corretor)
-    if (isCorretor) {
-      var creciVal = row[f.creci] || '';
-      html += dadoItem('CRECI', creciVal ? creciVal : 'CRECI pendente de cadastro', false, !creciVal);
-    }
-    // 11. RG
-    if (row[f.rg]) html += dadoItem('RG', row[f.rg]);
-    // 12. Nascimento
-    var nascimento = row[f.nascimento];
-    if (nascimento) html += dadoItem('Nascimento', formatarData(nascimento));
-    // 13. Idade
-    if (nascimento) {
-      if (isFalecido && row[f.dataFalecimento]) {
-        var idadeAoFalecer = calcularIdade(nascimento, row[f.dataFalecimento]);
-        if (idadeAoFalecer !== null) html += dadoItem('Idade ao Falecer', idadeAoFalecer + ' anos');
-      } else {
-        var idadeAtual = calcularIdade(nascimento, null);
-        if (idadeAtual !== null) html += dadoItem('Idade', idadeAtual + ' anos');
-      }
-    }
-    // 14. Profissão
-    if (row[f.profissao]) html += dadoItem('Profissão', row[f.profissao]);
-    // 15. Telefone
-    if (row[f.telefone]) html += dadoItem('Telefone', row[f.telefone]);
-    // 16. E-mail
-    if (row[f.email]) html += dadoItem('E-mail', row[f.email]);
-    // 17. Estado civil
-    var ec = row[f.estadoCivil];
-    if (ec && ec.value) html += dadoItem('Estado Civil', ec.value);
-    // 19. Regime de bens
-    var rp = row[f.regraPatrimonial];
-    if (rp && rp.value) html += dadoItem('Regime de Bens', rp.value);
-    // 20. Cônjuge (resolver link_row)
-    var conjugeArr = row[f.conjuge];
-    if (conjugeArr && conjugeArr.length > 0) {
-      resolverLinkRowCliente(conjugeArr[0].id, 'dadosCadastrais', 'Cônjuge');
-    }
-    // 21. União estável
-    var isUE = row[f.uniaoEstavelTF] === true;
-    html += dadoItem('União Estável', isUE ? 'Sim' : 'Não');
-    // 22. Companheiro (resolver link_row)
-    var compArr = row[f.companheiro];
-    if (compArr && compArr.length > 0) {
-      resolverLinkRowCliente(compArr[0].id, 'dadosCadastrais', 'Companheiro(a)');
-    }
-    // 23. Regra patrimonial UE
-    var rpUE = row[f.regraPatrimonialUE];
-    if (rpUE && rpUE.value) html += dadoItem('Regime Patrimonial (UE)', rpUE.value);
+  // Mesma deteccao PF/PJ: havendo CNPJ rotula CNPJ; senao CPF.
+  var docLabel = cnpj ? 'CNPJ' : 'CPF';
+  var docValor = cnpj ? cnpj : cpf;
+
+  var html = '<span class="ci-nome">' + esc(nome) + '</span>';
+  if (docValor) {
+    html += '<span class="ci-doc">' + docLabel + ' ' + esc(docValor) + '</span>';
   }
 
-  html += '</div>';
-  document.getElementById('dadosCadastrais').innerHTML = html;
-}
-
-function dadoItem(label, valor, fullWidth, pendente) {
-  var cls = 'dado-item' + (fullWidth ? ' full-width' : '');
-  var valorCls = 'dado-valor' + (pendente ? ' pendente' : '');
-  return '<div class="' + cls + '">' +
-    '<div class="dado-label">' + esc(label) + '</div>' +
-    '<div class="' + valorCls + '">' + esc(String(valor)) + '</div>' +
-    '</div>';
-}
-
-// Resolver cônjuge/companheiro: GET no registro e injetar no container
-function resolverLinkRowCliente(rowId, containerId, label) {
-  var url = API_BASE + '/database/rows/table/' + CONFIG.tables.clientes +
-    '/' + rowId + '/?user_field_names=false';
-  fetch(url, { headers: apiHeaders() })
-    .then(function(r) { return r.json(); })
-    .then(function(linked) {
-      var nome = linked[CONFIG.fields.nome] || '';
-      var cpf = linked[CONFIG.fields.cpf] || '';
-      var texto = nome;
-      if (cpf) texto += ' - CPF ' + cpf;
-      // Injetar como último item dentro do .dados-grid
-      var container = document.getElementById(containerId);
-      var grid = container.querySelector('.dados-grid');
-      if (grid) {
-        var div = document.createElement('div');
-        div.className = 'dado-item';
-        div.innerHTML = '<div class="dado-label">' + esc(label) + '</div>' +
-          '<div class="dado-valor">' + esc(texto) + '</div>';
-        grid.appendChild(div);
-      }
-    })
-    .catch(function(e) { console.error('Erro ao resolver ' + label + ':', e); });
+  var el = document.getElementById('clienteIdent');
+  el.innerHTML = html;
+  el.style.display = 'flex';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -460,10 +351,13 @@ function carregarEscrituras(row) {
         return da < db ? 1 : (da > db ? -1 : 0);
       });
 
-      var html = '';
+      var html = '<div class="table-wrapper"><table class="report-table"><thead><tr>' +
+        '<th>Livro</th><th>Página</th><th>Tipo</th><th>Data</th><th>Retificada?</th>' +
+        '</tr></thead><tbody>';
       for (var j = 0; j < registros.length; j++) {
         html += renderizarEscritura(registros[j]);
       }
+      html += '</tbody></table></div>';
       container.innerHTML = html;
 
       // Resolver retificações
@@ -486,17 +380,14 @@ function renderizarEscritura(reg) {
   var retifArr = reg[f.ctrlRetificadaPor] || [];
   var retificada = retifArr.length > 0;
 
-  var html = '<div class="ato-card">';
-  html += '<div class="ato-grid">';
-  html += atoItem('Livro', reg[f.ctrlLivro] || '\u2014');
-  html += atoItem('Página', reg[f.ctrlPagina] || '\u2014');
-  html += atoItem('Tipo', tipo || '\u2014');
-  html += atoItem('Data', formatarData(reg[f.ctrlData]));
-  html += atoItem('Retificada?', retificada ? 'Sim' : 'Não');
-  html += '</div>';
-  // Placeholder para retificações
-  html += '<div id="retif-' + reg.id + '"></div>';
-  html += '</div>';
+  var html = '<tr>';
+  html += '<td>' + esc(reg[f.ctrlLivro] || '—') + '</td>';
+  html += '<td>' + esc(reg[f.ctrlPagina] || '—') + '</td>';
+  html += '<td>' + esc(tipo || '—') + '</td>';
+  html += '<td>' + esc(formatarData(reg[f.ctrlData])) + '</td>';
+  html += '<td>' + esc(retificada ? 'Sim' : 'Não') +
+    '<div id="retif-' + reg.id + '" class="retif-refs"></div></td>';
+  html += '</tr>';
   return html;
 }
 
@@ -517,14 +408,9 @@ function resolverRetificacoes(reg, index) {
       var html = '';
       for (var j = 0; j < retifs.length; j++) {
         var r = retifs[j];
-        html += '<div class="retificacao-sub">';
-        html += '<div class="retificacao-titulo">Retificação ' + (j + 1) + '</div>';
-        html += '<div class="ato-grid">';
-        html += atoItem('Livro', r[CONFIG.fields.retifLivro] || '\u2014');
-        html += atoItem('Página', r[CONFIG.fields.retifPagina] || '\u2014');
-        html += atoItem('Data', formatarData(r[CONFIG.fields.retifData]));
-        html += '</div>';
-        html += '</div>';
+        html += '<div class="retif-ref">L ' + esc(r[CONFIG.fields.retifLivro] || '—') +
+          ' / P ' + esc(r[CONFIG.fields.retifPagina] || '—') +
+          ' · ' + esc(formatarData(r[CONFIG.fields.retifData])) + '</div>';
       }
       container.innerHTML = html;
     })
@@ -556,10 +442,13 @@ function carregarSubstabelecimentos(row) {
         return da < db ? 1 : (da > db ? -1 : 0);
       });
 
-      var html = '';
+      var html = '<div class="table-wrapper"><table class="report-table"><thead><tr>' +
+        '<th>Livro</th><th>Página</th><th>Data</th><th>Procuração Substabelecida</th>' +
+        '</tr></thead><tbody>';
       for (var j = 0; j < registros.length; j++) {
         html += renderizarSubstabelecimento(registros[j]);
       }
+      html += '</tbody></table></div>';
       container.innerHTML = html;
     })
     .catch(function(e) {
@@ -570,7 +459,6 @@ function carregarSubstabelecimentos(row) {
 
 function renderizarSubstabelecimento(reg) {
   var f = CONFIG.fields;
-  // Resolver procuração substabelecida (link_row para Table 745)
   var procArr = reg[f.substProcuracao] || [];
   var procTexto = '';
   for (var i = 0; i < procArr.length; i++) {
@@ -578,14 +466,12 @@ function renderizarSubstabelecimento(reg) {
     procTexto += procArr[i].value || ('ID ' + procArr[i].id);
   }
 
-  var html = '<div class="ato-card">';
-  html += '<div class="ato-grid">';
-  html += atoItem('Livro', reg[f.substLivro] || '\u2014');
-  html += atoItem('Página', reg[f.substPagina] || '\u2014');
-  html += atoItem('Data', formatarData(reg[f.substData]));
-  html += atoItem('Procuração Substabelecida', procTexto || '\u2014');
-  html += '</div>';
-  html += '</div>';
+  var html = '<tr>';
+  html += '<td>' + esc(reg[f.substLivro] || '—') + '</td>';
+  html += '<td>' + esc(reg[f.substPagina] || '—') + '</td>';
+  html += '<td>' + esc(formatarData(reg[f.substData])) + '</td>';
+  html += '<td>' + esc(procTexto || '—') + '</td>';
+  html += '</tr>';
   return html;
 }
 
@@ -614,10 +500,13 @@ function carregarRevogacoes(row) {
         return da < db ? 1 : (da > db ? -1 : 0);
       });
 
-      var html = '';
+      var html = '<div class="table-wrapper"><table class="report-table"><thead><tr>' +
+        '<th>Livro</th><th>Página</th><th>Data</th><th>Procuração Revogada</th>' +
+        '</tr></thead><tbody>';
       for (var j = 0; j < registros.length; j++) {
         html += renderizarRevogacao(registros[j]);
       }
+      html += '</tbody></table></div>';
       container.innerHTML = html;
     })
     .catch(function(e) {
@@ -635,14 +524,12 @@ function renderizarRevogacao(reg) {
     procTexto += procArr[i].value || ('ID ' + procArr[i].id);
   }
 
-  var html = '<div class="ato-card">';
-  html += '<div class="ato-grid">';
-  html += atoItem('Livro', reg[f.revogLivro] || '\u2014');
-  html += atoItem('Página', reg[f.revogPagina] || '\u2014');
-  html += atoItem('Data', formatarData(reg[f.revogData]));
-  html += atoItem('Procuração Revogada', procTexto || '\u2014');
-  html += '</div>';
-  html += '</div>';
+  var html = '<tr>';
+  html += '<td>' + esc(reg[f.revogLivro] || '—') + '</td>';
+  html += '<td>' + esc(reg[f.revogPagina] || '—') + '</td>';
+  html += '<td>' + esc(formatarData(reg[f.revogData])) + '</td>';
+  html += '<td>' + esc(procTexto || '—') + '</td>';
+  html += '</tr>';
   return html;
 }
 
@@ -671,10 +558,13 @@ function carregarProtocolos(row) {
         return da < db ? 1 : (da > db ? -1 : 0);
       });
 
-      var html = '';
+      var html = '<div class="table-wrapper"><table class="report-table"><thead><tr>' +
+        '<th>Protocolo</th><th>Serviço</th><th>Data Entrada</th><th>Status</th>' +
+        '</tr></thead><tbody>';
       for (var j = 0; j < registros.length; j++) {
         html += renderizarProtocolo(registros[j]);
       }
+      html += '</tbody></table></div>';
       container.innerHTML = html;
     })
     .catch(function(e) {
@@ -702,14 +592,12 @@ function renderizarProtocolo(reg) {
     statusTag = '<span class="' + tagClass + '">' + esc(status) + '</span>';
   }
 
-  var html = '<div class="ato-card">';
-  html += '<div class="ato-grid">';
-  html += atoItem('Protocolo', reg[f.protoNumero] || '\u2014');
-  html += atoItem('Serviço', servico || '\u2014');
-  html += atoItem('Data Entrada', formatarData(reg[f.protoDataEntrada]));
-  html += '<div class="dado-item"><div class="ato-label">Status</div><div class="ato-valor">' + (statusTag || '\u2014') + '</div></div>';
-  html += '</div>';
-  html += '</div>';
+  var html = '<tr>';
+  html += '<td>' + esc(reg[f.protoNumero] || '—') + '</td>';
+  html += '<td>' + esc(servico || '—') + '</td>';
+  html += '<td>' + esc(formatarData(reg[f.protoDataEntrada])) + '</td>';
+  html += '<td>' + (statusTag || '—') + '</td>';
+  html += '</tr>';
   return html;
 }
 
@@ -738,10 +626,13 @@ function carregarCertidoes(row) {
         return da < db ? 1 : (da > db ? -1 : 0);
       });
 
-      var html = '';
+      var html = '<div class="table-wrapper"><table class="report-table"><thead><tr>' +
+        '<th>Protocolo</th><th>Data Emissão</th><th>Subtipo</th><th>Requerente</th>' +
+        '</tr></thead><tbody>';
       for (var j = 0; j < registros.length; j++) {
         html += renderizarCertidao(registros[j]);
       }
+      html += '</tbody></table></div>';
       container.innerHTML = html;
     })
     .catch(function(e) {
@@ -764,25 +655,13 @@ function renderizarCertidao(reg) {
   var reqArr = reg[f.certRequerente];
   if (reqArr && reqArr.length > 0) requerente = reqArr[0].value || '';
 
-  var html = '<div class="ato-card">';
-  html += '<div class="ato-grid">';
-  html += atoItem('Protocolo', protocolo || '\u2014');
-  html += atoItem('Data Emissão', formatarData(reg[f.certDataEmissao]));
-  html += atoItem('Subtipo', subtipo || '\u2014');
-  html += atoItem('Requerente', requerente || '\u2014');
-  html += '</div>';
-  html += '</div>';
+  var html = '<tr>';
+  html += '<td>' + esc(protocolo || '—') + '</td>';
+  html += '<td>' + esc(formatarData(reg[f.certDataEmissao])) + '</td>';
+  html += '<td>' + esc(subtipo || '—') + '</td>';
+  html += '<td>' + esc(requerente || '—') + '</td>';
+  html += '</tr>';
   return html;
-}
-
-// ═══════════════════════════════════════════════════════
-// HELPER: item de ato (mini-tabela label/valor)
-// ═══════════════════════════════════════════════════════
-function atoItem(label, valor) {
-  return '<div class="dado-item">' +
-    '<div class="ato-label">' + esc(label) + '</div>' +
-    '<div class="ato-valor">' + esc(String(valor)) + '</div>' +
-    '</div>';
 }
 
 // ═══════════════════════════════════════════════════════

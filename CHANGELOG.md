@@ -2,7 +2,11 @@
 
 Controle de correções e melhorias do sistema
 
-## [1.5.2] 2026-06-28
+## [2.0] 2026-06-29
+
+### Refatoração visual
+
+- **Shadow**. Alteração global do design do sistema para um visual mais claro, leve e profissional. Alteração do ícone para um mais leve e objetivo.
 
 ### Adicionado
 
