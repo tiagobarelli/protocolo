@@ -232,6 +232,8 @@ function preencherFormularioExistente(row) {
   if (protoArr && protoArr.length > 0) {
     protocoloSelecionadoId = protoArr[0].id;
     document.getElementById('protocoloInput').value = protoArr[0].value || '';
+    protoNumeroAtual = protoArr[0].value || '';
+    habilitarAbaAnexo(true);
     document.getElementById('protocoloInput').readOnly = true;
 
     // Buscar status do protocolo
@@ -317,6 +319,7 @@ function prepararNovoRegistro(protoRow) {
   var numero = protoRow[CONFIG.fields.protoNumero] || '';
   protocoloSelecionadoId = protoRow.id;
   document.getElementById('protocoloInput').value = numero;
+  protoNumeroAtual = numero;
   document.getElementById('protocoloInput').readOnly = true;
 
   // Status do protocolo
@@ -329,6 +332,10 @@ function prepararNovoRegistro(protoRow) {
 
   // Preencher requerente
   preencherRequerente(protoRow);
+
+  // Estado inicial das abas (registro novo: anexo só depois de salvar)
+  habilitarAbaAnexo(false);
+  ativarAbaCertidao('dados');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -360,6 +367,12 @@ function resetarEstadoFormulario() {
   esconderMsg('formStatusMsg');
   esconderMsg('protocoloInfo');
   esconderMsg('escrituraInfoMsg');
+
+  protoNumeroAtual = null;
+  var certList = document.getElementById('certFilesList');
+  if (certList) certList.innerHTML = '<div class="files-empty">Nenhum anexo.</div>';
+  habilitarAbaAnexo(false);
+  ativarAbaCertidao('dados');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -796,6 +809,7 @@ function salvarCertidao() {
     })
     .then(function(data) {
       certidaoRowId = data.id;
+      habilitarAbaAnexo(true);
       mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
       document.getElementById('formMsg').scrollIntoView({ behavior: 'smooth' });
 
@@ -872,6 +886,141 @@ function construirPayloadCertidao() {
 }
 
 // ═══════════════════════════════════════════════════════
+// ANEXOS DA CERTIDÃO (aba "Anexo")
+// ═══════════════════════════════════════════════════════
+var protoNumeroAtual = null;
+
+var CERT_ALLOWED_EXT = ['pdf','jpg','jpeg','png','tif','tiff','doc','docx','odt','txt','md'];
+var CERT_MAX_SIZE = 100 * 1024 * 1024; // 100 MB (o servidor é o backstop real)
+
+function iconeExtensao(ext) {
+  var e = (ext || '').toLowerCase();
+  if (e === 'pdf') return 'ph-file-pdf';
+  if (e === 'doc' || e === 'docx' || e === 'odt') return 'ph-file-doc';
+  if (e === 'jpg' || e === 'png') return 'ph-file-image';
+  if (e === 'txt' || e === 'md') return 'ph-file-text';
+  if (e === 'xls') return 'ph-file-xls';
+  return 'ph-file';
+}
+
+function formatarTamanho(bytes) {
+  if (!bytes || bytes === 0) return '0 KB';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1).replace('.', ',') + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
+}
+
+function ativarAbaCertidao(nome) {
+  var btn = document.querySelector('.tab-btn[data-tab="' + nome + '"]');
+  if (btn && btn.disabled) return;
+  var btns = document.querySelectorAll('.tab-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute('data-tab') === nome) btns[i].classList.add('active');
+    else btns[i].classList.remove('active');
+  }
+  var conteudos = document.querySelectorAll('.tab-content');
+  for (var j = 0; j < conteudos.length; j++) {
+    if (conteudos[j].id === 'tab-' + nome) conteudos[j].classList.add('active');
+    else conteudos[j].classList.remove('active');
+  }
+  if (nome === 'anexo') carregarAnexosCertidao();
+}
+
+function habilitarAbaAnexo(habilitar) {
+  var btn = document.getElementById('tabBtnAnexo');
+  if (!btn) return;
+  var podeAbrir = !!(habilitar && protoNumeroAtual);
+  btn.disabled = !podeAbrir;
+  // Se desabilitar enquanto a aba "Anexo" está ativa, volta para "Dados Emissão"
+  if (!podeAbrir && document.querySelector('.tab-btn[data-tab="anexo"].active')) {
+    ativarAbaCertidao('dados');
+  }
+}
+
+function carregarAnexosCertidao() {
+  var container = document.getElementById('certFilesList');
+  if (!container || !protoNumeroAtual) return;
+  fetch('/api/certidoes-anexos/listar?proto=' + encodeURIComponent(protoNumeroAtual), { headers: apiHeaders() })
+    .then(function(resp) { return resp.json(); })
+    .then(function(data) { renderizarAnexosCertidao(data.arquivos || []); })
+    .catch(function(err) {
+      console.error('Erro ao carregar anexos:', err);
+      container.innerHTML = '<div class="files-empty">Erro ao carregar anexos.</div>';
+    });
+}
+
+function renderizarAnexosCertidao(arquivos) {
+  var container = document.getElementById('certFilesList');
+  if (!container) return;
+  if (!arquivos || arquivos.length === 0) {
+    container.innerHTML = '<div class="files-empty">Nenhum anexo.</div>';
+    return;
+  }
+  var ehMaster = !!(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+  var html = '';
+  for (var i = 0; i < arquivos.length; i++) {
+    var f = arquivos[i];
+    var iconClass = iconeExtensao(f.extensao);
+    var url = '/api/certidoes-anexos/download?proto=' + encodeURIComponent(protoNumeroAtual) +
+              '&nome=' + encodeURIComponent(f.nome);
+    html += '<div class="file-item">';
+    html += '  <i class="ph ' + iconClass + ' file-icon"></i>';
+    html += '  <div class="file-info">';
+    html += '    <a href="' + url + '" class="file-name">' + f.nome + '</a>';
+    html += '    <span class="file-meta">' + formatarTamanho(f.tamanho) + '</span>';
+    html += '  </div>';
+    if (ehMaster) {
+      var nomeEsc = String(f.nome).replace(/'/g, "\\'");
+      html += '  <button type="button" class="file-delete" onclick="excluirAnexoCertidao(\'' + nomeEsc + '\')" title="Excluir anexo">';
+      html += '    <i class="ph ph-trash"></i>';
+      html += '  </button>';
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function uploadAnexoCertidao(file) {
+  var msgBox = document.getElementById('certUploadMsg');
+  msgBox.className = 'msg-box success';
+  msgBox.innerHTML = '<i class="ph ph-spinner"></i> Enviando arquivo...';
+  msgBox.style.display = 'flex';
+  var formData = new FormData();
+  formData.append('proto', protoNumeroAtual);
+  formData.append('arquivo', file);
+  fetch('/api/certidoes-anexos/upload', { method: 'POST', body: formData })
+    .then(function(resp) {
+      if (!resp.ok) return resp.json().then(function(data) { throw new Error(data.erro || 'Erro ao enviar arquivo.'); });
+      return resp.json();
+    })
+    .then(function() {
+      msgBox.className = 'msg-box success';
+      msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Arquivo enviado com sucesso.';
+      msgBox.style.display = 'flex';
+      carregarAnexosCertidao();
+      setTimeout(function() { msgBox.style.display = 'none'; }, 4000);
+    })
+    .catch(function(err) {
+      msgBox.className = 'msg-box error';
+      msgBox.innerHTML = '<i class="ph ph-x-circle"></i> ' + err.message;
+      msgBox.style.display = 'flex';
+    });
+}
+
+function excluirAnexoCertidao(nome) {
+  if (!confirm('Deseja excluir o anexo "' + nome + '"?')) return;
+  var url = '/api/certidoes-anexos/excluir?proto=' + encodeURIComponent(protoNumeroAtual) +
+            '&nome=' + encodeURIComponent(nome);
+  fetch(url, { method: 'DELETE', headers: apiHeaders() })
+    .then(function(resp) {
+      if (!resp.ok) return resp.json().then(function(data) { throw new Error(data.erro || 'Erro ao excluir anexo.'); });
+      return resp.json();
+    })
+    .then(function() { carregarAnexosCertidao(); })
+    .catch(function(err) { alert(err.message || 'Erro ao excluir anexo.'); });
+}
+
+// ═══════════════════════════════════════════════════════
 // INICIALIZACAO
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
@@ -909,6 +1058,40 @@ document.addEventListener('DOMContentLoaded', function() {
   var overlayEl = document.querySelector('.sidebar-overlay');
   if (overlayEl) {
     overlayEl.addEventListener('click', toggleSidebar);
+  }
+
+  // Upload de anexos da certidão
+  var btnCertSelectFile = document.getElementById('btnCertSelectFile');
+  var certFileInput = document.getElementById('certFileInput');
+  if (btnCertSelectFile && certFileInput) {
+    // Defensivo: esconder o envio para quem não pode anexar (a página já é master/admin)
+    var perfilAtual = window.CURRENT_USER ? window.CURRENT_USER.perfil : '';
+    if (perfilAtual !== 'master' && perfilAtual !== 'administrador') {
+      btnCertSelectFile.style.display = 'none';
+    }
+    btnCertSelectFile.addEventListener('click', function() { certFileInput.click(); });
+    certFileInput.addEventListener('change', function() {
+      var file = certFileInput.files[0];
+      if (!file) return;
+      var msgBox = document.getElementById('certUploadMsg');
+      var ext = file.name.split('.').pop().toLowerCase();
+      if (CERT_ALLOWED_EXT.indexOf(ext) === -1) {
+        msgBox.className = 'msg-box error';
+        msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Extensão ".' + ext + '" não permitida.';
+        msgBox.style.display = 'flex';
+        certFileInput.value = '';
+        return;
+      }
+      if (file.size > CERT_MAX_SIZE) {
+        msgBox.className = 'msg-box error';
+        msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Arquivo excede o tamanho máximo de 100 MB.';
+        msgBox.style.display = 'flex';
+        certFileInput.value = '';
+        return;
+      }
+      uploadAnexoCertidao(file);
+      certFileInput.value = '';
+    });
   }
 
   // Foco inicial

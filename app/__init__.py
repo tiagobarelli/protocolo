@@ -46,6 +46,7 @@ def create_app(config=None):
     from app.uploads import uploads_bp
     from app.oficios import oficios_bp
     from app.eventos_arquivos import eventos_arquivos_bp
+    from app.certidoes_arquivos import certidoes_arquivos_bp
     from app.comments import comments_bp, users_bp
     from app.notifications import notifications_bp
     from app.email_proxy import email_bp
@@ -61,6 +62,7 @@ def create_app(config=None):
     app.register_blueprint(uploads_bp)
     app.register_blueprint(oficios_bp)
     app.register_blueprint(eventos_arquivos_bp)
+    app.register_blueprint(certidoes_arquivos_bp)
     app.register_blueprint(comments_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(notifications_bp)

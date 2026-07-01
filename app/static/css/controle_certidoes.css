@@ -131,6 +131,130 @@ main { max-width: none; padding: 0; margin: 0; }
   z-index: 90;
 }
 
+/* ==================== ABAS (mesmo padrão visual de oficios) ==================== */
+.tabs-header {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+.tab-btn {
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-btn:hover { color: var(--text-dark); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.tab-btn:disabled:hover { color: var(--text-muted); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ==================== ARQUIVOS ANEXADOS (copiado de protocolo.css) ==================== */
+.upload-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.upload-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.files-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px dotted var(--border-strong);
+  transition: background 0.15s;
+}
+.file-item:last-child { border-bottom: none; }
+.file-item:hover { background: var(--accent-soft); }
+
+.file-icon {
+  font-size: 24px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--accent);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-name:hover { text-decoration: underline; }
+
+.file-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.file-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.file-delete:hover {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.files-empty {
+  padding: 20px;
+  font-style: italic;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
 /* ==================== ANIMATIONS ==================== */
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -143,4 +267,5 @@ main { max-width: none; padding: 0; margin: 0; }
   .form-row { flex-direction: column; gap: 16px; }
   .form-group.small { flex: 1; }
   .card { padding: 20px; }
+  .tabs-header { overflow-x: auto; }
 }

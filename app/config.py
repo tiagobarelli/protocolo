@@ -38,6 +38,9 @@ class BaseConfig:
     # Eventos societários (acervo de atos — pasta legível por humano)
     EVENTOS_FOLDER = os.environ.get("EVENTOS_FOLDER", str(BASE_DIR / "data" / "eventos_societarios"))
 
+    # Anexos de certidão (acervo de emissões — pasta legível por humano, por nº de protocolo)
+    CERTIDOES_FOLDER = os.environ.get("CERTIDOES_FOLDER", str(BASE_DIR / "data" / "certidoes_anexos"))
+
     # Paperless-ngx (proxy somente leitura)
     PAPERLESS_URL = os.environ.get("PAPERLESS_URL", "http://192.168.0.31:8094").rstrip("/")
     PAPERLESS_TOKEN = os.environ.get("PAPERLESS_TOKEN", "")

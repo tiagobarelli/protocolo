@@ -53,6 +53,19 @@
     <div class="card" id="formCard" style="display:none;">
       <div id="formStatusMsg" class="msg-box"></div>
 
+      <!-- Abas -->
+      <div class="tabs-header">
+        <button type="button" class="tab-btn active" data-tab="dados" onclick="ativarAbaCertidao('dados')">
+          <i class="ph ph-file-text"></i> Dados Emissão
+        </button>
+        <button type="button" class="tab-btn" data-tab="anexo" id="tabBtnAnexo" disabled onclick="ativarAbaCertidao('anexo')">
+          <i class="ph ph-paperclip"></i> Anexo
+        </button>
+      </div>
+
+      <!-- ABA 1 — Dados Emissão -->
+      <div class="tab-content active" id="tab-dados">
+
       <!-- Secao 1: Dados da Certidao -->
       <div class="form-section">
         <div class="section-title"><i class="ph ph-file-text"></i> Dados da Certid&atilde;o</div>
@@ -148,12 +161,39 @@
 
       <!-- Mensagem de feedback (abaixo dos botoes) -->
       <div id="formMsg" class="msg-box"></div>
-    </div>
+      </div><!-- /#tab-dados -->
+
+      <!-- ABA 2 — Anexo -->
+      <div class="tab-content" id="tab-anexo">
+        <div class="form-section">
+          <div class="section-title"><i class="ph ph-paperclip"></i> Anexos da Certid&atilde;o</div>
+          <div class="upload-area">
+            <input type="file" id="certFileInput" style="display:none;"
+                   accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.doc,.docx,.odt,.txt,.md">
+            <button type="button" class="btn btn-outline" id="btnCertSelectFile">
+              <i class="ph ph-upload-simple"></i> Selecionar Arquivo
+            </button>
+            <span class="upload-hint">Formatos: PDF, JPG, PNG, TIFF, DOC, DOCX, ODT, TXT, MD — M&aacute;x: 100 MB</span>
+            <div class="msg-box" id="certUploadMsg"></div>
+          </div>
+          <div id="certFilesList" class="files-list">
+            <div class="files-empty">Nenhum anexo.</div>
+          </div>
+        </div>
+      </div><!-- /#tab-anexo -->
+    </div><!-- /#formCard -->
 
   </main>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
 <script src="{{ url_for('static', filename='js/controle_certidoes.js') }}"></script>
 {% endblock %}
