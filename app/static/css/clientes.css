@@ -207,6 +207,7 @@ main {
 .msg-box.success { background: var(--success-bg); border: 1px solid var(--success); color: var(--success); display: flex; }
 .msg-box.warning { background: var(--warning-bg); border: 1px solid var(--warning); color: var(--warning); display: flex; }
 .msg-box.error   { background: var(--danger-bg);  border: 1px solid var(--danger);  color: var(--danger); display: flex; }
+.msg-box.info    { background: var(--info-bg); border: 1px solid var(--info); color: var(--info); display: flex; }
 
 /* ── Markdown editor ── */
 .md-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
@@ -470,25 +471,6 @@ main {
   opacity: 0.8;              /* Deixa um pouco mais elegante */
 }
 
-/* ── Mensagens inline (avisos em campos) ── */
-.msg-inline {
-  font-size: 0.82rem;
-  padding: 6px 10px;
-  margin-top: 4px;
-  border-radius: 6px;
-  line-height: 1.4;
-}
-.msg-inline.aviso-falecido {
-  background: var(--warning-bg);
-  color: var(--warning);
-  border: 1px solid var(--warning);
-}
-.msg-inline.aviso-conflito {
-  background: var(--info-bg);
-  color: var(--info);
-  border: 1px solid var(--info);
-}
-
 /* ── Barra de ação sticky (Salvar/Limpar) ── */
 .form-actions-sticky {
   position: sticky;
@@ -645,3 +627,98 @@ main {
   font-size: 1.1rem;
 }
 .evt-ver-lateral:hover { color: var(--accent); background: var(--accent-soft); }
+
+/* ── Eventos de Estado Civil (timeline da PF, tabela 786) ── */
+.ec-form {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--grey-98);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.ec-form .btn-row { margin-top: 16px; }
+
+.ec-empty { color: var(--text-muted); font-size: 0.92rem; padding: 8px 0; }
+.ec-empty i { margin-right: 4px; vertical-align: -2px; }
+.ec-empty-legado {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius);
+}
+.ec-empty-legado i { font-size: 1.1rem; flex-shrink: 0; margin-right: 0; }
+
+.ec-timeline { display: flex; flex-direction: column; gap: 14px; }
+.ec-item {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.ec-item-corpo { flex: 1; min-width: 0; }
+.ec-item-cab { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ec-item-data { font-weight: 700; color: var(--text-dark); }
+.ec-item-tipo {
+  font-size: 0.78rem; font-weight: 600; color: var(--accent);
+  background: var(--accent-soft); border-radius: 999px; padding: 2px 10px;
+}
+.ec-badge-espelho {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.ec-badge-espelho i { font-size: 0.85rem; }
+.ec-badge-pendente {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.ec-badge-pendente i { font-size: 0.85rem; }
+.ec-item-detalhes {
+  margin-top: 6px; display: flex; flex-direction: column; gap: 2px;
+  font-size: 0.9rem; color: var(--text-main);
+}
+.ec-item-detalhes i { color: var(--text-muted); }
+.ec-item-desc { margin-top: 6px; font-size: 0.92rem; color: var(--text-main); }
+.ec-item-meta { margin-top: 6px; font-size: 0.8rem; color: var(--text-muted); }
+
+.ec-item-acoes {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ec-acao-btn {
+  width: 30px; height: 30px; padding: 0;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-muted);
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+.ec-acao-btn:hover { color: var(--text-dark); background: var(--accent-soft); }
+.ec-acao-btn.ec-btn-editar:hover { color: var(--accent); }
+.ec-acao-btn.ec-btn-excluir { color: var(--danger); }
+.ec-acao-btn.ec-btn-excluir:hover { color: var(--danger); background: var(--accent-soft); }

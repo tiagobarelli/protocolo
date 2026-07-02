@@ -6,6 +6,8 @@
 
   var API_BASE = '/api/baserow';
   var TABLE_END = 779;
+  var TABLE_CLIENTES = 754;
+  var F_LOG_CLIENTE = 'field_7395'; // FIELDS.logs da 754 (mesmo campo em PF e PJ)
 
   // Campos da tabela 779 (Endereco_CPF_CNPJ)
   var F_NAME        = 'field_7467';
@@ -38,6 +40,7 @@
 
   // Estado interno
   var enderecoEditId = null;
+  var enderecoEditRow = null;  // linha completa no momento em que a edição abre (diff do log)
 
   // ── Helpers ───────────────────────────────────────────
   function apiHeaders() {
@@ -94,6 +97,113 @@
     s = (s == null) ? '' : ('' + s);
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
+  }
+
+  // ── Log de auditoria no Histórico do cliente (Leva 5) ──
+  // Inserção/edição/exclusão de endereço gravam linha no campo de log da 754
+  // (mesmo Histórico dos eventos e do cadastro), sempre APÓS o sucesso na 779.
+  // A exclusão é DELETE físico: o resumo é capturado ANTES (o log é o único
+  // rastro que sobra). Falha de log nunca bloqueia a operação principal.
+  // Helpers duplicados de eventos_estado_civil.js por decisão consciente
+  // (módulos IIFE independentes; consolidação adiada de propósito).
+
+  // Linha no formato da casa: "{usuário}. {dd/mm/aaaa hh:mm}: {texto}"
+  function gerarLinhaLog(texto) {
+    var agora = new Date();
+    var dia = ('0' + agora.getDate()).slice(-2);
+    var mes = ('0' + (agora.getMonth() + 1)).slice(-2);
+    var ano = agora.getFullYear();
+    var hora = ('0' + agora.getHours()).slice(-2);
+    var min = ('0' + agora.getMinutes()).slice(-2);
+    var nomeUsuario = (window.CURRENT_USER && window.CURRENT_USER.nome)
+      ? window.CURRENT_USER.nome : 'Usuário';
+    return nomeUsuario + '. ' + dia + '/' + mes + '/' + ano + ' ' + hora + ':' + min + ': ' + texto;
+  }
+
+  // Prepend de linha(s) no log do cliente. O PATCH contém SOMENTE F_LOG_CLIENTE —
+  // nenhum outro campo da 754 vai junto. Sempre resolve; falha vira aviso.
+  function appendLogCliente(clienteRowId, linhas) {
+    if (!clienteRowId || !linhas || !linhas.length) return Promise.resolve();
+    var texto = (typeof linhas === 'string') ? linhas : linhas.join('\n');
+    var url = API_BASE + '/database/rows/table/' + TABLE_CLIENTES + '/' + clienteRowId + '/?user_field_names=false';
+    return fetch(url, { headers: apiHeaders() })
+      .then(function(r) {
+        if (!r.ok) throw new Error('get-cliente-log');
+        return r.json();
+      })
+      .then(function(cli) {
+        var existente = cli[F_LOG_CLIENTE] || '';
+        var body = {};
+        body[F_LOG_CLIENTE] = existente ? (texto + '\n' + existente) : texto;
+        return fetch(url, { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(body) });
+      })
+      .then(function(r2) { if (!r2.ok) throw new Error('patch-cliente-log'); })
+      .catch(function(e) {
+        console.error('Falha ao gravar o histórico do cliente:', e);
+        var aviso = 'Endereço salvo, mas não foi possível gravar o histórico do cliente.';
+        if (window.mostrarToast) { mostrarToast(aviso, 'warning'); } else { alert(aviso); }
+      });
+  }
+
+  function labelTipo(id) {
+    var idNum = Number(id);
+    for (var i = 0; i < TIPO_OPTS.length; i++) {
+      if (TIPO_OPTS[i].id === idNum) return TIPO_OPTS[i].label;
+    }
+    return '';
+  }
+
+  // Id da opção de UF -> sigla (reverso de UF_OPTS)
+  function ufIdParaSigla(id) {
+    if (!id) return '';
+    var idNum = Number(id);
+    for (var k in UF_OPTS) {
+      if (UF_OPTS.hasOwnProperty(k) && UF_OPTS[k] === idNum) return k;
+    }
+    return '';
+  }
+
+  // Resumo curto em texto puro p/ o log: "{Tipo}: {logradouro, nº} — {município}/{UF}"
+  // (partes vazias omitidas; sem CEP para não poluir o texto)
+  function resumoEnderecoLog(tipoLabel, logradouro, numero, municipio, uf) {
+    var linha = ('' + (logradouro || '')).trim();
+    var num = ('' + (numero || '')).trim();
+    if (num) linha += (linha ? ', ' : '') + num;
+    if (!linha) linha = '(sem logradouro)';
+    var local = ('' + (municipio || '')).trim();
+    if (uf) local += (local ? '/' : '') + uf;
+    var texto = linha;
+    if (local) texto += ' \u2014 ' + local;
+    return (tipoLabel ? tipoLabel + ': ' : '') + texto;
+  }
+
+  // Diff legível de uma edição (das anotações NUNCA se loga o conteúdo — apenas
+  // que mudaram). Retorna '' quando nada mudou (edição sem mudança não gera log).
+  function gerarDiffEndereco(rowAntes, payloadDepois) {
+    if (!rowAntes) return '';
+    var partes = [];
+
+    function comparar(rotulo, antes, depois) {
+      antes = (antes === null || antes === undefined || ('' + antes).trim() === '') ? '(vazio)' : ('' + antes).trim();
+      depois = (depois === null || depois === undefined || ('' + depois).trim() === '') ? '(vazio)' : ('' + depois).trim();
+      if (antes !== depois) partes.push(rotulo + ': ' + antes + ' -> ' + depois);
+    }
+
+    comparar('Tipo', valorSelect(rowAntes[F_TIPO]), labelTipo(payloadDepois[F_TIPO]));
+    comparar('CEP', mascararCep(rowAntes[F_CEP] || ''), mascararCep(payloadDepois[F_CEP] || ''));
+    comparar('Logradouro', rowAntes[F_LOGRADOURO], payloadDepois[F_LOGRADOURO]);
+    comparar('Número', rowAntes[F_NUMERO], payloadDepois[F_NUMERO]);
+    comparar('Complemento', rowAntes[F_COMPLEMENTO], payloadDepois[F_COMPLEMENTO]);
+    comparar('Bairro', rowAntes[F_BAIRRO], payloadDepois[F_BAIRRO]);
+    comparar('Município', rowAntes[F_MUNICIPIO], payloadDepois[F_MUNICIPIO]);
+    comparar('UF', valorSelect(rowAntes[F_UF]), ufIdParaSigla(payloadDepois[F_UF]));
+    comparar('País', rowAntes[F_PAIS], payloadDepois[F_PAIS]);
+
+    if ((rowAntes[F_ANOTACOES] || '') !== (payloadDepois[F_ANOTACOES] || '')) {
+      partes.push('Anotações alteradas');
+    }
+
+    return partes.join('; ');
   }
 
   // ── Selects ───────────────────────────────────────────
@@ -267,7 +377,7 @@
         btnExcluir.className = 'endereco-btn-acao endereco-btn-excluir';
         btnExcluir.title = 'Excluir';
         btnExcluir.innerHTML = '<i class="ph ph-trash"></i>';
-        btnExcluir.addEventListener('click', function() { excluirEndereco(row.id); });
+        btnExcluir.addEventListener('click', function() { excluirEndereco(row); });
 
         acoes.appendChild(btnMapa);
         acoes.appendChild(btnEditar);
@@ -299,6 +409,7 @@
     limparForm();
     if (row) {
       enderecoEditId = row.id;
+      enderecoEditRow = row;
       el('endTipo').value = idSelect(row[F_TIPO]) || '';
       el('endCep').value = mascararCep(row[F_CEP] || '');
       el('endLogradouro').value = row[F_LOGRADOURO] || '';
@@ -311,6 +422,7 @@
       el('endAnotacoes').value = row[F_ANOTACOES] || '';
     } else {
       enderecoEditId = null;
+      enderecoEditRow = null;
     }
     el('enderecoFormWrap').style.display = 'block';
     var btnAdd = el('btnAddEndereco');
@@ -320,6 +432,7 @@
   function fecharForm() {
     el('enderecoFormWrap').style.display = 'none';
     enderecoEditId = null;
+    enderecoEditRow = null;
     var btnAdd = el('btnAddEndereco');
     if (btnAdd) btnAdd.style.display = '';
   }
@@ -389,6 +502,12 @@
     payload[F_NAME]        = logradouro + (numero ? ', ' + numero : '');
     payload[F_ATUALIZADO]  = agora;
 
+    // Auditoria: diff e resumo calculados antes do save (fecharForm limpa o estado)
+    var ehEdicao = !!enderecoEditId;
+    var diff = ehEdicao ? gerarDiffEndereco(enderecoEditRow, payload) : '';
+    var resumoLog = resumoEnderecoLog(labelTipo(payload[F_TIPO]), payload[F_LOGRADOURO],
+      payload[F_NUMERO], payload[F_MUNICIPIO], ufIdParaSigla(payload[F_UF]));
+
     var btn = el('btnSalvarEndereco');
     btn.disabled = true;
     overlayOn();
@@ -415,6 +534,16 @@
         return r.json();
       })
       .then(function() {
+        // Log APÓS o sucesso na 779; edição sem mudança não gera linha
+        if (!ehEdicao) {
+          return appendLogCliente(clienteId, gerarLinhaLog('Endereço adicionado: ' + resumoLog + '.'));
+        }
+        if (diff) {
+          return appendLogCliente(clienteId, gerarLinhaLog('Endereço editado: ' + resumoLog + '. Alterações: ' + diff + '.'));
+        }
+        return null;
+      })
+      .then(function() {
         overlayOff();
         btn.disabled = false;
         fecharForm();
@@ -429,14 +558,21 @@
   }
 
   // ── Excluir (DELETE) ──────────────────────────────────
-  function excluirEndereco(rowId) {
-    if (!rowId) return;
+  function excluirEndereco(row) {
+    if (!row || !row.id) return;
     if (!confirm('Excluir este endereço? Esta ação não pode ser desfeita.')) return;
+    // DELETE físico: o resumo é capturado ANTES — o log será o único rastro
+    var clienteId = window.ENDERECO_CLIENTE_ID;
+    var resumoLog = resumoEnderecoLog(valorSelect(row[F_TIPO]), row[F_LOGRADOURO],
+      row[F_NUMERO], row[F_MUNICIPIO], valorSelect(row[F_UF]));
     overlayOn();
-    var url = API_BASE + '/database/rows/table/' + TABLE_END + '/' + rowId + '/';
+    var url = API_BASE + '/database/rows/table/' + TABLE_END + '/' + row.id + '/';
     fetch(url, { method: 'DELETE', headers: apiHeaders() })
       .then(function(r) {
         if (!r.ok && r.status !== 204) throw new Error('Erro ao excluir endereço.');
+        return appendLogCliente(clienteId, gerarLinhaLog('Endereço excluído: ' + resumoLog + '.'));
+      })
+      .then(function() {
         overlayOff();
         carregarEnderecos();
       })

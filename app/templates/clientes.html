@@ -59,7 +59,7 @@
     <button type="button" class="tab-btn" data-tab="auxiliares" onclick="ativarAbaCliente('auxiliares')">
       <i class="ph ph-info"></i> Dados Auxiliares
     </button>
-    <button type="button" class="tab-btn" data-tab="estadocivil" onclick="ativarAbaCliente('estadocivil')">
+    <button type="button" class="tab-btn" data-tab="estadocivil" id="tabBtnEstadoCivil" disabled onclick="ativarAbaCliente('estadocivil')">
       <i class="ph ph-heart"></i> Estado Civil
     </button>
     <button type="button" class="tab-btn" data-tab="enderecos" id="tabBtnEnderecos" disabled onclick="ativarAbaCliente('enderecos')">
@@ -171,61 +171,65 @@
 
   <!-- ABA 3 — Estado Civil -->
   <div class="tab-content" id="tab-estadocivil">
-    <div class="card">
+    <!-- Linha do tempo de eventos de estado civil (tabela 786) -->
+    <div class="card" id="ecCard">
+      <div class="enderecos-header">
+        <div class="section-title">
+          <i class="ph ph-clock-counter-clockwise"></i> Linha do Tempo — Eventos de Estado Civil
+        </div>
+        <button type="button" class="btn btn-primary" id="btnAddEventoEC">
+          <i class="ph ph-plus"></i> Registrar evento
+        </button>
+      </div>
 
-      <!-- Linha 1: Estado Civil + Regra Patrimonial (casado) + Cônjuge (casado) -->
-      <div class="form-row">
-        <div class="form-group small">
-          <label for="estadoCivilSelect">Estado Civil</label>
-          <select id="estadoCivilSelect">
-            <option value="">Selecione...</option>
-          </select>
-        </div>
-        <div class="form-group small" id="regraPatrimonialGroup" style="display:none;">
-          <label for="regraPatrimonialSelect">Regra Patrimonial</label>
-          <select id="regraPatrimonialSelect">
-            <option value="">Selecione...</option>
-          </select>
-        </div>
-        <div class="form-group" id="conjugeGroup" style="display:none;">
-          <label for="conjugeInput">Cônjuge <span class="hint">— buscar na base</span></label>
-          <div class="autocomplete-wrapper">
-            <input type="text" id="conjugeInput"
-                   placeholder="Comece a digitar o nome..." autocomplete="off">
-            <div class="autocomplete-list" id="conjugeAutoList"></div>
+      <div id="ecFormWrap" class="ec-form" style="display:none;">
+        <div class="form-row">
+          <div class="form-group small">
+            <label for="ecTipo">Tipo de evento <span class="hint">*</span></label>
+            <select id="ecTipo">
+              <option value="">Selecione...</option>
+            </select>
           </div>
-          <div id="conjugeAviso" class="msg-inline" style="display:none;"></div>
+          <div class="form-group small">
+            <label for="ecData">Data do evento</label>
+            <input type="date" id="ecData" autocomplete="off">
+          </div>
+          <div class="form-group small" id="ecRegimeGroup" style="display:none;">
+            <label for="ecRegime">Regime de bens <span class="hint">*</span></label>
+            <select id="ecRegime">
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ecConjugeInput">C&ocirc;njuge / Companheiro(a) <span class="hint">— buscar na base</span></label>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="ecConjugeInput"
+                     placeholder="Comece a digitar o nome..." autocomplete="off">
+              <div class="autocomplete-list" id="ecConjugeAutoList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ecObsTextarea">Observa&ccedil;&otilde;es</label>
+            <textarea id="ecObsTextarea" placeholder="Observa&ccedil;&otilde;es (Markdown suportado)..." autocomplete="off"></textarea>
+          </div>
+        </div>
+        <div id="ecFormMsg" class="msg-box"></div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="btnCancelarEC">
+            <i class="ph ph-x"></i> Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" id="btnSalvarEC">
+            <i class="ph ph-floppy-disk"></i> Salvar evento
+          </button>
         </div>
       </div>
 
-      <!-- Bloco: União Estável (oculto por padrão) -->
-      <div id="uniaoEstavelGroup" style="display:none;">
-        <div class="toggle-row">
-          <label class="switch-label">
-            <input type="checkbox" id="switchUniaoEstavel">
-            <span class="switch-track"></span>
-            <span class="switch-text">União Estável</span>
-          </label>
-        </div>
-        <div id="uniaoEstavelCampos" style="display:none;">
-          <div class="form-row">
-            <div class="form-group small">
-              <label for="regraPatrimonialUESelect">Regra Patrimonial (UE)</label>
-              <select id="regraPatrimonialUESelect">
-                <option value="">Selecione...</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="companheiroInput">Companheiro(a) <span class="hint">— buscar na base</span></label>
-              <div class="autocomplete-wrapper">
-                <input type="text" id="companheiroInput"
-                       placeholder="Comece a digitar o nome..." autocomplete="off">
-                <div class="autocomplete-list" id="companheiroAutoList"></div>
-              </div>
-              <div id="companheiroAviso" class="msg-inline" style="display:none;"></div>
-            </div>
-          </div>
-        </div>
+      <div id="ecTimeline" class="ec-timeline">
+        <div class="ec-empty">Carregando...</div>
       </div>
     </div>
   </div>
@@ -469,4 +473,5 @@
 <script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/clientes.js') }}"></script>
 <script src="{{ url_for('static', filename='js/enderecos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/eventos_estado_civil.js') }}"></script>
 {% endblock %}
