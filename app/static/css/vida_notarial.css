@@ -1,0 +1,22 @@
+/* vida_notarial.css — aba "Vida notarial" das páginas de cliente (PF/PJ)
+   Somente o próprio da aba: mensagem de vazio e link discreto.
+   As tabelas herdam o componente canônico .report-table de components.css. */
+
+.main-content .vn-vazia {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 20px 0;
+}
+
+.main-content .vn-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.main-content .vn-link:hover {
+  color: var(--accent);
+}

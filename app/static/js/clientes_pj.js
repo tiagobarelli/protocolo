@@ -384,6 +384,7 @@ function ativarAbaCliente(nome) {
   }
   if (nome === 'enderecos' && window.carregarEnderecos) window.carregarEnderecos();
   if (nome === 'eventos' && window.carregarEventos) window.carregarEventos();
+  if (nome === 'vidanotarial' && window.carregarVidaNotarial) window.carregarVidaNotarial();
   atualizarVisibilidadeBarraAcoes(nome);
 }
 
@@ -391,7 +392,7 @@ function atualizarVisibilidadeBarraAcoes(nomeAba) {
   var barra = document.querySelector('.form-actions-sticky');
   if (!barra) return;
   // Abas com formulário/salvamento próprio escondem a barra de ação do registro principal
-  barra.style.display = (nomeAba === 'enderecos' || nomeAba === 'eventos') ? 'none' : '';
+  barra.style.display = (nomeAba === 'enderecos' || nomeAba === 'eventos' || nomeAba === 'vidanotarial') ? 'none' : '';
 }
 
 function habilitarAbasDependentes(habilitar) {
@@ -399,9 +400,10 @@ function habilitarAbasDependentes(habilitar) {
   window.EVENTOS_PJ_ID       = (habilitar && clienteAtual) ? clienteAtual.id : null;
   window.EVENTOS_PJ_CNPJ     = (habilitar && clienteAtual) ? (clienteAtual[FIELDS.cnpj] || '') : '';
   window.EVENTOS_PJ_NOME     = (habilitar && clienteAtual) ? (clienteAtual[FIELDS.nome] || '') : '';
+  window.VIDA_NOTARIAL_CLIENTE_ID = (habilitar && clienteAtual) ? clienteAtual.id : null;
   if (habilitar && window.carregarEnderecos) window.carregarEnderecos();
 
-  var ids = ['tabBtnEnderecos', 'tabBtnProtocolos', 'tabBtnHistorico', 'tabBtnEventos'];
+  var ids = ['tabBtnEnderecos', 'tabBtnVidaNotarial', 'tabBtnHistorico', 'tabBtnEventos'];
   for (var i = 0; i < ids.length; i++) {
     var btn = document.getElementById(ids[i]);
     if (btn) btn.disabled = !habilitar;
@@ -409,7 +411,7 @@ function habilitarAbasDependentes(habilitar) {
 
   // Se desabilitar enquanto uma aba dependente está ativa, voltar para "Denominação"
   if (!habilitar) {
-    var dependentes = ['enderecos', 'protocolos', 'historico', 'eventos'];
+    var dependentes = ['enderecos', 'vidanotarial', 'historico', 'eventos'];
     for (var j = 0; j < dependentes.length; j++) {
       var ativo = document.querySelector('.tab-btn[data-tab="' + dependentes[j] + '"].active');
       if (ativo) { ativarAbaCliente('denominacao'); break; }
@@ -603,9 +605,6 @@ function preencherFormulario(cli) {
   // Exibir logs
   exibirLogs(cli);
 
-  // Protocolos vinculados
-  carregarProtocolos(cli[FIELDS.protocolos] || []);
-
   // Resumo de leitura (Denominação/CNPJ no topo da aba Denominação)
   atualizarResumoCliente();
 }
@@ -643,8 +642,7 @@ function limparCamposFormulario() {
   document.getElementById('emailInput').value       = '';
   document.getElementById('outrosTextarea').value   = '';
   atualizarPreviewOutros();
-  document.getElementById('protocolosList').innerHTML =
-    '<div class="protocols-empty">Nenhum protocolo vinculado.</div>';
+  if (window.limparVidaNotarial) window.limparVidaNotarial();
   document.getElementById('alertaTextarea').value = '';
   document.getElementById('alertaReadonly').textContent = '';
   document.getElementById('alertaCard').style.display = 'none';
@@ -654,52 +652,6 @@ function limparCamposFormulario() {
   document.getElementById('logCard').style.display = 'none';
   esconderMsg('buscaMsg');
   atualizarResumoCliente();
-}
-
-// ═══════════════════════════════════════════════════════
-// PROTOCOLOS VINCULADOS
-// ═══════════════════════════════════════════════════════
-function carregarProtocolos(protArr) {
-  var container = document.getElementById('protocolosList');
-  if (!protArr || protArr.length === 0) {
-    container.innerHTML = '<div class="protocols-empty">Nenhum protocolo vinculado.</div>';
-    return;
-  }
-  container.innerHTML = '<div class="protocols-empty">Carregando protocolos...</div>';
-
-  var promises = [];
-  for (var i = 0; i < protArr.length; i++) {
-    promises.push(
-      fetch(
-        API_BASE + '/database/rows/table/' + TABLE_PROTOCOLO + '/' + protArr[i].id +
-          '/?user_field_names=false',
-        { headers: apiHeaders() }
-      ).then(function(r) { return r.json(); })
-    );
-  }
-
-  Promise.all(promises)
-    .then(function(rows) {
-      container.innerHTML = '';
-      for (var j = 0; j < rows.length; j++) {
-        var proto     = rows[j];
-        var numProto  = proto['field_7240'] || (protArr[j] ? (protArr[j].value || '\u2014') : '\u2014');
-        var servicoArr = proto['field_7242'] || [];
-        var servico   = servicoArr.length > 0 ? (servicoArr[0].value || '\u2014') : '\u2014';
-        var statusObj = proto['field_7252'];
-        var status    = statusObj ? (statusObj.value || '\u2014') : '\u2014';
-        var dataRaw   = proto['field_7250'] || '';
-        var data      = dataRaw ? dataRaw.split('-').reverse().join('/') : '\u2014';
-        var item = document.createElement('div');
-        item.className = 'protocol-item';
-        item.textContent = 'N\u00ba ' + numProto + ' \u2014 ' + servico + ' \u2014 ' + status + ' \u2014 ' + data;
-        container.appendChild(item);
-      }
-    })
-    .catch(function(e) {
-      container.innerHTML = '<div class="protocols-empty">Erro ao carregar protocolos.</div>';
-      console.error('Erro ao carregar protocolos vinculados:', e);
-    });
 }
 
 // ═══════════════════════════════════════════════════════

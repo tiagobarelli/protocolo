@@ -944,6 +944,16 @@ document.addEventListener('DOMContentLoaded', function() {
     overlayEl.addEventListener('click', toggleSidebar);
   }
 
+  // Abertura via query params (ex: /revogacao-procuracao?livro=150&pagina=025)
+  var urlParams = new URLSearchParams(window.location.search);
+  var livroParam = urlParams.get('livro');
+  var paginaParam = urlParams.get('pagina');
+  if (livroParam && paginaParam) {
+    document.getElementById('buscaLivro').value = livroParam;
+    document.getElementById('buscaPagina').value = paginaParam;
+    buscarPorLivroPagina();
+  }
+
   // Foco inicial
   document.getElementById('buscaLivro').focus();
 });

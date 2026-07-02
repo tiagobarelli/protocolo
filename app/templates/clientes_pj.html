@@ -4,6 +4,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/clientes.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/vida_notarial.css') }}">
 {% endblock %}
 
 {% block flash_messages %}{% endblock %}
@@ -62,8 +63,8 @@
     <button type="button" class="tab-btn" data-tab="enderecos" id="tabBtnEnderecos" disabled onclick="ativarAbaCliente('enderecos')">
       <i class="ph ph-map-pin"></i> Endereços
     </button>
-    <button type="button" class="tab-btn" data-tab="protocolos" id="tabBtnProtocolos" disabled onclick="ativarAbaCliente('protocolos')">
-      <i class="ph ph-stack"></i> Protocolos Vinculados
+    <button type="button" class="tab-btn" data-tab="vidanotarial" id="tabBtnVidaNotarial" disabled onclick="ativarAbaCliente('vidanotarial')">
+      <i class="ph ph-scroll"></i> Vida notarial
     </button>
     <button type="button" class="tab-btn" data-tab="historico" id="tabBtnHistorico" disabled onclick="ativarAbaCliente('historico')">
       <i class="ph ph-clock-counter-clockwise"></i> Histórico
@@ -243,12 +244,27 @@
     </div>
   </div>
 
-  <!-- ABA 4 — Protocolos Vinculados -->
-  <div class="tab-content" id="tab-protocolos">
+  <!-- ABA 4 — Vida notarial -->
+  <div class="tab-content" id="tab-vidanotarial">
     <div class="card">
-      <div class="protocols-list" id="protocolosList">
-        <div class="protocols-empty">Nenhum protocolo vinculado.</div>
-      </div>
+      <div class="section-title"><i class="ph ph-book-open"></i> Participação em Escrituras</div>
+      <div id="vnSecaoEscrituras"><div class="vn-vazia">Nenhuma participação em escritura localizada.</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="ph ph-swap"></i> Participação em Substabelecimento</div>
+      <div id="vnSecaoSubstabelecimentos"><div class="vn-vazia">Nenhuma participação em substabelecimento localizada.</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="ph ph-exclude-square"></i> Participação em Revogação de Procuração</div>
+      <div id="vnSecaoRevogacoes"><div class="vn-vazia">Nenhuma participação em revogação de procuração localizada.</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="ph ph-stack"></i> Requerente de Protocolos</div>
+      <div id="vnSecaoProtocolos"><div class="vn-vazia">Nenhum protocolo localizado.</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="ph ph-seal"></i> Participação como Requerido em Certidões</div>
+      <div id="vnSecaoCertidoes"><div class="vn-vazia">Nenhuma certidão localizada.</div></div>
     </div>
   </div>
 
@@ -367,4 +383,5 @@
 <script src="{{ url_for('static', filename='js/clientes_pj.js') }}"></script>
 <script src="{{ url_for('static', filename='js/enderecos.js') }}"></script>
 <script src="{{ url_for('static', filename='js/eventos_societarios.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vida_notarial.js') }}"></script>
 {% endblock %}

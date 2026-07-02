@@ -2,6 +2,18 @@
 
 Controle de correções e melhorias do sistema
 
+## [2.2.0] 2026-07-02
+
+### Adicionado
+
+- **Aba "Vida notarial" nos cadastros de cliente (PF e PJ):** a aba "Protocolos Vinculados" das telas de Pessoa Física e Pessoa Jurídica deu lugar à nova aba **Vida notarial**, que reúne em um só lugar tudo o que antes era consultado na página "Detalhamento de Cliente": participação em escrituras, substabelecimentos, revogações de procuração, protocolos (como requerente) e certidões (como requerido) — cada seção em tabela própria, ordenada da data mais recente para a mais antiga. As informações são carregadas ao abrir a aba e não são recarregadas ao alternar entre as abas do mesmo cliente.
+- **Abertura direta do ato a partir da linha:** cada registro listado na Vida notarial tem um link discreto que abre a página de gestão correspondente (Controle de Escrituras, Substabelecimentos, Revogação de Procuração, Consulta de Protocolos ou Controle de Certidões) já com a busca executada e o registro carregado. Para o perfil escrevente, que não acessa as telas de gestão de atos, o link aparece apenas na seção de protocolos.
+- **Abertura por endereço (deep links):** as páginas de Substabelecimentos, Revogação de Procuração e Controle de Certidões passaram a aceitar abertura por endereço com a busca automática (ex.: livro e página, ou número do protocolo, direto no endereço), como já acontecia no Controle de Escrituras e na Consulta de Protocolos.
+
+### Melhorias
+
+- **Página "Detalhamento de Cliente" aposentada:** com as informações incorporadas à aba Vida notarial, a página exclusiva de detalhamento foi removida do sistema, inclusive do menu lateral (seção Clientes passa a ter só Pessoa Física e Pessoa Jurídica). O endereço antigo deixa de existir. A coluna "Retificada?" e o botão de imprimir o relatório foram descontinuados.
+
 ## [2.0] 2026-06-29
 
 ### Refatoração visual

@@ -1094,6 +1094,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Abertura via query params (ex: /controle-certidoes?protocolo=2025/123)
+  var urlParams = new URLSearchParams(window.location.search);
+  var protocoloParam = urlParams.get('protocolo');
+  if (protocoloParam) {
+    document.getElementById('buscaProtocolo').value = protocoloParam;
+    buscarPorProtocolo();
+  }
+
   // Foco inicial
   document.getElementById('buscaProtocolo').focus();
 });
