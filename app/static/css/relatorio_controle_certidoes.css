@@ -90,6 +90,11 @@ main {
   color: var(--text-muted);
 }
 
+/* Coluna de link para o Controle de Certidões */
+.main-content .report-table td.col-link { width: 1%; text-align: center; white-space: nowrap; }
+.main-content .rel-cert-link { color: var(--text-muted); text-decoration: none; font-size: 1.05rem; }
+.main-content .rel-cert-link:hover { color: var(--accent); }
+
 /* Paginação */
 .pagination-bar {
   display: flex;

@@ -329,18 +329,6 @@ a.todo-group-num:hover { text-decoration: underline; }
   flex-wrap: wrap;
 }
 
-.todo-protocolo a {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--accent);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.todo-protocolo a:hover { text-decoration: underline; }
-
 .todo-data {
   font-size: 0.75rem;
   color: var(--text-muted);

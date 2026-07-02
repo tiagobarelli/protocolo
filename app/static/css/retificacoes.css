@@ -70,27 +70,6 @@
   padding: 10px 0;
 }
 
-/* ==================== SEARCH DIVIDER ==================== */
-.search-divider {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 24px 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.search-divider::before,
-.search-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
 
 /* ==================== ANIMATIONS ==================== */
 @keyframes spin { to { transform: rotate(360deg); } }

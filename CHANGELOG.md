@@ -2,17 +2,22 @@
 
 Controle de correções e melhorias do sistema
 
-## [2.2.0] 2026-07-02
+## [2.1.2] 2026-07-02
 
 ### Adicionado
 
+- **Linha do tempo de Estado Civil (Pessoa Física):** a aba Estado Civil do cadastro de Pessoa Física deixou de ser um formulário de situação atual e passou a ser uma **linha do tempo de eventos** — Casamento, União Estável, Divórcio, Separação, Dissolução de União Estável, Viuvez e Alteração de Regime de Bens. Cada evento registra a data, o cônjuge/companheiro(a) (buscado entre os clientes já cadastrados), o regime de bens (quando o tipo de evento pede) e observações com formatação. Os eventos aparecem do mais recente para o mais antigo, e a aba é liberada depois que o cliente está salvo. Registrar e editar é aberto a todos os perfis; excluir é restrito ao master, e a exclusão é **reversível** (o registro é preservado).
+- **Evento espelhado no cadastro do cônjuge:** ao registrar um evento que envolve outra pessoa cadastrada, o sistema oferece criar automaticamente o **evento espelho** no cadastro do cônjuge/companheiro(a), com os papéis invertidos. Edições em um dos lados propagam para o outro mediante confirmação; trocar o cônjuge desfaz o vínculo entre os dois registros; e excluir um evento vinculado remove os dois. A Viuvez, por sua natureza, não gera espelho.
+- **Data do evento opcional:** um evento pode ser registrado sem data quando ela ainda não foi confirmada — ele fica marcado como pendência ("Confirmar data na certidão"), posicionado no fim da linha do tempo, até que a data seja preenchida.
+- **Registro no Histórico do cliente:** toda operação nos eventos de estado civil e nos endereços (criar, editar, excluir) passou a ser gravada no **Histórico** do cliente, com autor e data/hora. Nas operações espelhadas, o registro é feito nos dois cadastros envolvidos. Vale para Pessoa Física e, no caso dos endereços, também para Pessoa Jurídica.
 - **Aba "Vida notarial" nos cadastros de cliente (PF e PJ):** a aba "Protocolos Vinculados" das telas de Pessoa Física e Pessoa Jurídica deu lugar à nova aba **Vida notarial**, que reúne em um só lugar tudo o que antes era consultado na página "Detalhamento de Cliente": participação em escrituras, substabelecimentos, revogações de procuração, protocolos (como requerente) e certidões (como requerido) — cada seção em tabela própria, ordenada da data mais recente para a mais antiga. As informações são carregadas ao abrir a aba e não são recarregadas ao alternar entre as abas do mesmo cliente.
 - **Abertura direta do ato a partir da linha:** cada registro listado na Vida notarial tem um link discreto que abre a página de gestão correspondente (Controle de Escrituras, Substabelecimentos, Revogação de Procuração, Consulta de Protocolos ou Controle de Certidões) já com a busca executada e o registro carregado. Para o perfil escrevente, que não acessa as telas de gestão de atos, o link aparece apenas na seção de protocolos.
 - **Abertura por endereço (deep links):** as páginas de Substabelecimentos, Revogação de Procuração e Controle de Certidões passaram a aceitar abertura por endereço com a busca automática (ex.: livro e página, ou número do protocolo, direto no endereço), como já acontecia no Controle de Escrituras e na Consulta de Protocolos.
 
 ### Melhorias
 
-- **Página "Detalhamento de Cliente" aposentada:** com as informações incorporadas à aba Vida notarial, a página exclusiva de detalhamento foi removida do sistema, inclusive do menu lateral (seção Clientes passa a ter só Pessoa Física e Pessoa Jurídica). O endereço antigo deixa de existir. A coluna "Retificada?" e o botão de imprimir o relatório foram descontinuados.
+- **Estado civil antigo preservado:** os campos antigos de estado civil do formulário (estado civil, cônjuge, regime patrimonial, união estável) saíram da tela de Pessoa Física, mas os valores já cadastrados continuam guardados na base para conferência e migração — a linha do tempo passa a ser o registro oficial. Quando o cadastro tem estado civil antigo diferente de "Solteiro" e ainda não tem eventos registrados, a aba avisa que a migração está pendente.
+- **Página "Detalhamento de Cliente" aposentada:** com as informações incorporadas à aba Vida notarial, a página exclusiva de detalhamento foi removida do sistema, inclusive do menu lateral (a seção Clientes passa a ter só Pessoa Física e Pessoa Jurídica). O endereço antigo deixa de existir. A coluna "Retificada?" e o botão de imprimir o relatório foram descontinuados.
 
 ## [2.0] 2026-06-29
 

@@ -230,6 +230,7 @@ function renderizarResultados(protocolos, dadosCert) {
   html += '<th>Data Emiss\u00e3o</th>';
   html += '<th>Data Entrega</th>';
   html += '<th>Escritura / Tipo</th>';
+  html += '<th></th>';
   html += '</tr></thead>';
   html += '<tbody>';
 
@@ -267,6 +268,16 @@ function renderizarResultados(protocolos, dadosCert) {
     // Escritura / Tipo
     html += '<td>' + montarColunaEscrituraTipo(expedida, cert) + '</td>';
 
+    // Link para o Controle de Certidões
+    var numProtoLink = row[CONFIG.fields.protoNumero] || '';
+    if (numProtoLink) {
+      html += '<td class="col-link"><a class="rel-cert-link" href="/controle-certidoes?protocolo=' +
+        encodeURIComponent(numProtoLink) +
+        '" title="Abrir no Controle de Certid\u00f5es"><i class="ph ph-arrow-square-out"></i></a></td>';
+    } else {
+      html += '<td class="col-link">\u2014</td>';
+    }
+
     html += '</tr>';
 
     // Linha extra de observação
@@ -275,7 +286,7 @@ function renderizarResultados(protocolos, dadosCert) {
       var obsTexto = stripMarkdown(obsRaw).replace(/^\s+|\s+$/g, '');
       if (obsTexto) {
         html += '<tr class="obs-row">';
-        html += '<td colspan="7"><div class="obs-content"><i class="ph ph-note"></i>' + obsTexto + '</div></td>';
+        html += '<td colspan="8"><div class="obs-content"><i class="ph ph-note"></i>' + obsTexto + '</div></td>';
         html += '</tr>';
       }
     }
