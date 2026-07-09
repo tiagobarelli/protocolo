@@ -96,9 +96,6 @@ var imoveisBlocks = [];
 var imoveisCounter = 0;
 var protocoloTimer = null;
 var clienteTimer = null;
-var PAPERLESS_API = '/api/paperless';
-var cacheDocsPaperlessControle = {};
-
 // Anexos da escritura (aba Anexos — acervo /api/escrituras-anexos)
 var ESC_ANEXOS_API = '/api/escrituras-anexos';
 var ESC_ALLOWED_EXT = ['pdf', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'doc', 'docx', 'odt', 'txt', 'md'];
@@ -106,8 +103,7 @@ var ESC_MAX_SIZE = 100 * 1024 * 1024; // 100 MB (o servidor é o backstop real)
 var ESC_NOTA_MAX = 1000;
 var escLivroAtual = null;
 var escPaginaAtual = null;
-var escAnexosCarregados = false; // lazy-load: lista já buscada para o registro atual?
-var escNotaAberta = null;        // nome do anexo com editor de nota aberto
+var escNotaAberta = null; // nome do anexo com editor de nota aberto
 
 // ═══════════════════════════════════════════════════════
 // HELPERS (copiados de cadastrar.js / clientes.js)
@@ -550,10 +546,11 @@ function preencherFormularioExistente(row) {
   // Verificar se escritura possui substabelecimentos
   verificarSubstabelecimentos(row);
 
-  // Aba Anexos: registro existente — habilitar (lazy-load na primeira ativação)
+  // Aba Anexos + card Documentos: registro existente — habilitar e carregar (eager)
   escLivroAtual = livro;
   escPaginaAtual = pagina;
   habilitarAbaAnexosEsc(true);
+  carregarAnexosEscritura();
 }
 
 function carregarImoveisExistentes(imoveisArr) {
@@ -639,16 +636,10 @@ function resetarEstadoFormulario() {
   document.getElementById('retificacaoBannerContainer').innerHTML = '';
   document.getElementById('substabelecimentoBannerContainer').innerHTML = '';
 
-  // Limpar estado Paperless
-  limparEstadoPaperless();
-
-  // Aba Anexos: desabilitar, limpar lista e voltar para Dados
+  // Aba Anexos + card Documentos: desabilitar, limpar as duas visões e voltar para Dados
   escLivroAtual = null;
   escPaginaAtual = null;
-  escAnexosCarregados = false;
-  escNotaAberta = null;
-  var escListaEl = document.getElementById('escFilesList');
-  if (escListaEl) escListaEl.innerHTML = '<div class="files-empty">Nenhum anexo.</div>';
+  renderizarAnexosEscritura([]);
   esconderMsg('escUploadMsg');
   habilitarAbaAnexosEsc(false);
   ativarAbaControle('dados');
@@ -1390,139 +1381,6 @@ function construirPayloadControle(imoveisIds) {
 }
 
 // ═══════════════════════════════════════════════════════
-// PAPERLESS — DOCUMENTOS DIGITALIZADOS
-// ═══════════════════════════════════════════════════════
-
-function abrirDrawerControle() {
-  document.getElementById('paperlessDrawer').classList.add('open');
-  document.getElementById('drawerOverlayControle').classList.add('active');
-}
-
-function fecharDrawerControle() {
-  document.getElementById('paperlessDrawer').classList.remove('open');
-  document.getElementById('drawerOverlayControle').classList.remove('active');
-}
-
-function buscarDocumentosPaperless(identificador) {
-  if (!identificador) return;
-
-  // Cache hit
-  if (cacheDocsPaperlessControle[identificador]) {
-    abrirDrawerControle();
-    renderizarDocumentosControle(cacheDocsPaperlessControle[identificador]);
-    atualizarResumoInlineControle(cacheDocsPaperlessControle[identificador]);
-    return;
-  }
-
-  // Exibir loading e abrir drawer
-  var body = document.getElementById('drawerBodyControle');
-  body.innerHTML = '<div class="doc-loading"><div class="spinner"></div>Consultando Paperless...</div>';
-  abrirDrawerControle();
-
-  var url = PAPERLESS_API + '/api/documents/?query=' + encodeURIComponent(identificador) + '&page_size=50';
-
-  fetch(url)
-    .then(function(r) {
-      if (!r.ok) throw new Error('Erro HTTP ' + r.status);
-      return r.json();
-    })
-    .then(function(data) {
-      var resultados = data.results || [];
-      // Filtrar no cliente: manter apenas docs cujo titulo contenha o identificador
-      var idLower = identificador.toLowerCase();
-      var docs = [];
-      for (var i = 0; i < resultados.length; i++) {
-        var titulo = (resultados[i].title || '').toLowerCase();
-        if (titulo.indexOf(idLower) !== -1) {
-          docs.push(resultados[i]);
-        }
-      }
-      cacheDocsPaperlessControle[identificador] = docs;
-      renderizarDocumentosControle(docs);
-      atualizarResumoInlineControle(docs);
-    })
-    .catch(function(e) {
-      console.error('Erro ao buscar documentos Paperless:', e);
-      body.innerHTML = '<div class="doc-empty"><i class="ph ph-warning"></i><strong>Erro:</strong> ' + (e.message || e) + '</div>';
-    });
-}
-
-function renderizarDocumentosControle(docs) {
-  var body = document.getElementById('drawerBodyControle');
-  body.innerHTML = '';
-
-  if (docs.length === 0) {
-    body.innerHTML = '<div class="doc-empty"><i class="ph ph-file-dashed"></i>Nenhum documento encontrado para este identificador.</div>';
-    return;
-  }
-
-  for (var i = 0; i < docs.length; i++) {
-    var doc = docs[i];
-    var card = document.createElement('div');
-    card.className = 'doc-card';
-
-    // Thumbnail
-    var thumb = document.createElement('img');
-    thumb.className = 'doc-thumb';
-    thumb.src = PAPERLESS_API + '/api/documents/' + doc.id + '/thumb/';
-    thumb.alt = doc.title || 'Documento';
-    thumb.title = 'Clique para abrir o PDF';
-    (function(docId) {
-      thumb.addEventListener('click', function() {
-        window.open(PAPERLESS_API + '/api/documents/' + docId + '/preview/', '_blank');
-      });
-    })(doc.id);
-    card.appendChild(thumb);
-
-    // Info
-    var info = document.createElement('div');
-    info.className = 'doc-info';
-
-    var title = document.createElement('div');
-    title.className = 'doc-title';
-    title.textContent = doc.title || 'Sem título';
-    info.appendChild(title);
-
-    card.appendChild(info);
-    body.appendChild(card);
-  }
-}
-
-function atualizarResumoInlineControle(docs) {
-  var resumo = document.getElementById('docsResumoControle');
-  if (!resumo) return;
-
-  if (docs.length > 0) {
-    var texto = docs.length === 1 ? '1 documento encontrado' : docs.length + ' documento(s) encontrado(s)';
-    var nomes = [];
-    for (var i = 0; i < docs.length; i++) {
-      nomes.push(docs[i].title || 'Sem título');
-    }
-    texto += ': ' + nomes.join(', ');
-    resumo.textContent = texto;
-    resumo.classList.add('clickable');
-    resumo.onclick = function() {
-      abrirDrawerControle();
-      renderizarDocumentosControle(docs);
-    };
-  } else {
-    resumo.textContent = 'Nenhum documento encontrado.';
-    resumo.classList.remove('clickable');
-    resumo.onclick = null;
-  }
-}
-
-function limparEstadoPaperless() {
-  var resumo = document.getElementById('docsResumoControle');
-  if (resumo) {
-    resumo.textContent = 'Clique em "Consultar" para verificar documentos no ODIN.';
-    resumo.classList.remove('clickable');
-    resumo.onclick = null;
-  }
-  fecharDrawerControle();
-}
-
-// ═══════════════════════════════════════════════════════
 // ANEXOS DA ESCRITURA (aba Anexos — /api/escrituras-anexos)
 // ═══════════════════════════════════════════════════════
 function escapeHtml(texto) {
@@ -1574,7 +1432,6 @@ function ativarAbaControle(nome) {
     if (paineis[j].id === 'ctrl-tab-' + nome) paineis[j].classList.add('active');
     else paineis[j].classList.remove('active');
   }
-  if (nome === 'anexos' && !escAnexosCarregados) carregarAnexosEscritura();
 }
 
 function habilitarAbaAnexosEsc(habilitar) {
@@ -1583,6 +1440,12 @@ function habilitarAbaAnexosEsc(habilitar) {
   var podeAbrir = !!(habilitar && escLivroAtual && escPaginaAtual);
   btn.disabled = !podeAbrir;
   btn.title = podeAbrir ? '' : 'Salve o registro para anexar arquivos';
+  // Card "Documentos Digitalizados": clicável somente quando a aba está habilitada
+  var docsCard = document.getElementById('ctrlDocsCard');
+  if (docsCard) {
+    if (podeAbrir) docsCard.classList.add('ctrl-docs-clicavel');
+    else docsCard.classList.remove('ctrl-docs-clicavel');
+  }
   // Se desabilitar enquanto a aba Anexos está ativa, volta para Dados
   if (!podeAbrir && btn.classList.contains('active')) {
     ativarAbaControle('dados');
@@ -1599,7 +1462,6 @@ function carregarAnexosEscritura() {
       return resp.json();
     })
     .then(function(data) {
-      escAnexosCarregados = true;
       renderizarAnexosEscritura(data.arquivos || []);
     })
     .catch(function(err) {
@@ -1608,7 +1470,34 @@ function carregarAnexosEscritura() {
     });
 }
 
+function renderizarDocsCard(arquivos) {
+  var lista = document.getElementById('ctrlDocsLista');
+  if (!lista) return;
+  lista.innerHTML = '';
+  if (!arquivos || arquivos.length === 0) {
+    var vazio = document.createElement('div');
+    vazio.className = 'ctrl-docs-vazio';
+    vazio.textContent = 'Nenhum anexo.';
+    lista.appendChild(vazio);
+    return;
+  }
+  for (var i = 0; i < arquivos.length; i++) {
+    var item = document.createElement('div');
+    item.className = 'ctrl-docs-item';
+    var icone = document.createElement('i');
+    icone.className = 'ph ' + iconeExtensao(arquivos[i].extensao);
+    item.appendChild(icone);
+    var nome = document.createElement('span');
+    nome.textContent = arquivos[i].nome;
+    item.appendChild(nome);
+    lista.appendChild(item);
+  }
+}
+
 function renderizarAnexosEscritura(arquivos) {
+  // Atualiza as duas visões: card "Documentos Digitalizados" (aba Dados) + lista da aba Anexos
+  renderizarDocsCard(arquivos);
+
   var container = document.getElementById('escFilesList');
   if (!container) return;
   escNotaAberta = null;
@@ -1822,7 +1711,6 @@ function enviarAnexosEscritura(files) {
     // Re-render único ao final do lote, com a lista da última resposta bem-sucedida
     if (ultimaLista) {
       renderizarAnexosEscritura(ultimaLista);
-      escAnexosCarregados = true;
     }
     if (falhas.length === 0) {
       mostrarMsg('escUploadMsg', 'success', total === 1 ? 'Arquivo enviado com sucesso.' : total + ' arquivos enviados com sucesso.');
@@ -1887,24 +1775,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Paperless — drawer de documentos digitalizados
-  document.getElementById('btnConsultarPaperless').addEventListener('click', function() {
-    var livro = document.getElementById('livroInput').value.trim();
-    var pagina = document.getElementById('paginaInput').value.trim();
-    if (!livro || !pagina) return;
-    var identificador = 'L_' + livro + '_P_' + pagina;
-    buscarDocumentosPaperless(identificador);
-  });
-  document.getElementById('btnCloseDrawerControle').addEventListener('click', fecharDrawerControle);
-  document.getElementById('drawerOverlayControle').addEventListener('click', fecharDrawerControle);
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' || e.keyCode === 27) {
-      var drawer = document.getElementById('paperlessDrawer');
-      if (drawer && drawer.classList.contains('open')) {
-        fecharDrawerControle();
-      }
-    }
-  });
+  // Card "Documentos Digitalizados" — clique ativa a aba Anexos (quando habilitada)
+  var docsCardEl = document.getElementById('ctrlDocsCard');
+  if (docsCardEl) {
+    docsCardEl.addEventListener('click', function() {
+      var btnAba = document.getElementById('ctrlTabBtnAnexos');
+      if (btnAba && !btnAba.disabled) ativarAbaControle('anexos');
+    });
+  }
 
   // Sidebar overlay
   var overlayEl = document.querySelector('.sidebar-overlay');

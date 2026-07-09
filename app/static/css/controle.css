@@ -235,156 +235,12 @@
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ==================== BOTAO CONSULTAR DOCS ==================== */
-.btn-docs {
-  margin-left: auto;
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: white;
-  color: var(--text-main);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.2s;
-  text-transform: none;
-  letter-spacing: 0;
-}
-.btn-docs:hover { background: var(--grey-98); border-color: var(--border-strong); color: var(--accent); }
-
-/* ==================== RESUMO INLINE DOCS ==================== */
-.docs-resumo {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
-.docs-resumo.clickable { cursor: pointer; }
-.docs-resumo.clickable:hover { color: var(--accent); }
-
-/* ==================== DRAWER LATERAL (Paperless) ==================== */
-.paperless-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  width: 420px;
-  background: var(--surface);
-  z-index: 200;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-  display: flex;
-  flex-direction: column;
-}
-.paperless-drawer.open { transform: translateX(0); }
-
-.drawer-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 199;
-  display: none;
-}
-.drawer-overlay.active { display: block; }
-
-.drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.drawer-header h3 {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-dark);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-}
-.drawer-close {
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.drawer-close:hover { color: var(--accent); background: var(--accent-soft); }
-
-.drawer-body {
-  overflow-y: auto;
-  padding: 20px;
-  flex: 1;
-}
-
-/* ==================== CARDS DE DOCUMENTO ==================== */
-.doc-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-  overflow: hidden;
-  background: var(--surface);
-  transition: box-shadow 0.2s;
-}
-.doc-card:hover { box-shadow: var(--shadow-md); }
-
-.doc-thumb {
-  width: 100%;
-  display: block;
-  cursor: pointer;
-  border-bottom: 1px solid var(--border);
-  background: var(--grey-98);
-}
-
-.doc-info {
-  padding: 12px;
-}
-.doc-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-dark);
-  word-break: break-word;
-}
-
-.doc-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-.doc-empty i { font-size: 2rem; display: block; margin-bottom: 12px; opacity: 0.5; }
-
-.doc-loading {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-.doc-loading .spinner {
-  width: 32px;
-  height: 32px;
-  margin: 0 auto 12px;
-}
-
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .form-row { flex-direction: column; gap: 16px; }
   .form-group.small { flex: 1; }
   .imovel-grid { grid-template-columns: 1fr; }
   .card { padding: 20px; }
-  .paperless-drawer { width: 100%; }
 }
 
 /* ==================== TRILHO DE ABAS (Dados / Anexos) ==================== */
@@ -453,6 +309,15 @@
 .main-content .file-nota-acoes { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .main-content .file-nota-acoes .btn { padding: 6px 12px; font-size: 0.8rem; }
 .main-content .file-nota-contador { font-size: 0.75rem; color: var(--text-muted); margin-right: auto; }
+
+/* ==================== CARD DOCUMENTOS DIGITALIZADOS (espelho dos anexos) ==================== */
+.main-content .ctrl-docs-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; }
+.main-content .ctrl-docs-card.ctrl-docs-clicavel { cursor: pointer; transition: all 0.2s; }
+.main-content .ctrl-docs-card.ctrl-docs-clicavel:hover { border-color: var(--border-strong); background: var(--accent-soft); }
+.main-content .ctrl-docs-item { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 0.85rem; color: var(--text-main); }
+.main-content .ctrl-docs-item i { color: var(--accent); font-size: 1.05rem; flex-shrink: 0; }
+.main-content .ctrl-docs-vazio { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
+.main-content .ctrl-docs-rodape { margin-top: 8px; font-size: 0.78rem; color: var(--text-muted); }
 
 /* Trilho no breakpoint estreito: barra horizontal acima do conteúdo */
 @media (max-width: 768px) {
