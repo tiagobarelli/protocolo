@@ -1487,7 +1487,7 @@ function salvarResponsavel() {
 /* ---------- ARQUIVOS ANEXADOS ---------- */
 
 var ALLOWED_EXTENSIONS = ['doc', 'docx', 'odt', 'pdf', 'jpg', 'png', 'txt', 'md', 'xls'];
-var MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+var MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
 function iconeExtensao(ext) {
   var e = (ext || '').toLowerCase();
@@ -2032,7 +2032,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (file.size > MAX_FILE_SIZE) {
         var msgBox = document.getElementById('uploadMsg');
         msgBox.className = 'msg-box error';
-        msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Arquivo excede o tamanho máximo de 20 MB.';
+        msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Arquivo excede o tamanho máximo de 100 MB.';
         msgBox.style.display = 'flex';
         fileInput.value = '';
         return;

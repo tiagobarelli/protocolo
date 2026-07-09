@@ -99,6 +99,16 @@ var clienteTimer = null;
 var PAPERLESS_API = '/api/paperless';
 var cacheDocsPaperlessControle = {};
 
+// Anexos da escritura (aba Anexos — acervo /api/escrituras-anexos)
+var ESC_ANEXOS_API = '/api/escrituras-anexos';
+var ESC_ALLOWED_EXT = ['pdf', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'doc', 'docx', 'odt', 'txt', 'md'];
+var ESC_MAX_SIZE = 100 * 1024 * 1024; // 100 MB (o servidor é o backstop real)
+var ESC_NOTA_MAX = 1000;
+var escLivroAtual = null;
+var escPaginaAtual = null;
+var escAnexosCarregados = false; // lazy-load: lista já buscada para o registro atual?
+var escNotaAberta = null;        // nome do anexo com editor de nota aberto
+
 // ═══════════════════════════════════════════════════════
 // HELPERS (copiados de cadastrar.js / clientes.js)
 // ═══════════════════════════════════════════════════════
@@ -539,6 +549,11 @@ function preencherFormularioExistente(row) {
 
   // Verificar se escritura possui substabelecimentos
   verificarSubstabelecimentos(row);
+
+  // Aba Anexos: registro existente — habilitar (lazy-load na primeira ativação)
+  escLivroAtual = livro;
+  escPaginaAtual = pagina;
+  habilitarAbaAnexosEsc(true);
 }
 
 function carregarImoveisExistentes(imoveisArr) {
@@ -626,6 +641,17 @@ function resetarEstadoFormulario() {
 
   // Limpar estado Paperless
   limparEstadoPaperless();
+
+  // Aba Anexos: desabilitar, limpar lista e voltar para Dados
+  escLivroAtual = null;
+  escPaginaAtual = null;
+  escAnexosCarregados = false;
+  escNotaAberta = null;
+  var escListaEl = document.getElementById('escFilesList');
+  if (escListaEl) escListaEl.innerHTML = '<div class="files-empty">Nenhum anexo.</div>';
+  esconderMsg('escUploadMsg');
+  habilitarAbaAnexosEsc(false);
+  ativarAbaControle('dados');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1268,6 +1294,11 @@ function salvarControle() {
     .then(function(data) {
       controleRowId = data.id;
 
+      // Aba Anexos: registro agora salvo — habilitar (sem trocar de aba)
+      escLivroAtual = document.getElementById('livroInput').value.trim();
+      escPaginaAtual = document.getElementById('paginaInput').value.trim();
+      habilitarAbaAnexosEsc(true);
+
       // Atualizar status do protocolo se necessario
       if (protocoloSelecionadoId && protocoloStatusId === CONFIG.statusEmAndamento) {
         var patchBody = {};
@@ -1492,6 +1523,318 @@ function limparEstadoPaperless() {
 }
 
 // ═══════════════════════════════════════════════════════
+// ANEXOS DA ESCRITURA (aba Anexos — /api/escrituras-anexos)
+// ═══════════════════════════════════════════════════════
+function escapeHtml(texto) {
+  return String(texto == null ? '' : texto)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Ícone por extensão e formatação de tamanho — espelhados de controle_certidoes.js
+function iconeExtensao(ext) {
+  var e = (ext || '').toLowerCase();
+  if (e === 'pdf') return 'ph-file-pdf';
+  if (e === 'doc' || e === 'docx' || e === 'odt') return 'ph-file-doc';
+  if (e === 'jpg' || e === 'png') return 'ph-file-image';
+  if (e === 'txt' || e === 'md') return 'ph-file-text';
+  if (e === 'xls') return 'ph-file-xls';
+  return 'ph-file';
+}
+
+function formatarTamanho(bytes) {
+  if (!bytes || bytes === 0) return '0 KB';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1).replace('.', ',') + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
+}
+
+function escPodeAnexar() {
+  var perfil = window.CURRENT_USER ? window.CURRENT_USER.perfil : '';
+  return perfil === 'master' || perfil === 'administrador';
+}
+
+function escPodeExcluir() {
+  return !!(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+}
+
+function ativarAbaControle(nome) {
+  var alvo = document.querySelector('.ctrl-tabrail-btn[data-tab="' + nome + '"]');
+  if (alvo && alvo.disabled) return;
+  var btns = document.querySelectorAll('.ctrl-tabrail-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute('data-tab') === nome) btns[i].classList.add('active');
+    else btns[i].classList.remove('active');
+  }
+  var paineis = document.querySelectorAll('.ctrl-tab-panel');
+  for (var j = 0; j < paineis.length; j++) {
+    if (paineis[j].id === 'ctrl-tab-' + nome) paineis[j].classList.add('active');
+    else paineis[j].classList.remove('active');
+  }
+  if (nome === 'anexos' && !escAnexosCarregados) carregarAnexosEscritura();
+}
+
+function habilitarAbaAnexosEsc(habilitar) {
+  var btn = document.getElementById('ctrlTabBtnAnexos');
+  if (!btn) return;
+  var podeAbrir = !!(habilitar && escLivroAtual && escPaginaAtual);
+  btn.disabled = !podeAbrir;
+  btn.title = podeAbrir ? '' : 'Salve o registro para anexar arquivos';
+  // Se desabilitar enquanto a aba Anexos está ativa, volta para Dados
+  if (!podeAbrir && btn.classList.contains('active')) {
+    ativarAbaControle('dados');
+  }
+}
+
+function carregarAnexosEscritura() {
+  var container = document.getElementById('escFilesList');
+  if (!container || !escLivroAtual || !escPaginaAtual) return;
+  fetch(ESC_ANEXOS_API + '/listar?livro=' + encodeURIComponent(escLivroAtual) +
+        '&pagina=' + encodeURIComponent(escPaginaAtual), { headers: apiHeaders() })
+    .then(function(resp) {
+      if (!resp.ok) return resp.json().then(function(data) { throw new Error(data.erro || 'Erro ao carregar anexos.'); });
+      return resp.json();
+    })
+    .then(function(data) {
+      escAnexosCarregados = true;
+      renderizarAnexosEscritura(data.arquivos || []);
+    })
+    .catch(function(err) {
+      console.error('Erro ao carregar anexos:', err);
+      container.innerHTML = '<div class="files-empty">Erro ao carregar anexos.</div>';
+    });
+}
+
+function renderizarAnexosEscritura(arquivos) {
+  var container = document.getElementById('escFilesList');
+  if (!container) return;
+  escNotaAberta = null;
+  container.innerHTML = '';
+  if (!arquivos || arquivos.length === 0) {
+    container.innerHTML = '<div class="files-empty">Nenhum anexo.</div>';
+    return;
+  }
+  for (var i = 0; i < arquivos.length; i++) {
+    container.appendChild(criarItemAnexoEscritura(arquivos[i]));
+  }
+}
+
+function criarItemAnexoEscritura(f) {
+  var item = document.createElement('div');
+  item.className = 'file-item';
+
+  var icone = document.createElement('i');
+  icone.className = 'ph ' + iconeExtensao(f.extensao) + ' file-icon';
+  item.appendChild(icone);
+
+  var info = document.createElement('div');
+  info.className = 'file-info';
+
+  var link = document.createElement('a');
+  link.className = 'file-name';
+  link.href = ESC_ANEXOS_API + '/download?livro=' + encodeURIComponent(escLivroAtual) +
+    '&pagina=' + encodeURIComponent(escPaginaAtual) + '&nome=' + encodeURIComponent(f.nome);
+  link.textContent = f.nome;
+  info.appendChild(link);
+
+  var meta = document.createElement('span');
+  meta.className = 'file-meta';
+  meta.textContent = formatarTamanho(f.tamanho);
+  info.appendChild(meta);
+
+  if (f.nota) {
+    var nota = document.createElement('div');
+    nota.className = 'file-nota';
+    nota.textContent = f.nota;
+    info.appendChild(nota);
+  }
+
+  item.appendChild(info);
+
+  if (escPodeAnexar()) {
+    var btnNota = document.createElement('button');
+    btnNota.type = 'button';
+    btnNota.className = 'file-action';
+    btnNota.title = f.nota ? 'Editar nota' : 'Adicionar nota';
+    btnNota.innerHTML = '<i class="ph ph-note-pencil"></i>';
+    btnNota.addEventListener('click', function() {
+      abrirEditorNota(info, f);
+    });
+    item.appendChild(btnNota);
+  }
+
+  if (escPodeExcluir()) {
+    var btnExcluir = document.createElement('button');
+    btnExcluir.type = 'button';
+    btnExcluir.className = 'file-delete';
+    btnExcluir.title = 'Excluir anexo';
+    btnExcluir.innerHTML = '<i class="ph ph-trash"></i>';
+    btnExcluir.addEventListener('click', function() {
+      excluirAnexoEscritura(f.nome);
+    });
+    item.appendChild(btnExcluir);
+  }
+
+  return item;
+}
+
+function fecharEditorNota() {
+  var aberto = document.querySelector('#escFilesList .file-nota-editor');
+  if (aberto && aberto.parentNode) aberto.parentNode.removeChild(aberto);
+  escNotaAberta = null;
+}
+
+function abrirEditorNota(infoEl, f) {
+  // Apenas um editor aberto por vez; clicar de novo no mesmo anexo fecha
+  if (escNotaAberta === f.nome) { fecharEditorNota(); return; }
+  fecharEditorNota();
+  escNotaAberta = f.nome;
+
+  var editor = document.createElement('div');
+  editor.className = 'file-nota-editor';
+
+  var ta = document.createElement('textarea');
+  ta.maxLength = ESC_NOTA_MAX;
+  ta.placeholder = 'Nota explicativa do anexo...';
+  ta.value = f.nota || '';
+  editor.appendChild(ta);
+
+  var acoes = document.createElement('div');
+  acoes.className = 'file-nota-acoes';
+
+  var contador = document.createElement('span');
+  contador.className = 'file-nota-contador';
+  var atualizarContador = function() {
+    contador.textContent = (ESC_NOTA_MAX - ta.value.length) + ' caracteres restantes';
+  };
+  ta.addEventListener('input', atualizarContador);
+  atualizarContador();
+  acoes.appendChild(contador);
+
+  var btnCancelar = document.createElement('button');
+  btnCancelar.type = 'button';
+  btnCancelar.className = 'btn btn-outline';
+  btnCancelar.innerHTML = '<i class="ph ph-x"></i> Cancelar';
+  btnCancelar.addEventListener('click', fecharEditorNota);
+  acoes.appendChild(btnCancelar);
+
+  var btnSalvarNota = document.createElement('button');
+  btnSalvarNota.type = 'button';
+  btnSalvarNota.className = 'btn btn-primary';
+  btnSalvarNota.innerHTML = '<i class="ph ph-check"></i> Salvar';
+  btnSalvarNota.addEventListener('click', function() {
+    salvarNotaEscritura(f.nome, ta.value, btnSalvarNota);
+  });
+  acoes.appendChild(btnSalvarNota);
+
+  editor.appendChild(acoes);
+  infoEl.appendChild(editor);
+  ta.focus();
+}
+
+function salvarNotaEscritura(nome, texto, btnEl) {
+  if (texto.length > ESC_NOTA_MAX) {
+    alert('A nota excede o limite de ' + ESC_NOTA_MAX + ' caracteres.');
+    return;
+  }
+  if (btnEl) btnEl.disabled = true;
+  var formData = new FormData();
+  formData.append('livro', escLivroAtual);
+  formData.append('pagina', escPaginaAtual);
+  formData.append('nome', nome);
+  formData.append('texto', texto);
+  fetch(ESC_ANEXOS_API + '/nota', { method: 'POST', body: formData })
+    .then(function(resp) {
+      if (!resp.ok) return resp.json().then(function(data) { throw new Error(data.erro || 'Erro ao salvar nota.'); });
+      return resp.json();
+    })
+    .then(function(data) {
+      // A resposta traz a lista completa atualizada; re-render fecha o editor
+      renderizarAnexosEscritura(data.arquivos || []);
+    })
+    .catch(function(err) {
+      if (btnEl) btnEl.disabled = false;
+      alert(err.message || 'Erro ao salvar nota.');
+    });
+}
+
+function excluirAnexoEscritura(nome) {
+  if (!confirm('Deseja excluir o anexo "' + nome + '"?')) return;
+  var url = ESC_ANEXOS_API + '/excluir?livro=' + encodeURIComponent(escLivroAtual) +
+            '&pagina=' + encodeURIComponent(escPaginaAtual) +
+            '&nome=' + encodeURIComponent(nome);
+  fetch(url, { method: 'DELETE', headers: apiHeaders() })
+    .then(function(resp) {
+      if (!resp.ok) return resp.json().then(function(data) { throw new Error(data.erro || 'Erro ao excluir anexo.'); });
+      return resp.json();
+    })
+    .then(function(data) { renderizarAnexosEscritura(data.arquivos || []); })
+    .catch(function(err) { alert(err.message || 'Erro ao excluir anexo.'); });
+}
+
+function enviarAnexosEscritura(files) {
+  if (!escLivroAtual || !escPaginaAtual) return;
+  var total = files.length;
+  var enviados = 0;
+  var falhas = [];
+  var ultimaLista = null;
+  var cadeia = Promise.resolve();
+
+  for (var i = 0; i < total; i++) {
+    (function(file, idx) {
+      cadeia = cadeia.then(function() {
+        mostrarMsg('escUploadMsg', 'info', 'Enviando ' + (idx + 1) + ' de ' + total + '...');
+
+        var ext = file.name.indexOf('.') !== -1 ? file.name.split('.').pop().toLowerCase() : '';
+        if (ESC_ALLOWED_EXT.indexOf(ext) === -1) {
+          falhas.push(escapeHtml(file.name) + ' — Extensão ".' + escapeHtml(ext) + '" não permitida.');
+          return;
+        }
+        if (file.size > ESC_MAX_SIZE) {
+          falhas.push(escapeHtml(file.name) + ' — Arquivo excede o tamanho máximo de 100 MB.');
+          return;
+        }
+
+        var formData = new FormData();
+        formData.append('livro', escLivroAtual);
+        formData.append('pagina', escPaginaAtual);
+        formData.append('arquivo', file);
+        return fetch(ESC_ANEXOS_API + '/upload', { method: 'POST', body: formData })
+          .then(function(resp) {
+            if (!resp.ok) return resp.json().then(function(data) { throw new Error(data.erro || 'Erro ao enviar arquivo.'); });
+            return resp.json();
+          })
+          .then(function(data) {
+            enviados++;
+            if (data && data.arquivos) ultimaLista = data.arquivos;
+          })
+          .catch(function(err) {
+            falhas.push(escapeHtml(file.name) + ' — ' + escapeHtml(err.message || 'Erro ao enviar arquivo.'));
+          });
+      });
+    })(files[i], i);
+  }
+
+  cadeia.then(function() {
+    // Re-render único ao final do lote, com a lista da última resposta bem-sucedida
+    if (ultimaLista) {
+      renderizarAnexosEscritura(ultimaLista);
+      escAnexosCarregados = true;
+    }
+    if (falhas.length === 0) {
+      mostrarMsg('escUploadMsg', 'success', total === 1 ? 'Arquivo enviado com sucesso.' : total + ' arquivos enviados com sucesso.');
+      setTimeout(function() { esconderMsg('escUploadMsg'); }, 4000);
+    } else {
+      var tipo = enviados === 0 ? 'error' : 'warning';
+      mostrarMsg('escUploadMsg', tipo, enviados + ' de ' + total + ' anexados. Falhou: ' + falhas.join('; '));
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
 // INICIALIZACAO
 // ═══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
@@ -1567,6 +1910,27 @@ document.addEventListener('DOMContentLoaded', function() {
   var overlayEl = document.querySelector('.sidebar-overlay');
   if (overlayEl) {
     overlayEl.addEventListener('click', toggleSidebar);
+  }
+
+  // Upload de anexos da escritura (seleção múltipla, envio sequencial)
+  var btnEscSelectFiles = document.getElementById('btnEscSelectFiles');
+  var escFileInput = document.getElementById('escFileInput');
+  if (btnEscSelectFiles && escFileInput) {
+    // Área de upload visível somente para quem pode anexar
+    if (!escPodeAnexar()) {
+      var escUploadArea = document.getElementById('escUploadArea');
+      if (escUploadArea) escUploadArea.style.display = 'none';
+    }
+    btnEscSelectFiles.addEventListener('click', function() { escFileInput.click(); });
+    escFileInput.addEventListener('change', function() {
+      var lista = escFileInput.files;
+      if (!lista || lista.length === 0) return;
+      // Copia para array antes de limpar o input (limpar esvazia o FileList)
+      var files = [];
+      for (var fi = 0; fi < lista.length; fi++) { files.push(lista[fi]); }
+      escFileInput.value = '';
+      enviarAnexosEscritura(files);
+    });
   }
 
   // Abertura via query params (ex: /controle?livro=150&pagina=025)

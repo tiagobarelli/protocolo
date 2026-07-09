@@ -72,9 +72,9 @@ def upload_arquivo(protocolo_id):
 
     # Ler conteúdo e validar tamanho
     conteudo = arquivo.read()
-    max_size = current_app.config.get("MAX_UPLOAD_SIZE", 20 * 1024 * 1024)
+    max_size = current_app.config.get("MAX_UPLOAD_SIZE", 100 * 1024 * 1024)
     if len(conteudo) > max_size:
-        return jsonify({"erro": "Arquivo excede o tamanho máximo de 20 MB."}), 400
+        return jsonify({"erro": "Arquivo excede o tamanho máximo de 100 MB."}), 400
 
     # Extrair extensão e gerar nome seguro
     nome_original = arquivo.filename

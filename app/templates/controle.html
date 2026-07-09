@@ -57,6 +57,9 @@
 
     <!-- ===== CARD DO FORMULARIO (oculto ate busca) ===== -->
     <div class="card" id="formCard" style="display:none;">
+      <div class="ctrl-tabs-layout">
+      <div class="ctrl-tabs-content">
+      <div class="ctrl-tab-panel active" id="ctrl-tab-dados">
       <div id="retificacaoBannerContainer"></div>
       <div id="revogacaoBannerContainer"></div>
       <div id="substabelecimentoBannerContainer"></div>
@@ -210,6 +213,39 @@
 
       <!-- Mensagem de feedback (após o botão Salvar) -->
       <div id="formMsg" class="msg-box"></div>
+      </div><!-- /#ctrl-tab-dados -->
+
+      <!-- ABA ANEXOS -->
+      <div class="ctrl-tab-panel" id="ctrl-tab-anexos">
+        <div class="form-section">
+          <div class="section-title"><i class="ph ph-paperclip"></i> Anexos da Escritura</div>
+          <div class="upload-area" id="escUploadArea">
+            <input type="file" id="escFileInput" multiple style="display:none;"
+                   accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.doc,.docx,.odt,.txt,.md">
+            <button type="button" class="btn btn-outline" id="btnEscSelectFiles">
+              <i class="ph ph-upload-simple"></i> Selecionar Arquivos
+            </button>
+            <span class="upload-hint">Formatos: PDF, JPG, PNG, TIFF, DOC, DOCX, ODT, TXT, MD — Máx: 100 MB por arquivo</span>
+          </div>
+          <div class="msg-box" id="escUploadMsg"></div>
+          <div id="escFilesList" class="files-list">
+            <div class="files-empty">Nenhum anexo.</div>
+          </div>
+        </div>
+      </div><!-- /#ctrl-tab-anexos -->
+      </div><!-- /.ctrl-tabs-content -->
+
+      <!-- Trilho vertical de abas -->
+      <div class="ctrl-tabrail">
+        <button type="button" class="ctrl-tabrail-btn active" data-tab="dados" onclick="ativarAbaControle('dados')">
+          <i class="ph ph-list-dashes"></i><span>Dados</span>
+        </button>
+        <button type="button" class="ctrl-tabrail-btn" data-tab="anexos" id="ctrlTabBtnAnexos" disabled
+                title="Salve o registro para anexar arquivos" onclick="ativarAbaControle('anexos')">
+          <i class="ph ph-paperclip"></i><span>Anexos</span>
+        </button>
+      </div>
+      </div><!-- /.ctrl-tabs-layout -->
     </div>
 
     <!-- Drawer lateral — Documentos Paperless -->
@@ -229,6 +265,13 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/controle.js') }}"></script>
