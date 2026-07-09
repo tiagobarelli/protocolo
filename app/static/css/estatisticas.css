@@ -1,0 +1,145 @@
+/* Estatísticas — layout da página (Leva 1: esqueleto) */
+
+/* Tokens base centralizados em design-system.css */
+/* Componentes (card, botões, campos, tabelas) canônicos em components.css */
+/* Sem declaração de tokens globais aqui — todas as regras escopadas a .main-content */
+
+/* Layout */
+.main-content {
+  background-color: var(--bg-body);
+  padding-bottom: 40px;
+}
+
+/* Largura ampla - replica o padrão da página de clientes (clientes.css:9),
+   escopado a esta página; nenhuma outra página é afetada */
+.main-content .container { max-width: 1280px; margin: 0 auto; padding: 30px 32px; width: 100%; }
+
+/* Page title */
+.main-content .page-title {
+  display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px;
+}
+.main-content .page-icon { font-size: 2rem; color: var(--accent); margin-top: 2px; }
+.main-content .page-title h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-dark); margin: 0; }
+.main-content .page-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-top: 4px; }
+
+/* Estado inicial (antes da primeira busca) */
+.main-content .estado-inicial {
+  padding: 24px; text-align: center; font-style: italic;
+  color: var(--text-muted); font-size: 0.9rem;
+}
+
+/* Search row (filtros de período) */
+.main-content .search-row {
+  display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
+}
+.main-content .field-group { display: flex; flex-direction: column; gap: 4px; }
+.main-content .field-group label {
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--text-muted);
+}
+.main-content .field-group input { width: 160px; }
+
+/* Message box */
+.main-content .msg-box {
+  padding: 10px 14px; border-radius: var(--radius);
+  font-size: 0.85rem; display: none; align-items: center; gap: 6px;
+  margin-top: 12px;
+}
+.main-content .msg-box.error { background: var(--danger-bg); border: 1px solid var(--danger); color: var(--danger); display: flex; }
+.main-content .msg-box.info { background: var(--info-bg); border: 1px solid var(--info); color: var(--info); display: flex; }
+
+/* Overlay / Spinner — os elementos moram FORA do .main-content no template
+   (padrão de todas as páginas de relatório), por isso estas regras não são
+   escopadas; segue sem qualquer declaração de tokens globais */
+.overlay {
+  position: fixed; inset: 0; background: rgba(255, 255, 255, 0.7);
+  display: none; align-items: center; justify-content: center;
+  z-index: 1000; backdrop-filter: blur(2px);
+}
+.overlay.active { display: flex; }
+
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Cards de resumo (Estatística 2) */
+.main-content .stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.main-content .stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 20px 24px;
+}
+.main-content .stat-card .stat-label {
+  font-size: var(--font-size-100);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.main-content .stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-dark);
+  line-height: 1.2;
+}
+.main-content .stat-card .stat-value-menor { font-size: 1.05rem; line-height: 1.4; }
+
+/* Seção "Por escrevente" (Estatística 1) */
+.main-content .detalhe-escrevente { margin-top: 20px; margin-bottom: 12px; }
+.main-content .detalhe-escrevente select { max-width: 320px; }
+
+/* Header do card Evolução mensal: título + seletor de tipo lado a lado;
+   o sublinhado canônico do .card-title sobe para o wrapper flex */
+.main-content .card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.main-content .card-header-flex .card-title {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.main-content .card-header-flex .field-group {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.main-content .card-header-flex .field-group select { max-width: 280px; }
+
+/* Containers dos gráficos (Leva 4) - position: relative é requisito do
+   modo responsivo do Chart.js; altura fixa evita salto de layout */
+.main-content .chart-wrap {
+  position: relative;
+  height: 300px;
+  margin-bottom: 20px;
+}
+.main-content .chart-wrap.compact { height: 220px; }
+
+/* Linha de total das tabelas de estatística */
+.main-content .report-table tfoot td {
+  font-weight: 600;
+  color: var(--text-dark);
+  background: var(--grey-96);
+  border-bottom: none;
+  border-top: 2px solid var(--border);
+}

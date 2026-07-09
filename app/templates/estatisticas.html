@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Estatísticas — Thṓth{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/estatisticas.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<!-- Overlay de loading -->
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+    {% include "partials/flash_messages.html" %}
+    <div class="container">
+
+      <!-- Card de título e filtros -->
+      <div class="card">
+        <div class="page-title">
+          <i class="ph ph-chart-bar page-icon"></i>
+          <div>
+            <h1>Estatísticas</h1>
+            <p class="page-subtitle">Escrituras lavradas — visão por período e por escrevente.</p>
+          </div>
+        </div>
+
+        <div class="search-row">
+          <button type="button" class="btn btn-secondary" id="btnAnoCorrente">
+            <i class="ph ph-calendar-blank"></i> Ano corrente
+          </button>
+
+          <div class="field-group">
+            <label for="dataInicio">Data início</label>
+            <input type="date" id="dataInicio">
+          </div>
+          <div class="field-group">
+            <label for="dataFim">Data fim</label>
+            <input type="date" id="dataFim">
+          </div>
+          <button type="button" class="btn btn-primary" id="btnBuscar">
+            <i class="ph ph-magnifying-glass"></i> Gerar estatísticas
+          </button>
+        </div>
+
+        <div class="msg-box" id="msgBox"></div>
+      </div>
+
+      <!-- Container de Resultados -->
+      <div id="resultadosContainer">
+        <div class="card" id="cardEstadoInicial">
+          <p class="estado-inicial">Selecione um período para visualizar as estatísticas.</p>
+        </div>
+        <div id="cardsResumo" class="stats-cards" style="display: none;"></div>
+        <div id="cardMensal" class="card" style="display: none;">
+          <div class="card-header-flex">
+            <div class="card-title"><i class="ph ph-chart-line-up"></i> Evolução mensal</div>
+            <div class="field-group" id="grupoTipoEvolucao">
+              <label for="selTipoEvolucao">Tipo</label>
+              <select id="selTipoEvolucao"><option value="">Todos os tipos</option></select>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="chartMensal"></canvas></div>
+        </div>
+        <div id="cardTipos" class="card" style="display: none;">
+          <div class="card-title" id="tituloTipos"></div>
+          <div class="chart-wrap"><canvas id="chartTipos"></canvas></div>
+          <div id="tabelaTipos"></div>
+        </div>
+        <div id="secaoEscreventes" class="card" style="display: none;">
+          <div class="card-title"><i class="ph ph-users"></i> Por escrevente</div>
+          <div class="chart-wrap compact"><canvas id="chartEscreventes"></canvas></div>
+          <div id="tabelaEscreventes"></div>
+          <div class="field-group detalhe-escrevente">
+            <label for="selEscrevente">Detalhar escrevente</label>
+            <select id="selEscrevente"><option value="">Selecione...</option></select>
+          </div>
+          <div id="tabelaTiposEscrevente" style="display: none;"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
+<script src="{{ url_for('static', filename='vendor/chartjs/chart.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/estatisticas.js') }}"></script>
+{% endblock %}

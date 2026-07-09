@@ -2,6 +2,15 @@
 
 Controle de correções e melhorias do sistema
 
+## [2.2] 2026-07-09
+
+### Adicionado
+
+- **Página de Estatísticas (perfil master):** nova página no grupo **Gestão Administrativa** da barra lateral, visível e acessível apenas ao perfil master. A partir de um período de datas (com atalho para o **ano corrente** e sem limite de intervalo — períodos de vários anos são aceitos), a página apresenta o panorama das escrituras lavradas: três **cards de resumo** (total de escrituras, tipo mais frequente e média mensal), a **quebra por tipo de escritura** com quantidades e percentuais e o **comparativo por escrevente**. Escrituras sem tipo ou sem escrevente atribuído aparecem agrupadas em "Sem tipo" / "Sem atribuição", para que nada fique de fora da conta.
+- **Detalhe por escrevente:** na seção "Por escrevente", um seletor abre a quebra por tipo de escritura de um escrevente específico, com quantidades e percentuais calculados sobre o total daquele escrevente.
+- **Gráficos:** a página traz três gráficos no estilo visual do sistema — **escrituras por tipo** (os 10 tipos mais frequentes, com os demais somados em uma barra "Outros"), **evolução mensal** (todos os meses do período aparecem no eixo, inclusive os sem escritura, que ficam zerados) e **por escrevente**. A biblioteca de gráficos foi instalada localmente no servidor, sem dependência de internet nos terminais.
+- **Evolução mensal por tipo de escritura:** o gráfico de evolução ganhou um seletor de tipo. Com "Todos os tipos", mostra as barras do total mês a mês; ao escolher um tipo, o gráfico vira uma **linha** com a evolução daquele tipo no período — inclusive quando o tipo não teve nenhuma escritura no intervalo (linha reta em zero, que também é informação). A escolha do tipo é mantida ao consultar outros períodos.
+
 ## [2.1.2] 2026-07-02
 
 ### Adicionado

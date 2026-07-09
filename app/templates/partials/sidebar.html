@@ -13,6 +13,7 @@
   {% set clientes_pf_active = request.endpoint == 'main.clientes' %}
   {% set clientes_pj_active = request.endpoint == 'main.clientes_pj' %}
   {% set oficios_active = request.endpoint == 'main.oficios' %}
+  {% set estatisticas_active = request.endpoint == 'main.estatisticas' %}
 
   <nav class="sidebar-nav">
     <a href="{{ url_for('main.index') }}" class="nav-item {% if request.endpoint == 'main.index' %}active{% endif %}">
@@ -47,7 +48,7 @@
     {% endif %}
 
     <!-- Submenu: Gest&atilde;o Administrativa -->
-    <div class="nav-group {% if oficios_active %}open{% endif %}">
+    <div class="nav-group {% if oficios_active or estatisticas_active %}open{% endif %}">
       <button type="button" class="nav-group-toggle" onclick="toggleNavGroup(this)">
         <span class="nav-group-label"><i class="ph ph-briefcase"></i> Gest&atilde;o Administrativa</span>
         <i class="ph ph-caret-down nav-group-arrow"></i>
@@ -56,6 +57,11 @@
         <a href="{{ url_for('main.oficios') }}" class="nav-item sub {% if oficios_active %}active{% endif %}">
           <i class="ph ph-envelope-simple"></i> Of&iacute;cios
         </a>
+        {% if current_user.perfil == 'master' %}
+        <a href="{{ url_for('main.estatisticas') }}" class="nav-item sub {% if estatisticas_active %}active{% endif %}">
+          <i class="ph ph-chart-bar"></i> Estat&iacute;sticas
+        </a>
+        {% endif %}
       </div>
     </div>
 
@@ -129,7 +135,7 @@
     </a>
     <span class="user-info"><i class="ph ph-user"></i> {{ current_user.nome }}</span>
     <a href="{{ url_for('auth.logout') }}"><i class="ph ph-sign-out"></i> Sair</a>
-    <a href="{{ url_for('main.changelog') }}" class="version-link">v. 2.1.2.</a>
+    <a href="{{ url_for('main.changelog') }}" class="version-link">v. 2.2.</a>
   </div>
 </aside>
 

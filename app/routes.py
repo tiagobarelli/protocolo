@@ -79,6 +79,13 @@ def relatorio_controle_certidoes():
     return render_template("relatorio_controle_certidoes.html")
 
 
+@main_bp.route("/estatisticas")
+@login_required
+@perfil_required("master")
+def estatisticas():
+    return render_template("estatisticas.html")
+
+
 @main_bp.route("/retificacoes")
 @login_required
 @perfil_required("master", "administrador")
