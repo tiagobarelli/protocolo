@@ -2,6 +2,22 @@
 
 Controle de correções e melhorias do sistema
 
+## [2.3] 2026-07-10
+
+### Adicionado
+
+- **Anexos de escrituras no próprio sistema:** a página de Controle de Livros de Notas foi reorganizada em duas abas — **Dados** (o formulário de sempre) e **Anexos** — e passou a guardar os PDFs e demais documentos da escritura no próprio sistema, organizados no servidor por livro e página (a pasta espelha a localização física no livro). É possível selecionar **vários arquivos de uma vez** (até 100 MB cada), acompanhar o progresso do envio e baixar qualquer anexo pelo nome. Enviar arquivos é permitido aos perfis master e administrador; excluir, somente ao master; os demais perfis podem ver e baixar. Cada pasta mantém um histórico próprio de quem anexou ou excluiu cada arquivo. A aba Anexos é liberada depois que o registro está salvo.
+- **Notas explicativas por anexo:** cada arquivo anexado pode receber uma nota curta (até 1000 caracteres) — por exemplo, "traslado assinado" ou "certidão que instruiu o ato". A nota aparece discretamente sob o nome do arquivo e pode ser criada, editada ou removida pelos perfis master e administrador.
+- **Anexos também em Retificações, Substabelecimentos e Revogações de Procuração:** as três páginas ganharam as mesmas abas Dados/Anexos, com envio múltiplo, notas e permissões idênticas. Como esses atos são lavrados nos mesmos Livros de Notas das escrituras, os arquivos vão para o mesmo acervo, organizado por livro e página.
+- **Coluna "Anexos" no Relatório de Controle de Atos:** a coluna ODIN do relatório deu lugar à coluna **Anexos**, que mostra, em um selo verde, a **quantidade real de arquivos** guardados para cada página do livro (e um traço quando não há nenhum). Se a contagem estiver momentaneamente indisponível, o relatório abre normalmente.
+
+### Melhorias
+
+- **Card "Documentos Digitalizados" renovado (Controle de Livros de Notas):** o card deixou de consultar o Paperless e passou a listar, automaticamente ao abrir o registro, os nomes dos arquivos já anexados — uma visão rápida, somente leitura. Clicar no card leva direto à aba Anexos. O painel lateral do Paperless foi removido da página; o acervo antigo de digitalizações continua disponível na interface do próprio Paperless, fora do sistema.
+- **ODIN aposentado nas telas de atos:** com os anexos nativos no sistema, o status ODIN saiu do formulário de Controle de Escrituras e das páginas de Retificações, Substabelecimentos e Revogações de Procuração (o campo "Anotado?" permanece). Os valores de ODIN já preenchidos continuam preservados na base, apenas deixam de ser exibidos e alterados.
+- **Limite de envio de arquivos unificado em 100 MB:** o envio de anexos por protocolo, que ainda barrava arquivos acima de 20 MB, passou a aceitar até **100 MB por arquivo**, igualando o limite de todo o sistema (ofícios, eventos societários, certidões e escrituras).
+- **Notas dos relatórios em tom neutro:** as linhas de detalhamento do relatório de Lavagem de Dinheiro (COAF) e de observação do relatório de Certidões deixaram o amarelo de alerta e passaram a um cinza discreto, em itálico — são notas informativas, não pendências.
+
 ## [2.2] 2026-07-09
 
 ### Adicionado
