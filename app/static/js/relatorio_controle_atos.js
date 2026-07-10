@@ -14,7 +14,6 @@ var CONFIG = {
     tipoEscritura: 'field_7194',
     digitalizacao: 'field_7200',
     doi: 'field_7201',
-    odin: 'field_7202',
     data: 'field_7226',
     retificacaoReversa: 'field_7232',
     substabelecimentoReverso: 'field_7331',
@@ -94,6 +93,14 @@ function badgeRetificada(arr) {
   return '<span class="badge-nao">N\u00e3o</span>';
 }
 
+function badgeContagemAnexos(pagina, contagens) {
+  var n = (contagens && pagina) ? contagens[pagina] : null;
+  if (n > 0) {
+    return '<span class="badge-sim">' + n + '</span>';
+  }
+  return '<span class="badge-nao">\u2014</span>';
+}
+
 /* ---------- BUSCA ---------- */
 
 function consultarLivro(livro) {
@@ -114,7 +121,13 @@ function consultarLivro(livro) {
     })
     .then(function(data) {
       var results = data.results || [];
-      renderizarResultados(results, livro);
+      // Contagem de anexos por página (acervo do Thoth); falha → relatório segue com mapa vazio
+      return fetch('/api/escrituras-anexos/contagem-livro?livro=' + encodeURIComponent(livro), { headers: apiHeaders() })
+        .then(function(r2) { return r2.ok ? r2.json() : { paginas: {} }; })
+        .catch(function() { return { paginas: {} }; })
+        .then(function(cont) {
+          renderizarResultados(results, livro, (cont && cont.paginas) || {});
+        });
     })
     .catch(function(e) {
       mostrarMsg('searchMsg', 'error', '<i class="ph ph-x-circle"></i> ' + (e.message || 'Erro ao consultar.'));
@@ -125,7 +138,7 @@ function consultarLivro(livro) {
     });
 }
 
-function renderizarResultados(results, livro) {
+function renderizarResultados(results, livro, contagens) {
   var container = document.getElementById('resultadosContainer');
   var header = document.getElementById('resultadosHeader');
   var body = document.getElementById('resultadosBody');
@@ -148,7 +161,7 @@ function renderizarResultados(results, livro) {
   html += '<th>Tipo Escritura</th>';
   html += '<th>Digitaliza\u00e7\u00e3o</th>';
   html += '<th>DOI</th>';
-  html += '<th>ODIN</th>';
+  html += '<th>Anexos</th>';
   html += '<th>Retificada</th>';
   html += '<th>Substab.</th>';
   html += '<th>Revog.</th>';
@@ -168,7 +181,7 @@ function renderizarResultados(results, livro) {
     html += '<td>' + obterValorLinkRow(row[CONFIG.fields.tipoEscritura]) + '</td>';
     html += '<td>' + obterValorSelect(row[CONFIG.fields.digitalizacao], 'Ausente') + '</td>';
     html += '<td>' + obterValorSelect(row[CONFIG.fields.doi], 'Ausente') + '</td>';
-    html += '<td>' + obterValorSelect(row[CONFIG.fields.odin], 'Pendente') + '</td>';
+    html += '<td>' + badgeContagemAnexos(pagina, contagens) + '</td>';
     html += '<td>' + badgeRetificada(row[CONFIG.fields.retificacaoReversa]) + '</td>';
     html += '<td>' + badgeSimNao(row[CONFIG.fields.substabelecimentoReverso]) + '</td>';
     html += '<td>' + badgeSimNao(row[CONFIG.fields.revogacaoReverso]) + '</td>';

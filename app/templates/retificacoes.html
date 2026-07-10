@@ -56,6 +56,18 @@
 
     <!-- ===== CARD DO FORMULARIO (oculto ate busca) ===== -->
     <div class="card" id="formCard" style="display:none;">
+      <!-- Abas (mesmo padrão visual de clientes) -->
+      <div class="tabs-header">
+        <button type="button" class="tab-btn active" data-tab="dados" onclick="ativarAbaRetificacao('dados')">
+          <i class="ph ph-list-dashes"></i> Dados
+        </button>
+        <button type="button" class="tab-btn" data-tab="anexos" id="retifTabBtnAnexos" disabled
+                title="Salve o registro para anexar arquivos" onclick="ativarAbaRetificacao('anexos')">
+          <i class="ph ph-paperclip"></i> Anexos
+        </button>
+      </div>
+
+      <div class="tab-content active" id="tab-dados">
 
       <!-- Secao 1: Identificacao -->
       <div class="form-section">
@@ -121,13 +133,20 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="odinSelect">ODIN</label>
-            <select id="odinSelect"><option value="">Selecione...</option></select>
-          </div>
-          <div class="form-group">
             <label for="anotadoSelect">Anotado?</label>
             <select id="anotadoSelect"><option value="">Selecione...</option></select>
           </div>
+        </div>
+      </div>
+
+      <!-- Secao: Documentos Digitalizados (espelho dos anexos da aba Anexos) -->
+      <div class="form-section" id="secaoDocs">
+        <div class="section-title"><i class="ph ph-files"></i> Documentos Digitalizados</div>
+        <div class="ctrl-docs-card" id="retifDocsCard">
+          <div id="retifDocsList">
+            <div class="ctrl-docs-vazio">Nenhum anexo.</div>
+          </div>
+          <div class="ctrl-docs-rodape">Abra a aba Anexos para visualizar ou gerenciar.</div>
         </div>
       </div>
 
@@ -160,6 +179,26 @@
         <button type="button" class="btn btn-primary" id="btnSalvar" onclick="salvarRetificacao()"><i class="ph ph-check-circle"></i> Salvar</button>
       </div>
       <div id="formMsg" class="msg-box"></div>
+      </div><!-- /#tab-dados -->
+
+      <!-- ABA ANEXOS -->
+      <div class="tab-content" id="tab-anexos">
+        <div class="form-section">
+          <div class="section-title"><i class="ph ph-paperclip"></i> Anexos da Retificação</div>
+          <div class="upload-area" id="retifUploadArea">
+            <input type="file" id="retifFileInput" multiple style="display:none;"
+                   accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.doc,.docx,.odt,.txt,.md">
+            <button type="button" class="btn btn-outline" id="btnRetifSelectFiles">
+              <i class="ph ph-upload-simple"></i> Selecionar Arquivos
+            </button>
+            <span class="upload-hint">Formatos: PDF, JPG, PNG, TIFF, DOC, DOCX, ODT, TXT, MD — Máx: 100 MB por arquivo</span>
+          </div>
+          <div class="msg-box" id="retifUploadMsg"></div>
+          <div id="retifFilesList" class="files-list">
+            <div class="files-empty">Nenhum anexo.</div>
+          </div>
+        </div>
+      </div><!-- /#tab-anexos -->
     </div>
 
   </main>
@@ -167,7 +206,15 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/anexos_atos.js') }}"></script>
 <script src="{{ url_for('static', filename='js/retificacoes.js') }}"></script>
 {% endblock %}

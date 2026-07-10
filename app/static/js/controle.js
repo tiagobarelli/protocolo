@@ -23,7 +23,6 @@ var CONFIG = {
     escrevente: 'field_7198',
     digitalizacao: 'field_7200',
     doi: 'field_7201',
-    odin: 'field_7202',
     pendencias: 'field_7203',
     data: 'field_7226',
     protocolo: 'field_7377',
@@ -69,10 +68,6 @@ var CONFIG = {
     { id: 3057, label: 'Salva' },
     { id: 3058, label: 'Ausente' },
     { id: 3059, label: 'NA' }
-  ],
-  odinOpts: [
-    { id: 3060, label: 'Finalizado' },
-    { id: 3061, label: 'Pendente' }
   ],
   servicosBloqueados: [
     { id: 7,  label: 'Retificação (Ata)',               url: '/retificacoes' },
@@ -305,8 +300,7 @@ function toggleSidebar() {
 // IDs de enum que indicam estado "concluído" (borda verde)
 var CONCLUIDO = {
   digitalizacao: ['3055', '3056'],
-  doi: ['3057', '3059'],
-  odin: ['3060']
+  doi: ['3057', '3059']
 };
 
 function atualizarBordaConcluido(selectEl, idsConcluidos) {
@@ -507,14 +501,8 @@ function preencherFormularioExistente(row) {
     document.getElementById('doiSelect').value = doiVal.id;
   }
 
-  var odinVal = row[CONFIG.fields.odin];
-  if (odinVal && odinVal.id) {
-    document.getElementById('odinSelect').value = odinVal.id;
-  }
-
   atualizarBordaConcluido(document.getElementById('digitalizacaoSelect'), CONCLUIDO.digitalizacao);
   atualizarBordaConcluido(document.getElementById('doiSelect'), CONCLUIDO.doi);
-  atualizarBordaConcluido(document.getElementById('odinSelect'), CONCLUIDO.odin);
 
   // Pendencias
   var pendencias = row[CONFIG.fields.pendencias] || '';
@@ -595,7 +583,6 @@ function prepararNovoRegistro(livro, pagina) {
   // Defaults
   document.getElementById('digitalizacaoSelect').value = '3054';
   document.getElementById('doiSelect').value = '3058';
-  document.getElementById('odinSelect').value = '3061';
 }
 
 function resetarEstadoFormulario() {
@@ -615,10 +602,8 @@ function resetarEstadoFormulario() {
   document.getElementById('protocoloInput').value = '';
   document.getElementById('digitalizacaoSelect').value = '';
   document.getElementById('doiSelect').value = '';
-  document.getElementById('odinSelect').value = '';
   atualizarBordaConcluido(document.getElementById('digitalizacaoSelect'), CONCLUIDO.digitalizacao);
   atualizarBordaConcluido(document.getElementById('doiSelect'), CONCLUIDO.doi);
-  atualizarBordaConcluido(document.getElementById('odinSelect'), CONCLUIDO.odin);
   document.getElementById('pendenciasTextarea').value = '';
   atualizarPreviewPendencias();
 
@@ -1204,7 +1189,6 @@ function salvarControle() {
   var dataVal = document.getElementById('dataEscritura').value;
   var digVal = document.getElementById('digitalizacaoSelect').value;
   var doiVal = document.getElementById('doiSelect').value;
-  var odinVal = document.getElementById('odinSelect').value;
   var pendVal = document.getElementById('pendenciasTextarea').value.trim();
   var temAlgo = tipoVal || escVal || dataVal || protocoloSelecionadoId ||
     pendVal || clientesSelecionados.length > 0 || imoveisBlocks.length > 0;
@@ -1213,8 +1197,7 @@ function salvarControle() {
   if (controleRowId === null) {
     var digMudou = digVal && digVal !== '3054';
     var doiMudou = doiVal && doiVal !== '3058';
-    var odinMudou = odinVal && odinVal !== '3061';
-    if (digMudou || doiMudou || odinMudou) temAlgo = true;
+    if (digMudou || doiMudou) temAlgo = true;
   } else {
     temAlgo = true; // Registro existente, sempre tem algo
   }
@@ -1355,9 +1338,6 @@ function construirPayloadControle(imoveisIds) {
   var doiVal = document.getElementById('doiSelect').value;
   payload[CONFIG.fields.doi] = doiVal ? parseInt(doiVal, 10) : null;
 
-  var odinVal = document.getElementById('odinSelect').value;
-  payload[CONFIG.fields.odin] = odinVal ? parseInt(odinVal, 10) : null;
-
   // Pendencias
   var pendVal = document.getElementById('pendenciasTextarea').value;
   payload[CONFIG.fields.pendencias] = pendVal;
@@ -1420,16 +1400,16 @@ function escPodeExcluir() {
 }
 
 function ativarAbaControle(nome) {
-  var alvo = document.querySelector('.ctrl-tabrail-btn[data-tab="' + nome + '"]');
+  var alvo = document.querySelector('.tab-btn[data-tab="' + nome + '"]');
   if (alvo && alvo.disabled) return;
-  var btns = document.querySelectorAll('.ctrl-tabrail-btn');
+  var btns = document.querySelectorAll('.tab-btn');
   for (var i = 0; i < btns.length; i++) {
     if (btns[i].getAttribute('data-tab') === nome) btns[i].classList.add('active');
     else btns[i].classList.remove('active');
   }
-  var paineis = document.querySelectorAll('.ctrl-tab-panel');
+  var paineis = document.querySelectorAll('.tab-content');
   for (var j = 0; j < paineis.length; j++) {
-    if (paineis[j].id === 'ctrl-tab-' + nome) paineis[j].classList.add('active');
+    if (paineis[j].id === 'tab-' + nome) paineis[j].classList.add('active');
     else paineis[j].classList.remove('active');
   }
 }
@@ -1731,20 +1711,15 @@ document.addEventListener('DOMContentLoaded', function() {
   carregarEscreventes();
   popularSelectOpcoes('digitalizacaoSelect', CONFIG.digitalizacaoOpts);
   popularSelectOpcoes('doiSelect', CONFIG.doiOpts);
-  popularSelectOpcoes('odinSelect', CONFIG.odinOpts);
 
   // Borda verde de "concluído" nos selects de Status e Controle
   var digSel = document.getElementById('digitalizacaoSelect');
   var doiSel = document.getElementById('doiSelect');
-  var odinSel = document.getElementById('odinSelect');
   digSel.addEventListener('change', function() {
     atualizarBordaConcluido(digSel, CONCLUIDO.digitalizacao);
   });
   doiSel.addEventListener('change', function() {
     atualizarBordaConcluido(doiSel, CONCLUIDO.doi);
-  });
-  odinSel.addEventListener('change', function() {
-    atualizarBordaConcluido(odinSel, CONCLUIDO.odin);
   });
 
   // Configurar componentes

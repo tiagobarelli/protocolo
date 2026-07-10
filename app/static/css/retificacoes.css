@@ -82,3 +82,74 @@
   .form-group.small { flex: 1; }
   .card { padding: 20px; }
 }
+
+/* ==================== ABAS (Dados | Anexos) — mesmo padrão visual de clientes (copiado de controle.css) ==================== */
+.main-content .tabs-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;            /* 4px entre linhas, 24px entre abas */
+  margin-bottom: 24px;
+}
+.main-content .tab-btn {
+  padding: 8px 2px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;   /* underline só aparece no ativo */
+  border-radius: 0;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.main-content .tab-btn:hover { color: var(--text-dark); }
+.main-content .tab-btn.active {
+  color: var(--accent);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+.main-content .tab-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.main-content .tab-btn:disabled:hover { color: var(--text-muted); }
+.main-content .tab-content { display: none; }
+.main-content .tab-content.active { display: block; }
+
+/* ==================== ANEXOS DO ATO (aba Anexos) — widget do módulo AnexosAtos (copiado de controle.css) ==================== */
+.main-content .upload-area { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.main-content .upload-hint { font-size: 0.8rem; color: var(--text-muted); }
+
+.main-content .files-list { list-style: none; padding: 0; margin: 0; }
+.main-content .file-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 4px; border-bottom: 1px dotted var(--border-strong); transition: background 0.15s; }
+.main-content .file-item:last-child { border-bottom: none; }
+.main-content .file-item:hover { background: var(--accent-soft); }
+.main-content .file-icon { font-size: 24px; color: var(--accent); flex-shrink: 0; }
+.main-content .file-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.main-content .file-name { font-weight: 600; font-size: 0.9rem; color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; }
+.main-content .file-name:hover { text-decoration: underline; }
+.main-content .file-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+.main-content .files-empty { padding: 20px; font-style: italic; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+
+.main-content .file-action,
+.main-content .file-delete { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; background: transparent; border-radius: var(--radius); color: var(--text-muted); font-size: 1.05rem; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
+.main-content .file-action:hover { background: var(--accent-soft); color: var(--accent); }
+.main-content .file-delete:hover { background: var(--danger-bg); color: var(--danger); }
+
+/* Nota explicativa do anexo + editor inline */
+.main-content .file-nota { font-size: 0.85rem; font-style: italic; color: var(--text-muted); margin-top: 6px; white-space: pre-wrap; word-break: break-word; }
+.main-content .file-nota-editor { margin-top: 8px; }
+.main-content .file-nota-editor textarea { width: 100%; min-height: 72px; font-size: 0.85rem; }
+.main-content .file-nota-acoes { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.main-content .file-nota-acoes .btn { padding: 6px 12px; font-size: 0.8rem; }
+.main-content .file-nota-contador { font-size: 0.75rem; color: var(--text-muted); margin-right: auto; }
+
+/* ==================== CARD DOCUMENTOS DIGITALIZADOS (espelho dos anexos) — copiado de controle.css ==================== */
+.main-content .ctrl-docs-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; }
+.main-content .ctrl-docs-card.ctrl-docs-clicavel { cursor: pointer; transition: all 0.2s; }
+.main-content .ctrl-docs-card.ctrl-docs-clicavel:hover { border-color: var(--border-strong); background: var(--accent-soft); }
+.main-content .ctrl-docs-item { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 0.85rem; color: var(--text-main); }
+.main-content .ctrl-docs-item i { color: var(--accent); font-size: 1.05rem; flex-shrink: 0; }
+.main-content .ctrl-docs-vazio { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
+.main-content .ctrl-docs-rodape { margin-top: 8px; font-size: 0.78rem; color: var(--text-muted); }

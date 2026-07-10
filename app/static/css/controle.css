@@ -243,43 +243,39 @@
   .card { padding: 20px; }
 }
 
-/* ==================== TRILHO DE ABAS (Dados / Anexos) ==================== */
-.main-content .ctrl-tabs-layout { display: flex; align-items: flex-start; gap: 20px; }
-.main-content .ctrl-tabs-content { flex: 1; min-width: 0; }
-.main-content .ctrl-tab-panel { display: none; }
-.main-content .ctrl-tab-panel.active { display: block; }
-
-.main-content .ctrl-tabrail {
+/* ==================== ABAS (Dados | Anexos) — mesmo padrão visual de clientes ==================== */
+.main-content .tabs-header {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 24px;
+  flex-wrap: wrap;
+  gap: 4px 24px;            /* 4px entre linhas, 24px entre abas */
+  margin-bottom: 24px;
 }
-.main-content .ctrl-tabrail-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 76px;
-  padding: 10px 6px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+.main-content .tab-btn {
+  padding: 8px 2px;
+  font-size: 0.9rem;
+  font-weight: 500;
   color: var(--text-muted);
-  font-family: inherit;
-  font-size: 0.72rem;
-  font-weight: 600;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;   /* underline só aparece no ativo */
+  border-radius: 0;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
-.main-content .ctrl-tabrail-btn i { font-size: 1.3rem; }
-.main-content .ctrl-tabrail-btn:hover { color: var(--accent); border-color: var(--border-strong); background: var(--accent-soft); }
-.main-content .ctrl-tabrail-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-foreground); }
-.main-content .ctrl-tabrail-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.main-content .ctrl-tabrail-btn:disabled:hover { color: var(--text-muted); border-color: var(--border); background: transparent; }
+.main-content .tab-btn:hover { color: var(--text-dark); }
+.main-content .tab-btn.active {
+  color: var(--accent);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+.main-content .tab-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.main-content .tab-btn:disabled:hover { color: var(--text-muted); }
+.main-content .tab-content { display: none; }
+.main-content .tab-content.active { display: block; }
 
 /* ==================== ANEXOS DA ESCRITURA (aba Anexos) ==================== */
 /* Widget espelhado das certidões (controle_certidoes.css), escopado à página */
@@ -318,11 +314,3 @@
 .main-content .ctrl-docs-item i { color: var(--accent); font-size: 1.05rem; flex-shrink: 0; }
 .main-content .ctrl-docs-vazio { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
 .main-content .ctrl-docs-rodape { margin-top: 8px; font-size: 0.78rem; color: var(--text-muted); }
-
-/* Trilho no breakpoint estreito: barra horizontal acima do conteúdo */
-@media (max-width: 768px) {
-  .main-content .ctrl-tabs-layout { flex-direction: column-reverse; gap: 16px; }
-  .main-content .ctrl-tabrail { position: static; flex-direction: row; width: 100%; }
-  .main-content .ctrl-tabrail-btn { flex: 1; flex-direction: row; width: auto; padding: 10px; }
-  .main-content .ctrl-tabrail-btn i { font-size: 1.1rem; }
-}

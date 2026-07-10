@@ -17,7 +17,6 @@ var CONFIG = {
     paginaRetif: 'field_7229',         // text
     observacao: 'field_7230',          // long_text
     escrituraRetificada: 'field_7231', // link_row → Controle (multiplo)
-    odin: 'field_7233',               // single_select
     data: 'field_7234',               // date
     escrevente: 'field_7235',          // link_row → Escreventes (single)
     anotado: 'field_7321',            // single_select
@@ -31,10 +30,6 @@ var CONFIG = {
   },
   statusEmAndamento: 3064,
   statusFinalizado: 3065,
-  odinOpts: [
-    { id: 3062, label: 'Finalizado' },
-    { id: 3063, label: 'Não finalizado' }
-  ],
   anotadoOpts: [
     { id: 3081, label: 'Anotado' },
     { id: 3082, label: 'Anotação Pendente' }
@@ -194,7 +189,6 @@ function toggleSidebar() {
 // ═══════════════════════════════════════════════════════
 // IDs de enum que indicam estado "concluído" (borda verde)
 var CONCLUIDO = {
-  odin: ['3062'],
   anotado: ['3081']
 };
 
@@ -354,19 +348,12 @@ function preencherFormularioExistente(row) {
     document.getElementById('escreventeSelect').value = escArr[0].id;
   }
 
-  // ODIN (single_select)
-  var odinVal = row[CONFIG.fields.odin];
-  if (odinVal && odinVal.id) {
-    document.getElementById('odinSelect').value = odinVal.id;
-  }
-
   // Anotado (single_select)
   var anotadoVal = row[CONFIG.fields.anotado];
   if (anotadoVal && anotadoVal.id) {
     document.getElementById('anotadoSelect').value = anotadoVal.id;
   }
 
-  atualizarBordaConcluido(document.getElementById('odinSelect'), CONCLUIDO.odin);
   atualizarBordaConcluido(document.getElementById('anotadoSelect'), CONCLUIDO.anotado);
 
   // Protocolo (link_row single)
@@ -382,6 +369,10 @@ function preencherFormularioExistente(row) {
   var obs = row[CONFIG.fields.observacao] || '';
   document.getElementById('observacaoTextarea').value = obs;
   atualizarPreviewObservacao();
+
+  // Aba Anexos + card Documentos: registro existente — habilitar e carregar (eager)
+  habilitarAbaAnexosRetif(true);
+  if (anexosWidget) anexosWidget.carregar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -398,7 +389,6 @@ function prepararNovoRegistro(livro, pagina) {
   document.getElementById('identificadorDisplay').textContent = 'L_' + livro + '_P_' + pagina;
 
   // Defaults
-  document.getElementById('odinSelect').value = '3063';     // Nao finalizado
   document.getElementById('anotadoSelect').value = '3082';  // Anotacao Pendente
 }
 
@@ -417,15 +407,18 @@ function resetarEstadoFormulario() {
   document.getElementById('protocoloInput').readOnly = false;
   document.getElementById('dataRetificacao').value = '';
   document.getElementById('escreventeSelect').value = '';
-  document.getElementById('odinSelect').value = '';
   document.getElementById('anotadoSelect').value = '';
-  atualizarBordaConcluido(document.getElementById('odinSelect'), CONCLUIDO.odin);
   atualizarBordaConcluido(document.getElementById('anotadoSelect'), CONCLUIDO.anotado);
   document.getElementById('observacaoTextarea').value = '';
   atualizarPreviewObservacao();
 
   esconderMsg('formMsg');
   esconderMsg('protocoloInfo');
+
+  // Aba Anexos + card Documentos: desabilitar, limpar as duas visões e voltar para Dados
+  if (anexosWidget) anexosWidget.limpar();
+  habilitarAbaAnexosRetif(false);
+  ativarAbaRetificacao('dados');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -643,6 +636,41 @@ function fecharAutoList(listId) {
 }
 
 // ═══════════════════════════════════════════════════════
+// ANEXOS DA RETIFICAÇÃO (aba Anexos — módulo AnexosAtos)
+// ═══════════════════════════════════════════════════════
+var anexosWidget = null;
+
+function ativarAbaRetificacao(nome) {
+  var alvo = document.querySelector('.tab-btn[data-tab="' + nome + '"]');
+  if (alvo && alvo.disabled) return;
+  var btns = document.querySelectorAll('.tab-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute('data-tab') === nome) btns[i].classList.add('active');
+    else btns[i].classList.remove('active');
+  }
+  var paineis = document.querySelectorAll('.tab-content');
+  for (var j = 0; j < paineis.length; j++) {
+    if (paineis[j].id === 'tab-' + nome) paineis[j].classList.add('active');
+    else paineis[j].classList.remove('active');
+  }
+}
+
+function habilitarAbaAnexosRetif(habilitar) {
+  var btn = document.getElementById('retifTabBtnAnexos');
+  if (!btn) return;
+  var livro = document.getElementById('livroInput').value.trim();
+  var pagina = document.getElementById('paginaInput').value.trim();
+  var podeAbrir = !!(habilitar && livro && pagina);
+  btn.disabled = !podeAbrir;
+  btn.title = podeAbrir ? '' : 'Salve o registro para anexar arquivos';
+  if (anexosWidget) anexosWidget.setCardClicavel(podeAbrir);
+  // Se desabilitar enquanto a aba Anexos está ativa, volta para Dados
+  if (!podeAbrir && btn.classList.contains('active')) {
+    ativarAbaRetificacao('dados');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 // SALVAMENTO
 // ═══════════════════════════════════════════════════════
 function salvarRetificacao() {
@@ -661,6 +689,7 @@ function salvarRetificacao() {
 
   var payload = construirPayloadRetificacao();
 
+  var eraNovo = (retificacaoRowId === null);
   var promessa;
   if (retificacaoRowId === null) {
     promessa = fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.retificacoes + '/?user_field_names=false', {
@@ -686,6 +715,12 @@ function salvarRetificacao() {
       mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
       document.getElementById('livroInput').readOnly = true;
       document.getElementById('paginaInput').readOnly = true;
+
+      // Aba Anexos: create — habilitar sem trocar de aba (recém-criado não tem anexos)
+      if (eraNovo) {
+        habilitarAbaAnexosRetif(true);
+        if (anexosWidget) anexosWidget.limpar();
+      }
 
       // Atualizar status do protocolo se necessario
       if (protocoloSelecionadoId && protocoloStatusId === CONFIG.statusEmAndamento) {
@@ -737,10 +772,6 @@ function construirPayloadRetificacao() {
   var escVal = document.getElementById('escreventeSelect').value;
   payload[CONFIG.fields.escrevente] = escVal ? [parseInt(escVal, 10)] : [];
 
-  // ODIN (single_select)
-  var odinVal = document.getElementById('odinSelect').value;
-  payload[CONFIG.fields.odin] = odinVal ? parseInt(odinVal, 10) : null;
-
   // Anotado (single_select)
   var anotadoVal = document.getElementById('anotadoSelect').value;
   payload[CONFIG.fields.anotado] = anotadoVal ? parseInt(anotadoVal, 10) : null;
@@ -760,15 +791,10 @@ function construirPayloadRetificacao() {
 document.addEventListener('DOMContentLoaded', function() {
   // Carregar dados dos selects
   carregarEscreventes();
-  popularSelectOpcoes('odinSelect', CONFIG.odinOpts);
   popularSelectOpcoes('anotadoSelect', CONFIG.anotadoOpts);
 
   // Borda verde de "concluído" nos selects de status
-  var odinSel = document.getElementById('odinSelect');
   var anotadoSel = document.getElementById('anotadoSelect');
-  odinSel.addEventListener('change', function() {
-    atualizarBordaConcluido(odinSel, CONCLUIDO.odin);
-  });
   anotadoSel.addEventListener('change', function() {
     atualizarBordaConcluido(anotadoSel, CONCLUIDO.anotado);
   });
@@ -777,6 +803,23 @@ document.addEventListener('DOMContentLoaded', function() {
   configurarMarkdownObservacao();
   configurarAutocompleteEscrituras();
   configurarAutocompleteProtocolo();
+
+  // Widget de anexos (módulo compartilhado AnexosAtos)
+  if (window.AnexosAtos) {
+    anexosWidget = AnexosAtos.criar({
+      ids: {
+        fileInput: 'retifFileInput',
+        btnSelect: 'btnRetifSelectFiles',
+        uploadMsg: 'retifUploadMsg',
+        filesList: 'retifFilesList',
+        docsCard: 'retifDocsCard',
+        docsList: 'retifDocsList'
+      },
+      getLivro: function() { return document.getElementById('livroInput').value.trim(); },
+      getPagina: function() { return document.getElementById('paginaInput').value.trim(); },
+      aoClicarCard: function() { ativarAbaRetificacao('anexos'); }
+    });
+  }
 
   // Busca por Enter
   document.getElementById('buscaLivro').addEventListener('keydown', function(e) {

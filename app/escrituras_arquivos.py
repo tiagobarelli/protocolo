@@ -189,6 +189,46 @@ def listar_arquivos():
     return jsonify({"arquivos": anexos, "tem_anexos": len(anexos) >= 1})
 
 
+@escrituras_arquivos_bp.route("/contagem-livro", methods=["GET"])
+@login_required
+def contagem_livro():
+    """Contagem de anexos por página de um livro (para o relatório de atos).
+
+    Resposta: {"paginas": {"097": 4, ...}} — chave sem o prefixo "P"; só
+    páginas com contagem > 0. Pasta inexistente → mapa vazio (nunca 404).
+    """
+    livro = _sanitizar_chave(request.args.get("livro"))
+    if not livro:
+        return jsonify({"erro": "Livro inválido."}), 400
+
+    base = current_app.config["ESCRITURAS_FOLDER"]
+    dir_livro = os.path.join(base, "L" + livro)
+
+    # Anti path traversal: o caminho resolvido tem de ficar dentro da base
+    base_real = os.path.realpath(base)
+    if not os.path.realpath(dir_livro).startswith(base_real + os.sep):
+        return jsonify({"erro": "Livro inválido."}), 400
+
+    paginas = {}
+    if os.path.isdir(dir_livro):
+        for nome_pasta in os.listdir(dir_livro):
+            if not nome_pasta.startswith("P"):
+                continue
+            dir_pagina = os.path.join(dir_livro, nome_pasta)
+            if not os.path.isdir(dir_pagina):
+                continue
+            total = 0
+            for nome in os.listdir(dir_pagina):
+                if nome == HISTORICO_NOME or nome.endswith(NOTA_SUFIXO):
+                    continue
+                if os.path.isfile(os.path.join(dir_pagina, nome)):
+                    total += 1
+            if total > 0:
+                paginas[nome_pasta[1:]] = total
+
+    return jsonify({"paginas": paginas})
+
+
 @escrituras_arquivos_bp.route("/upload", methods=["POST"])
 @login_required
 def upload_arquivo():
