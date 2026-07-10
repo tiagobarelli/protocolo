@@ -63,7 +63,7 @@ main {
 /* Badge de situação */
 /* Badges consolidados em components.css (expedida=success, pendente=warning) */
 
-/* Linha de observação (laranja) */
+/* Linha de observação — nota complementar (neutro muted, padrão .file-nota) */
 .obs-row td {
   border-top: none !important;
   padding-top: 0;
@@ -75,14 +75,14 @@ main {
   align-items: flex-start;
   gap: 6px;
   font-size: 0.8rem;
-  color: var(--warning);
+  color: var(--text-muted);
   font-style: italic;
   padding: 4px 8px;
-  background: var(--warning-bg);
+  background: var(--grey-98);
   border-radius: var(--radius);
-  border-left: 3px solid var(--warning);
+  border-left: 3px solid var(--border-strong);
 }
-.obs-content i { color: var(--warning); font-size: 1rem; flex-shrink: 0; }
+.obs-content i { color: var(--text-muted); font-size: 1rem; flex-shrink: 0; }
 
 /* Texto itálico muted */
 .text-muted-italic {
