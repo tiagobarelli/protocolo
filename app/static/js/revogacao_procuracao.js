@@ -18,7 +18,6 @@ var CONFIG = {
     paginaRevog: 'field_7437',             // text
     observacao: 'field_7440',              // long_text (rich text)
     procuracaoRevogada: 'field_7435',      // link_row → Controle (745), múltiplo
-    odin: 'field_7444',                    // single_select
     data: 'field_7441',                    // date (EU)
     escrevente: 'field_7442',              // link_row → Escreventes (747) — DB múltiplo, UI single
     anotado: 'field_7445',                 // single_select
@@ -41,10 +40,6 @@ var CONFIG = {
   statusFinalizado: 3065,
   // FILTRO: apenas Procuração (Escritura)
   tiposPermitidos: [6],  // 6 = Procuração (Escritura)
-  odinOpts: [
-    { id: 3117, label: 'Finalizado' },
-    { id: 3118, label: 'Não finalizado' }
-  ],
   anotadoOpts: [
     { id: 3119, label: 'Anotado' },
     { id: 3120, label: 'Anotação Pendente' }
@@ -346,12 +341,6 @@ function preencherFormularioExistente(row) {
     document.getElementById('escreventeSelect').value = escArr[0].id;
   }
 
-  // ODIN (single_select)
-  var odinVal = row[CONFIG.fields.odin];
-  if (odinVal && odinVal.id) {
-    document.getElementById('odinSelect').value = odinVal.id;
-  }
-
   // Anotado (single_select)
   var anotadoVal = row[CONFIG.fields.anotado];
   if (anotadoVal && anotadoVal.id) {
@@ -379,6 +368,10 @@ function preencherFormularioExistente(row) {
   var obs = row[CONFIG.fields.observacao] || '';
   document.getElementById('observacaoTextarea').value = obs;
   atualizarPreviewObservacao();
+
+  // Aba Anexos + card Documentos: registro existente — habilitar e carregar (eager)
+  habilitarAbaAnexosRevog(true);
+  if (anexosWidget) anexosWidget.carregar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -395,7 +388,6 @@ function prepararNovoRegistro(livro, pagina) {
   document.getElementById('identificadorDisplay').textContent = 'L_' + livro + '_P_' + pagina;
 
   // Defaults
-  document.getElementById('odinSelect').value = '3118';     // Nao finalizado
   document.getElementById('anotadoSelect').value = '3120';  // Anotacao Pendente
 }
 
@@ -417,13 +409,17 @@ function resetarEstadoFormulario() {
   document.getElementById('clientesChips').innerHTML = '';
   document.getElementById('dataSubstabelecimento').value = '';
   document.getElementById('escreventeSelect').value = '';
-  document.getElementById('odinSelect').value = '';
   document.getElementById('anotadoSelect').value = '';
   document.getElementById('observacaoTextarea').value = '';
   atualizarPreviewObservacao();
 
   esconderMsg('formMsg');
   esconderMsg('protocoloInfo');
+
+  // Aba Anexos + card Documentos: desabilitar, limpar as duas visões e voltar para Dados
+  if (anexosWidget) anexosWidget.limpar();
+  habilitarAbaAnexosRevog(false);
+  ativarAbaRevog('dados');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -781,6 +777,41 @@ function fecharAutoList(listId) {
 }
 
 // ═══════════════════════════════════════════════════════
+// ANEXOS DA REVOGAÇÃO (aba Anexos — módulo AnexosAtos)
+// ═══════════════════════════════════════════════════════
+var anexosWidget = null;
+
+function ativarAbaRevog(nome) {
+  var alvo = document.querySelector('.tab-btn[data-tab="' + nome + '"]');
+  if (alvo && alvo.disabled) return;
+  var btns = document.querySelectorAll('.tab-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute('data-tab') === nome) btns[i].classList.add('active');
+    else btns[i].classList.remove('active');
+  }
+  var paineis = document.querySelectorAll('.tab-content');
+  for (var j = 0; j < paineis.length; j++) {
+    if (paineis[j].id === 'tab-' + nome) paineis[j].classList.add('active');
+    else paineis[j].classList.remove('active');
+  }
+}
+
+function habilitarAbaAnexosRevog(habilitar) {
+  var btn = document.getElementById('revogTabBtnAnexos');
+  if (!btn) return;
+  var livro = document.getElementById('livroInput').value.trim();
+  var pagina = document.getElementById('paginaInput').value.trim();
+  var podeAbrir = !!(habilitar && livro && pagina);
+  btn.disabled = !podeAbrir;
+  btn.title = podeAbrir ? '' : 'Salve o registro para anexar arquivos';
+  if (anexosWidget) anexosWidget.setCardClicavel(podeAbrir);
+  // Se desabilitar enquanto a aba Anexos está ativa, volta para Dados
+  if (!podeAbrir && btn.classList.contains('active')) {
+    ativarAbaRevog('dados');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 // SALVAMENTO
 // ═══════════════════════════════════════════════════════
 function salvarRevogacao() {
@@ -799,6 +830,7 @@ function salvarRevogacao() {
 
   var payload = construirPayloadRevogacao();
 
+  var eraNovo = (revogacaoRowId === null);
   var promessa;
   if (revogacaoRowId === null) {
     promessa = fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.revogacao + '/?user_field_names=false', {
@@ -824,6 +856,12 @@ function salvarRevogacao() {
       mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
       document.getElementById('livroInput').readOnly = true;
       document.getElementById('paginaInput').readOnly = true;
+
+      // Aba Anexos: create — habilitar sem trocar de aba (recém-criado não tem anexos)
+      if (eraNovo) {
+        habilitarAbaAnexosRevog(true);
+        if (anexosWidget) anexosWidget.limpar();
+      }
 
       // Atualizar status do protocolo se necessario
       if (protocoloSelecionadoId && protocoloStatusId === CONFIG.statusEmAndamento) {
@@ -875,10 +913,6 @@ function construirPayloadRevogacao() {
   var escVal = document.getElementById('escreventeSelect').value;
   payload[CONFIG.fields.escrevente] = escVal ? [parseInt(escVal, 10)] : [];
 
-  // ODIN (single_select)
-  var odinVal = document.getElementById('odinSelect').value;
-  payload[CONFIG.fields.odin] = odinVal ? parseInt(odinVal, 10) : null;
-
   // Anotado (single_select)
   var anotadoVal = document.getElementById('anotadoSelect').value;
   payload[CONFIG.fields.anotado] = anotadoVal ? parseInt(anotadoVal, 10) : null;
@@ -905,7 +939,6 @@ function construirPayloadRevogacao() {
 document.addEventListener('DOMContentLoaded', function() {
   // Carregar dados dos selects
   carregarEscreventes();
-  popularSelectOpcoes('odinSelect', CONFIG.odinOpts);
   popularSelectOpcoes('anotadoSelect', CONFIG.anotadoOpts);
 
   // Configurar componentes
@@ -913,6 +946,23 @@ document.addEventListener('DOMContentLoaded', function() {
   configurarAutocompleteProcuracoes();
   configurarAutocompleteProtocolo();
   configurarAutocompleteClientes();
+
+  // Widget de anexos (módulo compartilhado AnexosAtos)
+  if (window.AnexosAtos) {
+    anexosWidget = AnexosAtos.criar({
+      ids: {
+        fileInput: 'revogFileInput',
+        btnSelect: 'btnRevogSelectFiles',
+        uploadMsg: 'revogUploadMsg',
+        filesList: 'revogFilesList',
+        docsCard: 'revogDocsCard',
+        docsList: 'revogDocsList'
+      },
+      getLivro: function() { return document.getElementById('livroInput').value.trim(); },
+      getPagina: function() { return document.getElementById('paginaInput').value.trim(); },
+      aoClicarCard: function() { ativarAbaRevog('anexos'); }
+    });
+  }
 
   // Busca por Enter
   document.getElementById('buscaLivro').addEventListener('keydown', function(e) {

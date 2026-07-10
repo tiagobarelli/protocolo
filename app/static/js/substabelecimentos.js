@@ -18,7 +18,6 @@ var CONFIG = {
     paginaSubst: 'field_7323',             // text
     observacao: 'field_7324',              // long_text
     procuracaoSubstabelecida: 'field_7325', // link_row → Controle (multiplo)
-    odin: 'field_7326',                    // single_select
     data: 'field_7327',                    // date
     escrevente: 'field_7328',              // link_row → Escreventes (single)
     anotado: 'field_7329',                 // single_select
@@ -41,10 +40,6 @@ var CONFIG = {
   statusFinalizado: 3065,
   // IDs dos tipos de ato permitidos na tabela Servicos (746)
   tiposPermitidos: [6, 30],  // 6 = Procuracao, 30 = Substabelecimento de procuracao
-  odinOpts: [
-    { id: 3083, label: 'Finalizado' },
-    { id: 3084, label: 'Não finalizado' }
-  ],
   anotadoOpts: [
     { id: 3085, label: 'Anotado' },
     { id: 3086, label: 'Anotação Pendente' }
@@ -346,12 +341,6 @@ function preencherFormularioExistente(row) {
     document.getElementById('escreventeSelect').value = escArr[0].id;
   }
 
-  // ODIN (single_select)
-  var odinVal = row[CONFIG.fields.odin];
-  if (odinVal && odinVal.id) {
-    document.getElementById('odinSelect').value = odinVal.id;
-  }
-
   // Anotado (single_select)
   var anotadoVal = row[CONFIG.fields.anotado];
   if (anotadoVal && anotadoVal.id) {
@@ -379,6 +368,10 @@ function preencherFormularioExistente(row) {
   var obs = row[CONFIG.fields.observacao] || '';
   document.getElementById('observacaoTextarea').value = obs;
   atualizarPreviewObservacao();
+
+  // Aba Anexos + card Documentos: registro existente — habilitar e carregar (eager)
+  habilitarAbaAnexosSubst(true);
+  if (anexosWidget) anexosWidget.carregar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -395,7 +388,6 @@ function prepararNovoRegistro(livro, pagina) {
   document.getElementById('identificadorDisplay').textContent = 'L_' + livro + '_P_' + pagina;
 
   // Defaults
-  document.getElementById('odinSelect').value = '3084';     // Nao finalizado
   document.getElementById('anotadoSelect').value = '3086';  // Anotacao Pendente
 }
 
@@ -417,13 +409,17 @@ function resetarEstadoFormulario() {
   document.getElementById('clientesChips').innerHTML = '';
   document.getElementById('dataSubstabelecimento').value = '';
   document.getElementById('escreventeSelect').value = '';
-  document.getElementById('odinSelect').value = '';
   document.getElementById('anotadoSelect').value = '';
   document.getElementById('observacaoTextarea').value = '';
   atualizarPreviewObservacao();
 
   esconderMsg('formMsg');
   esconderMsg('protocoloInfo');
+
+  // Aba Anexos + card Documentos: desabilitar, limpar as duas visões e voltar para Dados
+  if (anexosWidget) anexosWidget.limpar();
+  habilitarAbaAnexosSubst(false);
+  ativarAbaSubst('dados');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -781,6 +777,41 @@ function fecharAutoList(listId) {
 }
 
 // ═══════════════════════════════════════════════════════
+// ANEXOS DO SUBSTABELECIMENTO (aba Anexos — módulo AnexosAtos)
+// ═══════════════════════════════════════════════════════
+var anexosWidget = null;
+
+function ativarAbaSubst(nome) {
+  var alvo = document.querySelector('.tab-btn[data-tab="' + nome + '"]');
+  if (alvo && alvo.disabled) return;
+  var btns = document.querySelectorAll('.tab-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute('data-tab') === nome) btns[i].classList.add('active');
+    else btns[i].classList.remove('active');
+  }
+  var paineis = document.querySelectorAll('.tab-content');
+  for (var j = 0; j < paineis.length; j++) {
+    if (paineis[j].id === 'tab-' + nome) paineis[j].classList.add('active');
+    else paineis[j].classList.remove('active');
+  }
+}
+
+function habilitarAbaAnexosSubst(habilitar) {
+  var btn = document.getElementById('substTabBtnAnexos');
+  if (!btn) return;
+  var livro = document.getElementById('livroInput').value.trim();
+  var pagina = document.getElementById('paginaInput').value.trim();
+  var podeAbrir = !!(habilitar && livro && pagina);
+  btn.disabled = !podeAbrir;
+  btn.title = podeAbrir ? '' : 'Salve o registro para anexar arquivos';
+  if (anexosWidget) anexosWidget.setCardClicavel(podeAbrir);
+  // Se desabilitar enquanto a aba Anexos está ativa, volta para Dados
+  if (!podeAbrir && btn.classList.contains('active')) {
+    ativarAbaSubst('dados');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 // SALVAMENTO
 // ═══════════════════════════════════════════════════════
 function salvarSubstabelecimento() {
@@ -799,6 +830,7 @@ function salvarSubstabelecimento() {
 
   var payload = construirPayloadSubstabelecimento();
 
+  var eraNovo = (substabelecimentoRowId === null);
   var promessa;
   if (substabelecimentoRowId === null) {
     promessa = fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.substabelecimentos + '/?user_field_names=false', {
@@ -824,6 +856,12 @@ function salvarSubstabelecimento() {
       mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
       document.getElementById('livroInput').readOnly = true;
       document.getElementById('paginaInput').readOnly = true;
+
+      // Aba Anexos: create — habilitar sem trocar de aba (recém-criado não tem anexos)
+      if (eraNovo) {
+        habilitarAbaAnexosSubst(true);
+        if (anexosWidget) anexosWidget.limpar();
+      }
 
       // Atualizar status do protocolo se necessario
       if (protocoloSelecionadoId && protocoloStatusId === CONFIG.statusEmAndamento) {
@@ -875,10 +913,6 @@ function construirPayloadSubstabelecimento() {
   var escVal = document.getElementById('escreventeSelect').value;
   payload[CONFIG.fields.escrevente] = escVal ? [parseInt(escVal, 10)] : [];
 
-  // ODIN (single_select)
-  var odinVal = document.getElementById('odinSelect').value;
-  payload[CONFIG.fields.odin] = odinVal ? parseInt(odinVal, 10) : null;
-
   // Anotado (single_select)
   var anotadoVal = document.getElementById('anotadoSelect').value;
   payload[CONFIG.fields.anotado] = anotadoVal ? parseInt(anotadoVal, 10) : null;
@@ -905,7 +939,6 @@ function construirPayloadSubstabelecimento() {
 document.addEventListener('DOMContentLoaded', function() {
   // Carregar dados dos selects
   carregarEscreventes();
-  popularSelectOpcoes('odinSelect', CONFIG.odinOpts);
   popularSelectOpcoes('anotadoSelect', CONFIG.anotadoOpts);
 
   // Configurar componentes
@@ -913,6 +946,23 @@ document.addEventListener('DOMContentLoaded', function() {
   configurarAutocompleteProcuracoes();
   configurarAutocompleteProtocolo();
   configurarAutocompleteClientes();
+
+  // Widget de anexos (módulo compartilhado AnexosAtos)
+  if (window.AnexosAtos) {
+    anexosWidget = AnexosAtos.criar({
+      ids: {
+        fileInput: 'substFileInput',
+        btnSelect: 'btnSubstSelectFiles',
+        uploadMsg: 'substUploadMsg',
+        filesList: 'substFilesList',
+        docsCard: 'substDocsCard',
+        docsList: 'substDocsList'
+      },
+      getLivro: function() { return document.getElementById('livroInput').value.trim(); },
+      getPagina: function() { return document.getElementById('paginaInput').value.trim(); },
+      aoClicarCard: function() { ativarAbaSubst('anexos'); }
+    });
+  }
 
   // Busca por Enter
   document.getElementById('buscaLivro').addEventListener('keydown', function(e) {
