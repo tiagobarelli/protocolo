@@ -294,10 +294,10 @@ function executarBusca(livro, pagina) {
       var results = data.results || [];
       if (results.length > 0) {
         preencherFormularioExistente(results[0]);
-        mostrarMsg('formMsg', 'info', 'Registro encontrado — L_' + livro + '_P_' + pagina);
+        mostrarMsg('formStatusMsg', 'info', 'Registro encontrado — L_' + livro + '_P_' + pagina);
       } else {
         prepararNovoRegistro(livro, pagina);
-        mostrarMsg('formMsg', 'info', 'Novo registro — L_' + livro + '_P_' + pagina);
+        mostrarMsg('formStatusMsg', 'info', 'Novo registro — L_' + livro + '_P_' + pagina);
       }
       document.getElementById('formCard').style.display = 'block';
       document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
@@ -413,6 +413,7 @@ function resetarEstadoFormulario() {
   atualizarPreviewObservacao();
 
   esconderMsg('formMsg');
+  esconderMsg('formStatusMsg');
   esconderMsg('protocoloInfo');
 
   // Aba Anexos + card Documentos: desabilitar, limpar as duas visões e voltar para Dados
@@ -621,7 +622,7 @@ function selecionarProtocolo(row) {
   protocoloStatusId = statusObj ? statusObj.id : null;
 
   if (protocoloStatusId === CONFIG.statusEmAndamento) {
-    mostrarMsg('protocoloInfo', 'warning', 'Este protocolo será atualizado para "Finalizado" ao salvar.');
+    mostrarMsg('protocoloInfo', 'warning', 'Atenção: ao salvar, este protocolo será dado por <strong>encerrado</strong> (status "Finalizado").');
   } else {
     esconderMsg('protocoloInfo');
   }

@@ -53,6 +53,9 @@
     <div class="card" id="formCard" style="display:none;">
       <div id="formStatusMsg" class="msg-box"></div>
 
+      <!-- Badge de bloqueio de edição (renderizado por bloqueio_registro.js; visível nas duas abas) -->
+      <div id="bloqueioBadge"></div>
+
       <!-- Abas -->
       <div class="tabs-header">
         <button type="button" class="tab-btn active" data-tab="dados" onclick="ativarAbaCertidao('dados')">
@@ -156,6 +159,7 @@
 
       <!-- Botoes de acao -->
       <div class="btn-row">
+        <span id="bloqueioBotao"></span>
         <button type="button" class="btn btn-primary" id="btnSalvar" onclick="salvarCertidao()"><i class="ph ph-check-circle"></i> Salvar</button>
       </div>
 
@@ -195,5 +199,6 @@
     perfil: "{{ current_user.perfil }}"
   };
 </script>
+<script src="{{ url_for('static', filename='js/bloqueio_registro.js') }}"></script>
 <script src="{{ url_for('static', filename='js/controle_certidoes.js') }}"></script>
 {% endblock %}

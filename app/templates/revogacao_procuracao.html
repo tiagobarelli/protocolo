@@ -56,6 +56,8 @@
 
     <!-- ===== CARD DO FORMULARIO (oculto ate busca) ===== -->
     <div class="card" id="formCard" style="display:none;">
+      <div id="formStatusMsg" class="msg-box"></div>
+
       <!-- Abas (mesmo padrão visual de clientes) -->
       <div class="tabs-header">
         <button type="button" class="tab-btn active" data-tab="dados" onclick="ativarAbaRevog('dados')">
@@ -110,6 +112,7 @@
         <div class="form-row single">
           <div class="form-group">
             <label for="protocoloInput">Buscar protocolo por número</label>
+            <p class="hint-atencao"><i class="ph ph-warning-circle"></i><span>Insira o número de protocolo da revogação. A inserção dará o protocolo por <strong>encerrado</strong>.</span></p>
             <div class="autocomplete-wrapper">
               <input type="text" id="protocoloInput" placeholder="Digite o número do protocolo..." autocomplete="off">
               <div class="autocomplete-list" id="protocoloAutoList"></div>

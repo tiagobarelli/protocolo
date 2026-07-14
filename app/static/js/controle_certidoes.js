@@ -64,6 +64,9 @@ var escriturasSelecionadas = [];    // [{id, label}]
 var protocoloTimer = null;
 var clienteTimer = null;
 var escrituraTimer = null;
+// Bloqueio de edicao por registro (modulo compartilhado bloqueio_registro.js)
+var bloqueioWidget = null;
+var bloqueioTravadoUI = false; // ultimo estado de travamento aplicado na UI
 
 // ═══════════════════════════════════════════════════════
 // HELPERS
@@ -307,6 +310,9 @@ function preencherFormularioExistente(row) {
       adicionarEscritura(escriturasArr[j].id, escriturasArr[j].value || ('Escritura ' + escriturasArr[j].id));
     }
   }
+
+  // Estado de bloqueio do registro (badge + travamento + botao do master)
+  if (bloqueioWidget) bloqueioWidget.carregar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -373,6 +379,9 @@ function resetarEstadoFormulario() {
   if (certList) certList.innerHTML = '<div class="files-empty">Nenhum anexo.</div>';
   habilitarAbaAnexo(false);
   ativarAbaCertidao('dados');
+
+  // Bloqueio: registro novo/limpo nunca esta bloqueado
+  if (bloqueioWidget) bloqueioWidget.limpar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -619,7 +628,7 @@ function adicionarRequerido(id, label, advogado) {
   for (var i = 0; i < requeridosSelecionados.length; i++) {
     if (requeridosSelecionados[i].id === id) return;
   }
-  requeridosSelecionados.push({ id: id, label: label });
+  requeridosSelecionados.push({ id: id, label: label, advogado: !!advogado });
   renderizarChipRequerido(id, label, !!advogado);
 }
 
@@ -629,12 +638,25 @@ function renderizarChipRequerido(id, label, advogado) {
   chip.className = 'chip';
   chip.id = 'chip-requerido-' + id;
   var icone = advogado ? '<i class="ph ph-scales" title="Advogado"></i> ' : '';
+  // Registro bloqueado (perfil nao-master): chip sem botao de remover
+  var podeRemover = !bloqueioTravado();
   chip.innerHTML = icone + '<span>' + label + '</span>' +
-    '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>';
-  chip.querySelector('.chip-remove').addEventListener('click', function() {
-    removerRequerido(id);
-  });
+    (podeRemover ? '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>' : '');
+  if (podeRemover) {
+    chip.querySelector('.chip-remove').addEventListener('click', function() {
+      removerRequerido(id);
+    });
+  }
   container.appendChild(chip);
+}
+
+function rerenderizarChipsRequeridos() {
+  var container = document.getElementById('requeridosChips');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = 0; i < requeridosSelecionados.length; i++) {
+    renderizarChipRequerido(requeridosSelecionados[i].id, requeridosSelecionados[i].label, !!requeridosSelecionados[i].advogado);
+  }
 }
 
 function removerRequerido(id) {
@@ -742,12 +764,25 @@ function renderizarChipEscritura(id, label) {
   var chip = document.createElement('div');
   chip.className = 'chip';
   chip.id = 'chip-escritura-' + id;
+  // Registro bloqueado (perfil nao-master): chip sem botao de remover
+  var podeRemover = !bloqueioTravado();
   chip.innerHTML = '<span>' + label + '</span>' +
-    '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>';
-  chip.querySelector('.chip-remove').addEventListener('click', function() {
-    removerEscritura(id);
-  });
+    (podeRemover ? '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>' : '');
+  if (podeRemover) {
+    chip.querySelector('.chip-remove').addEventListener('click', function() {
+      removerEscritura(id);
+    });
+  }
   container.appendChild(chip);
+}
+
+function rerenderizarChipsEscrituras() {
+  var container = document.getElementById('escriturasChips');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = 0; i < escriturasSelecionadas.length; i++) {
+    renderizarChipEscritura(escriturasSelecionadas[i].id, escriturasSelecionadas[i].label);
+  }
 }
 
 function removerEscritura(id) {
@@ -765,9 +800,79 @@ function fecharAutoList(listId) {
 }
 
 // ═══════════════════════════════════════════════════════
+// BLOQUEIO DE EDICAO (modulo bloqueio_registro.js)
+// ═══════════════════════════════════════════════════════
+function bloqueioTravado() {
+  // Travado = registro bloqueado e perfil nao-master (master bypassa)
+  if (!bloqueioWidget || !bloqueioWidget.estaBloqueado()) return false;
+  return !(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+}
+
+// Callback do widget de bloqueio: trava/destrava os campos da aba Dados
+// Emissao e reflete o estado nos anexos. Travamento EXCLUSIVAMENTE via
+// disabled: a pagina gerencia readOnly por conta propria (ex.: protocoloInput
+// readonly ao carregar registro) e o destravamento nao pode libertar um campo
+// que ela mantem readonly.
+function aplicarBloqueioCertidao(deveTravar) {
+  var travar = !!deveTravar;
+  var mudou = (travar !== bloqueioTravadoUI);
+  bloqueioTravadoUI = travar;
+
+  // Campos da aba Dados Emissao (somente disabled; nunca tocar em readOnly)
+  document.getElementById('dataEmissao').disabled = travar;
+  document.getElementById('protocoloInput').disabled = travar;
+  document.getElementById('subtipoSelect').disabled = travar;
+  document.getElementById('entregueEm').disabled = travar;
+  document.getElementById('formaEntregaSelect').disabled = travar;
+  document.getElementById('escrituraInput').disabled = travar;
+  document.getElementById('clienteInput').disabled = travar;
+  document.getElementById('observacaoTextarea').disabled = travar;
+
+  // Chips (re-render remove/restaura os botoes de remover)
+  rerenderizarChipsEscrituras();
+  rerenderizarChipsRequeridos();
+
+  // Botao Salvar: oculto quando travado (nao apenas desabilitado)
+  var btnSalvar = document.getElementById('btnSalvar');
+  if (btnSalvar) btnSalvar.style.display = travar ? 'none' : '';
+
+  // Anexos: upload/exclusao seguem certPodeAnexar/certPodeExcluir, que
+  // consultam bloqueioTravado(). Leitura e download permanecem livres
+  // (aba acessivel, lista visivel, links de download ativos).
+  var btnCertSelectFile = document.getElementById('btnCertSelectFile');
+  if (btnCertSelectFile) btnCertSelectFile.style.display = certPodeAnexar() ? '' : 'none';
+  if (mudou && protoNumeroAtual) {
+    carregarAnexosCertidao();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 // VALIDACAO E SALVAMENTO
 // ═══════════════════════════════════════════════════════
+// Gate de bloqueio: re-verificacao fresca ANTES de qualquer gravacao
+// (fecha a brecha da aba antiga).
 function salvarCertidao() {
+  if (certidaoRowId === null || !bloqueioWidget) {
+    executarSalvarCertidao();
+    return;
+  }
+  bloqueioWidget.verificarAntesDeSalvar().then(function(info) {
+    var ehMaster = !!(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+    if (info.bloqueado && !ehMaster) {
+      var btnSalvar = document.getElementById('btnSalvar');
+      if (btnSalvar) btnSalvar.disabled = false;
+      esconderOverlay();
+      mostrarMsg('formMsg', 'error', 'Este registro foi bloqueado para edição por ' +
+        (info.bloqueadoPor || 'outro usuário') + '. Solicite o desbloqueio ao usuário master.');
+      document.getElementById('formMsg').scrollIntoView({ behavior: 'smooth' });
+      bloqueioWidget.carregar(); // sincroniza a UI da aba antiga (badge + travamento)
+      return;
+    }
+    executarSalvarCertidao();
+  });
+}
+
+function executarSalvarCertidao() {
   // Validar campos obrigatorios
   var dataEmissao = document.getElementById('dataEmissao').value;
   var subtipo = document.getElementById('subtipoSelect').value;
@@ -810,6 +915,10 @@ function salvarCertidao() {
     .then(function(data) {
       certidaoRowId = data.id;
       habilitarAbaAnexo(true);
+
+      // Bloqueio: no registro recem-criado o botao do master passa a aparecer
+      if (bloqueioWidget) bloqueioWidget.carregar();
+
       mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
       document.getElementById('formMsg').scrollIntoView({ behavior: 'smooth' });
 
@@ -910,6 +1019,17 @@ function formatarTamanho(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
 }
 
+function certPodeAnexar() {
+  if (bloqueioTravado()) return false; // anexos travados junto com os dados
+  var perfil = window.CURRENT_USER ? window.CURRENT_USER.perfil : '';
+  return perfil === 'master' || perfil === 'administrador';
+}
+
+function certPodeExcluir() {
+  if (bloqueioTravado()) return false; // anexos travados junto com os dados
+  return !!(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+}
+
 function ativarAbaCertidao(nome) {
   var btn = document.querySelector('.tab-btn[data-tab="' + nome + '"]');
   if (btn && btn.disabled) return;
@@ -956,7 +1076,7 @@ function renderizarAnexosCertidao(arquivos) {
     container.innerHTML = '<div class="files-empty">Nenhum anexo.</div>';
     return;
   }
-  var ehMaster = !!(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+  var podeExcluir = certPodeExcluir();
   var html = '';
   for (var i = 0; i < arquivos.length; i++) {
     var f = arquivos[i];
@@ -969,7 +1089,7 @@ function renderizarAnexosCertidao(arquivos) {
     html += '    <a href="' + url + '" class="file-name">' + f.nome + '</a>';
     html += '    <span class="file-meta">' + formatarTamanho(f.tamanho) + '</span>';
     html += '  </div>';
-    if (ehMaster) {
+    if (podeExcluir) {
       var nomeEsc = String(f.nome).replace(/'/g, "\\'");
       html += '  <button type="button" class="file-delete" onclick="excluirAnexoCertidao(\'' + nomeEsc + '\')" title="Excluir anexo">';
       html += '    <i class="ph ph-trash"></i>';
@@ -1033,6 +1153,17 @@ document.addEventListener('DOMContentLoaded', function() {
   configurarAutocompleteClientes();
   configurarAutocompleteEscrituras();
 
+  // Widget de bloqueio de edicao (modulo compartilhado bloqueio_registro.js)
+  if (window.criarBloqueioRegistro) {
+    bloqueioWidget = window.criarBloqueioRegistro({
+      tabelaId: CONFIG.tables.certidoes,
+      badgeContainerId: 'bloqueioBadge',
+      botaoContainerId: 'bloqueioBotao',
+      obterRowId: function() { return certidaoRowId; },
+      aoAplicarBloqueio: aplicarBloqueioCertidao
+    });
+  }
+
   // Botoes de busca
   document.getElementById('btnBuscarProtocolo').addEventListener('click', buscarPorProtocolo);
 
@@ -1065,8 +1196,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var certFileInput = document.getElementById('certFileInput');
   if (btnCertSelectFile && certFileInput) {
     // Defensivo: esconder o envio para quem não pode anexar (a página já é master/admin)
-    var perfilAtual = window.CURRENT_USER ? window.CURRENT_USER.perfil : '';
-    if (perfilAtual !== 'master' && perfilAtual !== 'administrador') {
+    if (!certPodeAnexar()) {
       btnCertSelectFile.style.display = 'none';
     }
     btnCertSelectFile.addEventListener('click', function() { certFileInput.click(); });

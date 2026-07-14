@@ -314,3 +314,7 @@
 .main-content .ctrl-docs-item i { color: var(--accent); font-size: 1.05rem; flex-shrink: 0; }
 .main-content .ctrl-docs-vazio { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
 .main-content .ctrl-docs-rodape { margin-top: 8px; font-size: 0.78rem; color: var(--text-muted); }
+
+/* ==================== BLOQUEIO DE EDIÇÃO (badge acima das abas) ==================== */
+/* Container vazio não ocupa espaço; com badge, separa das abas e alinha os badges lado a lado */
+.main-content #bloqueioBadge:not(:empty) { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }

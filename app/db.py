@@ -126,6 +126,20 @@ def init_db(app):
             );
             CREATE INDEX IF NOT EXISTS idx_internal_reads_message
                 ON internal_message_reads(message_id);
+
+            CREATE TABLE IF NOT EXISTS registro_bloqueios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tabela_id INTEGER NOT NULL,
+                row_id INTEGER NOT NULL,
+                bloqueado_por_id INTEGER NOT NULL,
+                bloqueado_por_nome TEXT NOT NULL,
+                bloqueado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+                desbloqueado_por_id INTEGER,
+                desbloqueado_por_nome TEXT,
+                desbloqueado_em DATETIME
+            );
+            CREATE INDEX IF NOT EXISTS idx_registro_bloqueios_registro
+                ON registro_bloqueios(tabela_id, row_id);
         """)
         conn.commit()
         conn.close()

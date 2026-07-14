@@ -57,6 +57,9 @@
 
     <!-- ===== CARD DO FORMULARIO (oculto ate busca) ===== -->
     <div class="card" id="formCard" style="display:none;">
+      <!-- Badge de bloqueio de edição (renderizado por bloqueio_registro.js; visível nas duas abas) -->
+      <div id="bloqueioBadge"></div>
+
       <!-- Abas (mesmo padrão visual de clientes) -->
       <div class="tabs-header">
         <button type="button" class="tab-btn active" data-tab="dados" onclick="ativarAbaControle('dados')">
@@ -72,7 +75,6 @@
       <div id="retificacaoBannerContainer"></div>
       <div id="revogacaoBannerContainer"></div>
       <div id="substabelecimentoBannerContainer"></div>
-      <div id="formMsg" class="msg-box"></div>
 
       <!-- Secao 1: Identificacao -->
       <div class="form-section">
@@ -211,6 +213,7 @@
 
       <!-- Botoes de acao -->
       <div class="btn-row">
+        <span id="bloqueioBotao"></span>
         <button type="button" class="btn btn-primary" id="btnSalvar" onclick="salvarControle()"><i class="ph ph-check-circle"></i> Salvar</button>
       </div>
 
@@ -252,5 +255,6 @@
 </script>
 <script src="{{ url_for('static', filename='vendor/marked/marked.umd.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bloqueio_registro.js') }}"></script>
 <script src="{{ url_for('static', filename='js/controle.js') }}"></script>
 {% endblock %}
