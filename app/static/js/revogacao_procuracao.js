@@ -57,6 +57,9 @@ var protocoloStatusId = null;
 var protocoloTimer = null;
 var clientesSelecionados = [];       // [{id, nome}]
 var clienteTimer = null;
+// Bloqueio de edicao por registro (modulo compartilhado bloqueio_registro.js)
+var bloqueioWidget = null;
+var bloqueioTravadoUI = false; // ultimo estado de travamento aplicado na UI
 
 // ═══════════════════════════════════════════════════════
 // HELPERS
@@ -372,6 +375,9 @@ function preencherFormularioExistente(row) {
   // Aba Anexos + card Documentos: registro existente — habilitar e carregar (eager)
   habilitarAbaAnexosRevog(true);
   if (anexosWidget) anexosWidget.carregar();
+
+  // Estado de bloqueio do registro (badge + travamento + botao do master)
+  if (bloqueioWidget) bloqueioWidget.carregar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -421,6 +427,9 @@ function resetarEstadoFormulario() {
   if (anexosWidget) anexosWidget.limpar();
   habilitarAbaAnexosRevog(false);
   ativarAbaRevog('dados');
+
+  // Bloqueio: registro novo/limpo nunca esta bloqueado
+  if (bloqueioWidget) bloqueioWidget.limpar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -528,12 +537,25 @@ function renderizarChipProcuracao(id, label) {
   var chip = document.createElement('div');
   chip.className = 'chip';
   chip.id = 'chip-procuracao-' + id;
+  // Registro bloqueado (perfil nao-master): chip sem botao de remover
+  var podeRemover = !bloqueioTravado();
   chip.innerHTML = '<span>' + label + '</span>' +
-    '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>';
-  chip.querySelector('.chip-remove').addEventListener('click', function() {
-    removerProcuracao(id);
-  });
+    (podeRemover ? '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>' : '');
+  if (podeRemover) {
+    chip.querySelector('.chip-remove').addEventListener('click', function() {
+      removerProcuracao(id);
+    });
+  }
   container.appendChild(chip);
+}
+
+function rerenderizarChipsProcuracoes() {
+  var container = document.getElementById('procuracoesChips');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = 0; i < procuracoesSelecionadas.length; i++) {
+    renderizarChipProcuracao(procuracoesSelecionadas[i].id, procuracoesSelecionadas[i].label);
+  }
 }
 
 function removerProcuracao(id) {
@@ -745,7 +767,7 @@ function adicionarCliente(id, nome, advogado) {
   for (var i = 0; i < clientesSelecionados.length; i++) {
     if (clientesSelecionados[i].id === id) return;
   }
-  clientesSelecionados.push({ id: id, nome: nome });
+  clientesSelecionados.push({ id: id, nome: nome, advogado: !!advogado });
   renderizarChipCliente(id, nome, !!advogado);
 }
 
@@ -755,12 +777,25 @@ function renderizarChipCliente(id, nome, advogado) {
   chip.className = 'chip';
   chip.id = 'chip-cliente-' + id;
   var icone = advogado ? '<i class="ph ph-scales" title="Advogado"></i> ' : '';
+  // Registro bloqueado (perfil nao-master): chip sem botao de remover
+  var podeRemover = !bloqueioTravado();
   chip.innerHTML = icone + '<span>' + nome + '</span>' +
-    '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>';
-  chip.querySelector('.chip-remove').addEventListener('click', function() {
-    removerCliente(id);
-  });
+    (podeRemover ? '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>' : '');
+  if (podeRemover) {
+    chip.querySelector('.chip-remove').addEventListener('click', function() {
+      removerCliente(id);
+    });
+  }
   container.appendChild(chip);
+}
+
+function rerenderizarChipsClientes() {
+  var container = document.getElementById('clientesChips');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = 0; i < clientesSelecionados.length; i++) {
+    renderizarChipCliente(clientesSelecionados[i].id, clientesSelecionados[i].nome, !!clientesSelecionados[i].advogado);
+  }
 }
 
 function removerCliente(id) {
@@ -813,9 +848,79 @@ function habilitarAbaAnexosRevog(habilitar) {
 }
 
 // ═══════════════════════════════════════════════════════
+// BLOQUEIO DE EDICAO (modulo bloqueio_registro.js)
+// ═══════════════════════════════════════════════════════
+function bloqueioTravado() {
+  // Travado = registro bloqueado e perfil nao-master (master bypassa)
+  if (!bloqueioWidget || !bloqueioWidget.estaBloqueado()) return false;
+  return !(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+}
+
+// Callback do widget de bloqueio: trava/destrava os campos da aba Dados e
+// reflete o estado nos anexos. Travamento EXCLUSIVAMENTE via disabled: a
+// pagina gerencia readOnly por conta propria (livroInput/paginaInput/
+// protocoloInput) e o destravamento nao pode libertar esses campos.
+function aplicarBloqueioRevogacao(deveTravar) {
+  var travar = !!deveTravar;
+  var mudou = (travar !== bloqueioTravadoUI);
+  bloqueioTravadoUI = travar;
+
+  // Campos da aba Dados (somente disabled; nunca tocar em readOnly).
+  // Obs.: o input de data desta pagina chama-se dataSubstabelecimento
+  // (heranca do clone) - e o ID real do template.
+  document.getElementById('procuracaoInput').disabled = travar;
+  document.getElementById('protocoloInput').disabled = travar;
+  document.getElementById('clienteInput').disabled = travar;
+  document.getElementById('dataSubstabelecimento').disabled = travar;
+  document.getElementById('escreventeSelect').disabled = travar;
+  document.getElementById('anotadoSelect').disabled = travar;
+  document.getElementById('observacaoTextarea').disabled = travar;
+
+  // Toolbar Markdown da observacao
+  var mdBtns = document.querySelectorAll('.md-toolbar .md-btn');
+  for (var i = 0; i < mdBtns.length; i++) { mdBtns[i].disabled = travar; }
+
+  // Chips (re-render remove/restaura os botoes de remover)
+  rerenderizarChipsProcuracoes();
+  rerenderizarChipsClientes();
+
+  // Botao Salvar: oculto quando travado (nao apenas desabilitado)
+  var btnSalvar = document.getElementById('btnSalvar');
+  if (btnSalvar) btnSalvar.style.display = travar ? 'none' : '';
+
+  // Anexos: a fabrica consulta estaTravado (flag local); re-render sob o
+  // novo estado. Leitura e download permanecem livres.
+  if (mudou && anexosWidget) {
+    anexosWidget.carregar();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 // SALVAMENTO
 // ═══════════════════════════════════════════════════════
+// Gate de bloqueio: re-verificacao fresca ANTES de qualquer gravacao
+// (fecha a brecha da aba antiga).
 function salvarRevogacao() {
+  if (revogacaoRowId === null || !bloqueioWidget) {
+    executarSalvarRevogacao();
+    return;
+  }
+  bloqueioWidget.verificarAntesDeSalvar().then(function(info) {
+    var ehMaster = !!(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+    if (info.bloqueado && !ehMaster) {
+      var btnSalvar = document.getElementById('btnSalvar');
+      if (btnSalvar) btnSalvar.disabled = false;
+      esconderOverlay();
+      mostrarMsg('formMsg', 'error', 'Este registro foi bloqueado para edição por ' +
+        (info.bloqueadoPor || 'outro usuário') + '. Solicite o desbloqueio ao usuário master.');
+      bloqueioWidget.carregar(); // sincroniza a UI da aba antiga (badge + travamento)
+      return;
+    }
+    executarSalvarRevogacao();
+  });
+}
+
+function executarSalvarRevogacao() {
   var livro = document.getElementById('livroInput').value.trim();
   var pagina = document.getElementById('paginaInput').value.trim();
 
@@ -854,6 +959,10 @@ function salvarRevogacao() {
     })
     .then(function(data) {
       revogacaoRowId = data.id;
+
+      // Bloqueio: no registro recem-criado o botao do master passa a aparecer
+      if (bloqueioWidget) bloqueioWidget.carregar();
+
       mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
       document.getElementById('livroInput').readOnly = true;
       document.getElementById('paginaInput').readOnly = true;
@@ -961,7 +1070,19 @@ document.addEventListener('DOMContentLoaded', function() {
       },
       getLivro: function() { return document.getElementById('livroInput').value.trim(); },
       getPagina: function() { return document.getElementById('paginaInput').value.trim(); },
-      aoClicarCard: function() { ativarAbaRevog('anexos'); }
+      aoClicarCard: function() { ativarAbaRevog('anexos'); },
+      estaTravado: bloqueioTravado
+    });
+  }
+
+  // Widget de bloqueio de edicao (modulo compartilhado bloqueio_registro.js)
+  if (window.criarBloqueioRegistro) {
+    bloqueioWidget = window.criarBloqueioRegistro({
+      tabelaId: CONFIG.tables.revogacao,
+      badgeContainerId: 'bloqueioBadge',
+      botaoContainerId: 'bloqueioBotao',
+      obterRowId: function() { return revogacaoRowId; },
+      aoAplicarBloqueio: aplicarBloqueioRevogacao
     });
   }
 

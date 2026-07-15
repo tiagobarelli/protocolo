@@ -172,3 +172,7 @@
 .main-content .hint-atencao strong {
   font-weight: 700;
 }
+
+/* ==================== BLOQUEIO DE EDIÇÃO (badge acima das abas) ==================== */
+/* Container vazio não ocupa espaço; com badge, separa das abas e alinha os badges lado a lado */
+.main-content #bloqueioBadge:not(:empty) { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }

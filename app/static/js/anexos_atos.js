@@ -17,6 +17,10 @@
  *   config.getLivro() / config.getPagina(): retornam a chave corrente do registro
  *     (valores exatos dos inputs readOnly; página já com padding de 3 dígitos).
  *   config.aoClicarCard(): callback do clique no card (a página ativa sua aba).
+ *   config.estaTravado() (OPCIONAL): callback sincrono; true = registro com a
+ *     edicao bloqueada para o usuario atual (bloqueio_registro.js). Oculta
+ *     upload/nota/exclusao; leitura e download seguem livres. Consumidores que
+ *     nao a fornecem mantem o comportamento anterior (nunca travado).
  *
  * Retorno (API pública):
  *   carregar()            — GET /listar da chave corrente; renderiza as duas visões.
@@ -94,6 +98,11 @@
     var ids = config.ids;
     var notaAberta = null;   // nome do anexo com editor de nota aberto
     var cardClicavel = false;
+    // Opcional, por instancia: travamento por bloqueio de edicao (flag local,
+    // sem fetch; a verificacao fresca fica no gate do salvar da pagina)
+    var estaTravado = (typeof config.estaTravado === 'function')
+      ? config.estaTravado
+      : function() { return false; };
 
     function el(id) {
       return document.getElementById(id);
@@ -143,8 +152,20 @@
       }
     }
 
+    // Mostra/oculta a area de upload conforme permissao + travamento.
+    // Reavaliada a cada render: o travamento pode mudar depois do wiring.
+    function atualizarAreaUpload() {
+      var btn = el(ids.btnSelect);
+      if (!btn) return;
+      var pode = podeAnexar() && !estaTravado();
+      var area = btn.closest ? btn.closest('.upload-area') : null;
+      if (area) area.style.display = pode ? '' : 'none';
+      else btn.style.display = pode ? '' : 'none';
+    }
+
     function renderizar(arquivos) {
       // Atualiza as duas visões: card de documentos + lista da aba Anexos
+      atualizarAreaUpload();
       renderizarDocsCard(arquivos);
 
       var container = el(ids.filesList);
@@ -192,25 +213,27 @@
 
       item.appendChild(info);
 
-      if (podeAnexar()) {
+      if (podeAnexar() && !estaTravado()) {
         var btnNota = document.createElement('button');
         btnNota.type = 'button';
         btnNota.className = 'file-action';
         btnNota.title = f.nota ? 'Editar nota' : 'Adicionar nota';
         btnNota.innerHTML = '<i class="ph ph-note-pencil"></i>';
         btnNota.addEventListener('click', function() {
+          if (estaTravado()) return; // seguro extra: botao renderizado antes do travamento
           abrirEditorNota(info, f);
         });
         item.appendChild(btnNota);
       }
 
-      if (podeExcluir()) {
+      if (podeExcluir() && !estaTravado()) {
         var btnExcluir = document.createElement('button');
         btnExcluir.type = 'button';
         btnExcluir.className = 'file-delete';
         btnExcluir.title = 'Excluir anexo';
         btnExcluir.innerHTML = '<i class="ph ph-trash"></i>';
         btnExcluir.addEventListener('click', function() {
+          if (estaTravado()) return; // seguro extra: botao renderizado antes do travamento
           excluirAnexo(f.nome);
         });
         item.appendChild(btnExcluir);
@@ -410,14 +433,11 @@
     var btnSelect = el(ids.btnSelect);
     var fileInput = el(ids.fileInput);
     if (btnSelect && fileInput) {
-      // Área de upload visível somente para quem pode anexar
-      if (!podeAnexar()) {
-        var area = btnSelect.closest ? btnSelect.closest('.upload-area') : null;
-        if (area) area.style.display = 'none';
-        else btnSelect.style.display = 'none';
-      }
+      // Área de upload visível somente para quem pode anexar (e sem travamento)
+      atualizarAreaUpload();
       btnSelect.addEventListener('click', function() { fileInput.click(); });
       fileInput.addEventListener('change', function() {
+        if (estaTravado()) { fileInput.value = ''; return; } // seguro extra (flag local)
         var lista = fileInput.files;
         if (!lista || lista.length === 0) return;
         // Copia para array antes de limpar o input (limpar esvazia o FileList)

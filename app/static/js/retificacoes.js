@@ -45,6 +45,9 @@ var escrituraTimer = null;
 var protocoloSelecionadoId = null;
 var protocoloStatusId = null;
 var protocoloTimer = null;
+// Bloqueio de edicao por registro (modulo compartilhado bloqueio_registro.js)
+var bloqueioWidget = null;
+var bloqueioTravadoUI = false; // ultimo estado de travamento aplicado na UI
 
 // ═══════════════════════════════════════════════════════
 // HELPERS
@@ -373,6 +376,9 @@ function preencherFormularioExistente(row) {
   // Aba Anexos + card Documentos: registro existente — habilitar e carregar (eager)
   habilitarAbaAnexosRetif(true);
   if (anexosWidget) anexosWidget.carregar();
+
+  // Estado de bloqueio do registro (badge + travamento + botao do master)
+  if (bloqueioWidget) bloqueioWidget.carregar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -420,6 +426,9 @@ function resetarEstadoFormulario() {
   if (anexosWidget) anexosWidget.limpar();
   habilitarAbaAnexosRetif(false);
   ativarAbaRetificacao('dados');
+
+  // Bloqueio: registro novo/limpo nunca esta bloqueado
+  if (bloqueioWidget) bloqueioWidget.limpar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -512,12 +521,25 @@ function renderizarChipEscritura(id, label) {
   var chip = document.createElement('div');
   chip.className = 'chip';
   chip.id = 'chip-escritura-' + id;
+  // Registro bloqueado (perfil nao-master): chip sem botao de remover
+  var podeRemover = !bloqueioTravado();
   chip.innerHTML = '<span>' + label + '</span>' +
-    '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>';
-  chip.querySelector('.chip-remove').addEventListener('click', function() {
-    removerEscritura(id);
-  });
+    (podeRemover ? '<button type="button" class="chip-remove" title="Remover"><i class="ph ph-x"></i></button>' : '');
+  if (podeRemover) {
+    chip.querySelector('.chip-remove').addEventListener('click', function() {
+      removerEscritura(id);
+    });
+  }
   container.appendChild(chip);
+}
+
+function rerenderizarChipsEscrituras() {
+  var container = document.getElementById('escriturasChips');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = 0; i < escriturasSelecionadas.length; i++) {
+    renderizarChipEscritura(escriturasSelecionadas[i].id, escriturasSelecionadas[i].label);
+  }
 }
 
 function removerEscritura(id) {
@@ -672,9 +694,75 @@ function habilitarAbaAnexosRetif(habilitar) {
 }
 
 // ═══════════════════════════════════════════════════════
+// BLOQUEIO DE EDICAO (modulo bloqueio_registro.js)
+// ═══════════════════════════════════════════════════════
+function bloqueioTravado() {
+  // Travado = registro bloqueado e perfil nao-master (master bypassa)
+  if (!bloqueioWidget || !bloqueioWidget.estaBloqueado()) return false;
+  return !(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+}
+
+// Callback do widget de bloqueio: trava/destrava os campos da aba Dados e
+// reflete o estado nos anexos. Travamento EXCLUSIVAMENTE via disabled: a
+// pagina gerencia readOnly por conta propria (livroInput/paginaInput/
+// protocoloInput) e o destravamento nao pode libertar esses campos.
+function aplicarBloqueioRetificacao(deveTravar) {
+  var travar = !!deveTravar;
+  var mudou = (travar !== bloqueioTravadoUI);
+  bloqueioTravadoUI = travar;
+
+  // Campos da aba Dados (somente disabled; nunca tocar em readOnly)
+  document.getElementById('escrituraInput').disabled = travar;
+  document.getElementById('protocoloInput').disabled = travar;
+  document.getElementById('dataRetificacao').disabled = travar;
+  document.getElementById('escreventeSelect').disabled = travar;
+  document.getElementById('anotadoSelect').disabled = travar;
+  document.getElementById('observacaoTextarea').disabled = travar;
+
+  // Toolbar Markdown da observacao
+  var mdBtns = document.querySelectorAll('.md-toolbar .md-btn');
+  for (var i = 0; i < mdBtns.length; i++) { mdBtns[i].disabled = travar; }
+
+  // Chips de escrituras (re-render remove/restaura os botoes de remover)
+  rerenderizarChipsEscrituras();
+
+  // Botao Salvar: oculto quando travado (nao apenas desabilitado)
+  var btnSalvar = document.getElementById('btnSalvar');
+  if (btnSalvar) btnSalvar.style.display = travar ? 'none' : '';
+
+  // Anexos: a fabrica consulta estaTravado (flag local); re-render sob o
+  // novo estado. Leitura e download permanecem livres.
+  if (mudou && anexosWidget) {
+    anexosWidget.carregar();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 // SALVAMENTO
 // ═══════════════════════════════════════════════════════
+// Gate de bloqueio: re-verificacao fresca ANTES de qualquer gravacao
+// (fecha a brecha da aba antiga).
 function salvarRetificacao() {
+  if (retificacaoRowId === null || !bloqueioWidget) {
+    executarSalvarRetificacao();
+    return;
+  }
+  bloqueioWidget.verificarAntesDeSalvar().then(function(info) {
+    var ehMaster = !!(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+    if (info.bloqueado && !ehMaster) {
+      var btnSalvar = document.getElementById('btnSalvar');
+      if (btnSalvar) btnSalvar.disabled = false;
+      esconderOverlay();
+      mostrarMsg('formMsg', 'error', 'Este registro foi bloqueado para edição por ' +
+        (info.bloqueadoPor || 'outro usuário') + '. Solicite o desbloqueio ao usuário master.');
+      bloqueioWidget.carregar(); // sincroniza a UI da aba antiga (badge + travamento)
+      return;
+    }
+    executarSalvarRetificacao();
+  });
+}
+
+function executarSalvarRetificacao() {
   var livro = document.getElementById('livroInput').value.trim();
   var pagina = document.getElementById('paginaInput').value.trim();
 
@@ -713,6 +801,10 @@ function salvarRetificacao() {
     })
     .then(function(data) {
       retificacaoRowId = data.id;
+
+      // Bloqueio: no registro recem-criado o botao do master passa a aparecer
+      if (bloqueioWidget) bloqueioWidget.carregar();
+
       mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
       document.getElementById('livroInput').readOnly = true;
       document.getElementById('paginaInput').readOnly = true;
@@ -818,7 +910,19 @@ document.addEventListener('DOMContentLoaded', function() {
       },
       getLivro: function() { return document.getElementById('livroInput').value.trim(); },
       getPagina: function() { return document.getElementById('paginaInput').value.trim(); },
-      aoClicarCard: function() { ativarAbaRetificacao('anexos'); }
+      aoClicarCard: function() { ativarAbaRetificacao('anexos'); },
+      estaTravado: bloqueioTravado
+    });
+  }
+
+  // Widget de bloqueio de edicao (modulo compartilhado bloqueio_registro.js)
+  if (window.criarBloqueioRegistro) {
+    bloqueioWidget = window.criarBloqueioRegistro({
+      tabelaId: CONFIG.tables.retificacoes,
+      badgeContainerId: 'bloqueioBadge',
+      botaoContainerId: 'bloqueioBotao',
+      obterRowId: function() { return retificacaoRowId; },
+      aoAplicarBloqueio: aplicarBloqueioRetificacao
     });
   }
 
