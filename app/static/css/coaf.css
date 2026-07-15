@@ -132,3 +132,7 @@
   .card { padding: 20px; }
   .info-grid { grid-template-columns: 1fr; gap: 16px; }
 }
+
+/* ==================== BLOQUEIO DE EDIÇÃO (badge no topo do formulário) ==================== */
+/* Container vazio não ocupa espaço; com badge, separa das seções e alinha os badges lado a lado */
+.main-content #bloqueioBadge:not(:empty) { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }

@@ -50,6 +50,8 @@ var controleRow = null;
 var arquivoPdfPendente = null;
 var removerPdfPendente = false;
 var reciboAtual = [];
+// Bloqueio de edicao por registro (modulo compartilhado bloqueio_registro.js)
+var bloqueioWidget = null;
 
 // ═══════════════════════════════════════════════════════
 // HELPERS
@@ -375,6 +377,10 @@ function verificarRegistroExistente(row) {
       coafRowId = coafRow.id;
       preencherFormulario(coafRow);
       atualizarInfoComCoaf(coafRow);
+
+      // Estado de bloqueio do registro (badge + travamento + botao do master)
+      if (bloqueioWidget) bloqueioWidget.carregar();
+
       document.getElementById('formCard').style.display = '';
       esconderCamposBusca();
       esconderOverlay();
@@ -401,6 +407,10 @@ function limparFormulario() {
   atualizarPreviewDetalhamento();
   esconderMsg('formMsg');
   esconderMsg('uploadMsg');
+
+  // Bloqueio: formulario limpo/modo novo nunca esta bloqueado (idempotente;
+  // cobre o modo NOVO de verificarRegistroExistente e buscas subsequentes)
+  if (bloqueioWidget) bloqueioWidget.limpar();
 }
 
 function preencherFormulario(coafRow) {
@@ -473,6 +483,13 @@ function onFileSelected() {
   var input = document.getElementById('fileInputPdf');
   var nomeSpan = document.getElementById('nomeArquivoSelecionado');
 
+  // Seguro extra (flag local): input acionado antes do travamento refletir
+  if (bloqueioTravado()) {
+    input.value = '';
+    nomeSpan.textContent = '';
+    return;
+  }
+
   if (input.files && input.files.length > 0) {
     var file = input.files[0];
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().match(/\.pdf$/)) {
@@ -492,9 +509,73 @@ function onFileSelected() {
 }
 
 // ═══════════════════════════════════════════════════════
+// BLOQUEIO DE EDICAO (modulo bloqueio_registro.js)
+// ═══════════════════════════════════════════════════════
+function bloqueioTravado() {
+  // Travado = registro bloqueado e perfil nao-master (master bypassa)
+  if (!bloqueioWidget || !bloqueioWidget.estaBloqueado()) return false;
+  return !(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+}
+
+// Callback do widget de bloqueio: trava/destrava os campos do formulario.
+// Travamento EXCLUSIVAMENTE via disabled: a pagina gerencia readOnly de
+// buscaLivro/buscaPagina em finalizarSalvamento - nunca tocar. A classe
+// 'disabled' de #secaoComunicacao segue sob gestao exclusiva de
+// atualizarCamposCondicionais (so classe CSS, nao mexe em disabled dos
+// inputs) - os dois mecanismos coexistem sem conflito.
+function aplicarBloqueioCoaf(deveTravar) {
+  var travar = !!deveTravar;
+
+  // Campos do formulario (somente disabled)
+  document.getElementById('analiseSelect').disabled = travar;
+  document.getElementById('detalhamentoTextarea').disabled = travar;
+  document.getElementById('numeroComunicacao').disabled = travar;
+  document.getElementById('dataComunicacao').disabled = travar;
+
+  // Toolbar Markdown do detalhamento (o preview segue exibindo o conteudo)
+  var mdBtns = document.querySelectorAll('.md-toolbar .md-btn');
+  for (var i = 0; i < mdBtns.length; i++) { mdBtns[i].disabled = travar; }
+
+  // Recibo PDF: selecao/substituicao/remocao travadas; visualizacao e
+  // download do PDF existente permanecem livres (atualizarComponenteRecibo)
+  document.getElementById('btnSelecionarPdf').disabled = travar;
+  document.getElementById('btnSubstituirPdf').disabled = travar;
+  document.getElementById('btnRemoverPdf').disabled = travar;
+  document.getElementById('fileInputPdf').disabled = travar;
+
+  // Botao Salvar: oculto quando travado (a pagina ja gerencia
+  // btnSalvar.disabled no fluxo de save; ocultar evita colisao)
+  var btnSalvar = document.getElementById('btnSalvar');
+  if (btnSalvar) btnSalvar.style.display = travar ? 'none' : '';
+}
+
+// ═══════════════════════════════════════════════════════
 // SALVAMENTO
 // ═══════════════════════════════════════════════════════
+// Gate de bloqueio: re-verificacao fresca ANTES de qualquer gravacao
+// (fecha a brecha da aba antiga). O addEventListener('click', salvar)
+// original continua valido: passa a apontar para este gate.
 function salvar() {
+  if (coafRowId === null || !bloqueioWidget) {
+    executarSalvarCoaf();
+    return;
+  }
+  bloqueioWidget.verificarAntesDeSalvar().then(function(info) {
+    var ehMaster = !!(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+    if (info.bloqueado && !ehMaster) {
+      var btnSalvar = document.getElementById('btnSalvar');
+      if (btnSalvar) btnSalvar.disabled = false;
+      esconderOverlay();
+      mostrarMsg('formMsg', 'error', 'Este registro foi bloqueado para edição por ' +
+        (info.bloqueadoPor || 'outro usuário') + '. Solicite o desbloqueio ao usuário master.');
+      bloqueioWidget.carregar(); // sincroniza a UI da aba antiga (badge + travamento)
+      return;
+    }
+    executarSalvarCoaf();
+  });
+}
+
+function executarSalvarCoaf() {
   var btnSalvar = document.getElementById('btnSalvar');
   esconderMsg('formMsg');
 
@@ -655,6 +736,9 @@ function recarregarCoaf() {
       reciboAtual = reciboArr;
       atualizarComponenteRecibo(reciboArr);
       atualizarInfoComCoaf(coafRow);
+
+      // Bloqueio: no registro recem-criado o botao do master passa a aparecer
+      if (bloqueioWidget) bloqueioWidget.carregar();
     })
     .catch(function(e) {
       console.error('Erro ao recarregar COAF:', e);
@@ -696,17 +780,20 @@ function configurarEventos() {
 
   // Recibo PDF — selecionar
   document.getElementById('btnSelecionarPdf').addEventListener('click', function() {
+    if (bloqueioTravado()) return; // seguro extra (flag local)
     document.getElementById('fileInputPdf').click();
   });
   document.getElementById('fileInputPdf').addEventListener('change', onFileSelected);
 
   // Recibo PDF — substituir
   document.getElementById('btnSubstituirPdf').addEventListener('click', function() {
+    if (bloqueioTravado()) return; // seguro extra (flag local)
     document.getElementById('fileInputPdf').click();
   });
 
   // Recibo PDF — remover
   document.getElementById('btnRemoverPdf').addEventListener('click', function() {
+    if (bloqueioTravado()) return; // seguro extra (flag local)
     if (!confirm('Deseja remover o recibo PDF?')) return;
     removerPdfPendente = true;
     reciboAtual = [];
@@ -734,6 +821,17 @@ document.addEventListener('DOMContentLoaded', function() {
   popularAnaliseSelect();
   configurarEventos();
   atualizarPreviewDetalhamento();
+
+  // Widget de bloqueio de edicao (modulo compartilhado bloqueio_registro.js)
+  if (window.criarBloqueioRegistro) {
+    bloqueioWidget = window.criarBloqueioRegistro({
+      tabelaId: CONFIG.tables.coaf,
+      badgeContainerId: 'bloqueioBadge',
+      botaoContainerId: 'bloqueioBotao',
+      obterRowId: function() { return coafRowId; },
+      aoAplicarBloqueio: aplicarBloqueioCoaf
+    });
+  }
 
   var params = new URLSearchParams(window.location.search);
   var qLivro = params.get('livro');
