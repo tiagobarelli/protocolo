@@ -8,7 +8,8 @@ main {
   padding-bottom: 40px;
 }
 
-.container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+/* Largura ampla — mesmo padrão de estatisticas.css / clientes.css */
+.container { max-width: 1280px; margin: 0 auto; padding: 30px 32px; width: 100%; }
 
 /* Card */
 /* .card e .card-title consolidados em components.css */
@@ -65,21 +66,22 @@ main {
 }
 .btn-action:hover { background: var(--accent-soft); color: var(--accent-hover); }
 
-/* Linha de pendencias */
+/* Linha de pendencias — nota complementar (neutro muted, padrão .file-nota) */
 .pendencia-row td { border-top: none !important; padding-top: 0; }
 .pendencia-row:hover { background: transparent !important; }
 .pendencia-content {
-  background: var(--warning-bg);
-  border-left: 3px solid var(--warning);
+  background: var(--grey-98);
+  border-left: 3px solid var(--border-strong);
   border-radius: 4px;
   padding: 6px 12px;
   font-size: 0.82rem;
-  color: var(--warning);
+  color: var(--text-muted);
+  font-style: italic;
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.pendencia-content i { color: var(--warning); font-size: 1rem; flex-shrink: 0; }
+.pendencia-content i { color: var(--text-muted); font-size: 1rem; flex-shrink: 0; }
 
 /* Overlay / Spinner */
 .overlay {

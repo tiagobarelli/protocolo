@@ -396,7 +396,9 @@
 .badge-nao,
 .oficios-badge--pendente    { background: var(--grey-94);    color: var(--text-muted); }
 
-.badge-retificada           { background: var(--info-bg); color: var(--info); }
+/* Tom oliva exclusivo do badge de retificação (decisão pontual de design;
+   propositalmente NÃO usa --info para não arrastar msg-box/toasts/flash) */
+.badge-retificada           { background: #DEE8B0; color: #38413A; }
 
 /* =====================================================================
    Tabelas de dados (relatórios, ofícios, admin)

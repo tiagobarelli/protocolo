@@ -79,16 +79,16 @@ function obterValorSelect(obj, alerta) {
   return val;
 }
 
-function badgeSimNao(arr) {
+function badgeSimNao(arr, textoSim) {
   if (arr && arr.length > 0) {
-    return '<span class="badge-sim">Sim</span>';
+    return '<span class="badge-sim">' + (textoSim || 'Sim') + '</span>';
   }
   return '<span class="badge-nao">N\u00e3o</span>';
 }
 
 function badgeRetificada(arr) {
   if (arr && arr.length > 0) {
-    return '<span class="badge-retificada">Sim</span>';
+    return '<span class="badge-retificada">Retificada</span>';
   }
   return '<span class="badge-nao">N\u00e3o</span>';
 }
@@ -224,8 +224,8 @@ function renderizarResultados(results, livro, contagens, bloqueados) {
     html += '<td>' + obterValorSelect(row[CONFIG.fields.doi], 'Ausente') + '</td>';
     html += '<td>' + badgeContagemAnexos(pagina, contagens) + '</td>';
     html += '<td>' + badgeRetificada(row[CONFIG.fields.retificacaoReversa]) + '</td>';
-    html += '<td>' + badgeSimNao(row[CONFIG.fields.substabelecimentoReverso]) + '</td>';
-    html += '<td>' + badgeSimNao(row[CONFIG.fields.revogacaoReverso]) + '</td>';
+    html += '<td>' + badgeSimNao(row[CONFIG.fields.substabelecimentoReverso], 'Substabelecida') + '</td>';
+    html += '<td>' + badgeSimNao(row[CONFIG.fields.revogacaoReverso], 'Revogada') + '</td>';
     html += '<td>' + badgeSimNao(row[CONFIG.fields.clientes]) + '</td>';
     html += '<td><button type="button" class="btn-action" onclick="abrirControle(\'' + livro + '\', \'' + pagina.replace(/'/g, "\\'") + '\')" title="Editar no Controle"><i class="ph ph-arrow-square-out"></i></button></td>';
     html += '</tr>';
