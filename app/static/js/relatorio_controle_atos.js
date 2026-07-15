@@ -101,6 +101,41 @@ function badgeContagemAnexos(pagina, contagens) {
   return '<span class="badge-nao">\u2014</span>';
 }
 
+/* ---------- BLOQUEIO DE EDICAO (cadeado informativo) ---------- */
+
+function consultarBloqueios(tabelaId, ids) {
+  // Mapa { rowId: true } dos registros com bloqueio vigente. Qualquer falha
+  // resolve {} (degradacao graciosa: o relatorio renderiza sem cadeados).
+  if (!ids || ids.length === 0) {
+    return Promise.resolve({});
+  }
+  return fetch('/api/bloqueios/' + tabelaId + '/consulta', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ row_ids: ids })
+  })
+    .then(function(r) {
+      if (!r.ok) { throw new Error('HTTP ' + r.status); }
+      return r.json();
+    })
+    .then(function(data) {
+      var mapa = {};
+      var lista = (data && data.bloqueados) || [];
+      for (var bi = 0; bi < lista.length; bi++) { mapa[lista[bi]] = true; }
+      return mapa;
+    })
+    .catch(function(e) {
+      console.warn('Consulta de bloqueios indisponivel:', e);
+      return {};
+    });
+}
+
+function celulaBloqueio(bloqueado) {
+  return '<td class="lock-cell">' +
+    (bloqueado ? '<i class="ph ph-lock" title="Bloqueado para edi\u00e7\u00e3o"></i>' : '') +
+    '</td>';
+}
+
 /* ---------- BUSCA ---------- */
 
 function consultarLivro(livro) {
@@ -121,12 +156,16 @@ function consultarLivro(livro) {
     })
     .then(function(data) {
       var results = data.results || [];
+      var idsBloqueio = [];
+      for (var bi = 0; bi < results.length; bi++) { idsBloqueio.push(results[bi].id); }
       // Contagem de anexos por página (acervo do Thoth); falha → relatório segue com mapa vazio
-      return fetch('/api/escrituras-anexos/contagem-livro?livro=' + encodeURIComponent(livro), { headers: apiHeaders() })
+      var pContagem = fetch('/api/escrituras-anexos/contagem-livro?livro=' + encodeURIComponent(livro), { headers: apiHeaders() })
         .then(function(r2) { return r2.ok ? r2.json() : { paginas: {} }; })
-        .catch(function() { return { paginas: {} }; })
-        .then(function(cont) {
-          renderizarResultados(results, livro, (cont && cont.paginas) || {});
+        .catch(function() { return { paginas: {} }; });
+      // Consulta de bloqueios em lote (falha resolve mapa vazio)
+      return Promise.all([pContagem, consultarBloqueios(CONFIG.tables.controle, idsBloqueio)])
+        .then(function(resLote) {
+          renderizarResultados(results, livro, (resLote[0] && resLote[0].paginas) || {}, resLote[1] || {});
         });
     })
     .catch(function(e) {
@@ -138,7 +177,7 @@ function consultarLivro(livro) {
     });
 }
 
-function renderizarResultados(results, livro, contagens) {
+function renderizarResultados(results, livro, contagens, bloqueados) {
   var container = document.getElementById('resultadosContainer');
   var header = document.getElementById('resultadosHeader');
   var body = document.getElementById('resultadosBody');
@@ -155,6 +194,7 @@ function renderizarResultados(results, livro, contagens) {
 
   var html = '<div class="table-wrapper"><table class="report-table">';
   html += '<thead><tr>';
+  html += '<th class="lock-cell"></th>';
   html += '<th>P\u00e1gina</th>';
   html += '<th>Protocolo</th>';
   html += '<th>Data</th>';
@@ -175,6 +215,7 @@ function renderizarResultados(results, livro, contagens) {
     var pagina = row[CONFIG.fields.pagina] || '';
 
     html += '<tr>';
+    html += celulaBloqueio(!!bloqueados[row.id]);
     html += '<td>' + (pagina || '\u2014') + '</td>';
     html += '<td>' + obterValorLinkRow(row[CONFIG.fields.protocolo]) + '</td>';
     html += '<td>' + formatarData(row[CONFIG.fields.data]) + '</td>';
@@ -194,7 +235,7 @@ function renderizarResultados(results, livro, contagens) {
     var pendenciasTexto = stripMarkdown(pendenciasRaw).replace(/^\s+|\s+$/g, '');
     if (pendenciasTexto) {
       html += '<tr class="pendencia-row">';
-      html += '<td colspan="12"><div class="pendencia-content"><i class="ph ph-warning-circle"></i>' + pendenciasTexto + '</div></td>';
+      html += '<td colspan="13"><div class="pendencia-content"><i class="ph ph-warning-circle"></i>' + pendenciasTexto + '</div></td>';
       html += '</tr>';
     }
   }

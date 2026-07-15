@@ -4,7 +4,7 @@
 # alterado. Este módulo apenas guarda e serve o estado de bloqueio por registro.
 # Bloqueio vigente = linha de registro_bloqueios com desbloqueado_em IS NULL.
 # Desbloquear preenche as colunas de desbloqueio (nunca apaga — histórico preservado).
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 
 from app.db import get_db
@@ -69,6 +69,44 @@ def estado_bloqueio(tabela_id, row_id):
     if not row:
         return jsonify(ok=True, bloqueado=False)
     return _resposta_bloqueado(row)
+
+
+@bloqueios_bp.route("/<int:tabela_id>/consulta", methods=["POST"])
+@login_required
+def consulta_lote(tabela_id):
+    """Bloqueios vigentes de uma lista de registros — leitura, todos os perfis.
+
+    Body: {"row_ids": [1, 2, ...]} (máx. 500). Resposta enxuta:
+    {"ok": true, "bloqueados": [<row_ids com bloqueio vigente>]}.
+    """
+    erro = _validar_tabela(tabela_id)
+    if erro:
+        return erro
+
+    dados = request.get_json(silent=True) or {}
+    row_ids = dados.get("row_ids")
+    if not isinstance(row_ids, list):
+        return jsonify(ok=False, erro="Lista de registros inválida."), 400
+    if len(row_ids) > 500:
+        return jsonify(ok=False, erro="Lista de registros excede o limite de 500 itens."), 400
+
+    ids = []
+    for item in row_ids:
+        if isinstance(item, bool) or not isinstance(item, int):
+            return jsonify(ok=False, erro="Lista de registros inválida."), 400
+        ids.append(item)
+
+    if not ids:
+        return jsonify(ok=True, bloqueados=[])
+
+    placeholders = ",".join("?" * len(ids))
+    rows = get_db().execute(
+        "SELECT row_id FROM registro_bloqueios "
+        "WHERE tabela_id = ? AND desbloqueado_em IS NULL "
+        "AND row_id IN (" + placeholders + ")",
+        [tabela_id] + ids,
+    ).fetchall()
+    return jsonify(ok=True, bloqueados=[r["row_id"] for r in rows])
 
 
 @bloqueios_bp.route("/<int:tabela_id>/<int:row_id>/bloquear", methods=["POST"])

@@ -154,3 +154,7 @@ main {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ==================== BLOQUEIO DE EDIÇÃO (cadeado informativo) ==================== */
+.main-content .report-table .lock-cell { width: 28px; text-align: center; }
+.main-content .report-table .lock-cell i { color: var(--text-muted); font-size: 0.9rem; }

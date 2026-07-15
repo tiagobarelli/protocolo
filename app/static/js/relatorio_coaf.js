@@ -101,6 +101,41 @@ function stripMarkdown(text) {
   return text;
 }
 
+/* ---------- BLOQUEIO DE EDICAO (cadeado informativo) ---------- */
+
+function consultarBloqueios(tabelaId, ids) {
+  // Mapa { rowId: true } dos registros com bloqueio vigente. Qualquer falha
+  // resolve {} (degradacao graciosa: o relatorio renderiza sem cadeados).
+  if (!ids || ids.length === 0) {
+    return Promise.resolve({});
+  }
+  return fetch('/api/bloqueios/' + tabelaId + '/consulta', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ row_ids: ids })
+  })
+    .then(function(r) {
+      if (!r.ok) { throw new Error('HTTP ' + r.status); }
+      return r.json();
+    })
+    .then(function(data) {
+      var mapa = {};
+      var lista = (data && data.bloqueados) || [];
+      for (var bi = 0; bi < lista.length; bi++) { mapa[lista[bi]] = true; }
+      return mapa;
+    })
+    .catch(function(e) {
+      console.warn('Consulta de bloqueios indisponivel:', e);
+      return {};
+    });
+}
+
+function celulaBloqueio(bloqueado) {
+  return '<td class="lock-cell">' +
+    (bloqueado ? '<i class="ph ph-lock" title="Bloqueado para edi\u00e7\u00e3o"></i>' : '') +
+    '</td>';
+}
+
 /* ---------- ABRIR COAF ---------- */
 
 function abrirCoaf(livro, pagina) {
@@ -179,7 +214,7 @@ function consultarLivro(livro) {
 
     // Passo D — buscar dados COAF em lote
     if (coafIds.length === 0) {
-      renderizarResultados(linhasFiltradas, livro, {});
+      renderizarResultados(linhasFiltradas, livro, {}, {});
       return;
     }
 
@@ -188,18 +223,23 @@ function consultarLivro(livro) {
       '&filter__id__in=' + coafIds.join(',') +
       '&size=200';
 
-    return fetch(urlCoaf, { headers: apiHeaders() })
-      .then(function(r) {
-        if (!r.ok) throw new Error('Erro ao buscar dados COAF.');
-        return r.json();
-      })
-      .then(function(coafData) {
+    // Dados COAF e consulta de bloqueios em paralelo (falha de bloqueios resolve mapa vazio)
+    return Promise.all([
+      fetch(urlCoaf, { headers: apiHeaders() })
+        .then(function(r) {
+          if (!r.ok) throw new Error('Erro ao buscar dados COAF.');
+          return r.json();
+        }),
+      consultarBloqueios(CONFIG.tables.coaf, coafIds)
+    ])
+      .then(function(resLote) {
+        var coafData = resLote[0];
         var dadosCoaf = {};
         var coafRows = coafData.results || [];
         for (var c = 0; c < coafRows.length; c++) {
           dadosCoaf[coafRows[c].id] = coafRows[c];
         }
-        renderizarResultados(linhasFiltradas, livro, dadosCoaf);
+        renderizarResultados(linhasFiltradas, livro, dadosCoaf, resLote[1] || {});
       });
   })
   .catch(function(e) {
@@ -213,7 +253,7 @@ function consultarLivro(livro) {
 
 /* ---------- RENDERIZAÇÃO ---------- */
 
-function renderizarResultados(linhasFiltradas, livro, dadosCoaf) {
+function renderizarResultados(linhasFiltradas, livro, dadosCoaf, bloqueados) {
   var container = document.getElementById('resultadosContainer');
   var header = document.getElementById('resultadosHeader');
   var body = document.getElementById('resultadosBody');
@@ -230,6 +270,7 @@ function renderizarResultados(linhasFiltradas, livro, dadosCoaf) {
 
   var html = '<div class="table-wrapper"><table class="report-table">';
   html += '<thead><tr>';
+  html += '<th class="lock-cell"></th>';
   html += '<th>P\u00e1gina</th>';
   html += '<th>Data</th>';
   html += '<th>Tipo Escritura</th>';
@@ -270,6 +311,7 @@ function renderizarResultados(linhasFiltradas, livro, dadosCoaf) {
     }
 
     html += '<tr>';
+    html += celulaBloqueio(item.coafId !== null && !!bloqueados[item.coafId]);
     html += '<td>' + (pagina || '\u2014') + '</td>';
     html += '<td>' + formatarData(row[CONFIG.fields.ctrlData]) + '</td>';
     html += '<td>' + item.tipoNome + '</td>';
@@ -285,7 +327,7 @@ function renderizarResultados(linhasFiltradas, livro, dadosCoaf) {
       var detalhamentoTexto = stripMarkdown(detalhamentoRaw).replace(/^\s+|\s+$/g, '');
       if (detalhamentoTexto) {
         html += '<tr class="pendencia-row">';
-        html += '<td colspan="7"><div class="pendencia-content"><i class="ph ph-note"></i>' + detalhamentoTexto + '</div></td>';
+        html += '<td colspan="8"><div class="pendencia-content"><i class="ph ph-note"></i>' + detalhamentoTexto + '</div></td>';
         html += '</tr>';
       }
     }

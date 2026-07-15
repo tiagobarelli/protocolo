@@ -101,6 +101,41 @@ function obterValoresLinkRow(arr) {
   return vals.length > 0 ? vals.join(', ') : '\u2014';
 }
 
+/* ---------- BLOQUEIO DE EDICAO (cadeado informativo) ---------- */
+
+function consultarBloqueios(tabelaId, ids) {
+  // Mapa { rowId: true } dos registros com bloqueio vigente. Qualquer falha
+  // resolve {} (degradacao graciosa: o relatorio renderiza sem cadeados).
+  if (!ids || ids.length === 0) {
+    return Promise.resolve({});
+  }
+  return fetch('/api/bloqueios/' + tabelaId + '/consulta', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ row_ids: ids })
+  })
+    .then(function(r) {
+      if (!r.ok) { throw new Error('HTTP ' + r.status); }
+      return r.json();
+    })
+    .then(function(data) {
+      var mapa = {};
+      var lista = (data && data.bloqueados) || [];
+      for (var bi = 0; bi < lista.length; bi++) { mapa[lista[bi]] = true; }
+      return mapa;
+    })
+    .catch(function(e) {
+      console.warn('Consulta de bloqueios indisponivel:', e);
+      return {};
+    });
+}
+
+function celulaBloqueio(bloqueado) {
+  return '<td class="lock-cell">' +
+    (bloqueado ? '<i class="ph ph-lock" title="Bloqueado para edi\u00e7\u00e3o"></i>' : '') +
+    '</td>';
+}
+
 /* ---------- BUSCA ---------- */
 
 function buscarCertidoes(pagina) {
@@ -151,7 +186,7 @@ function buscarDadosCertidao(protocolos) {
 
   if (idsParaBuscar.length === 0) {
     // Nenhuma certidão expedida, renderizar direto
-    renderizarResultados(protocolos, {});
+    renderizarResultados(protocolos, {}, {});
     return;
   }
 
@@ -159,6 +194,8 @@ function buscarDadosCertidao(protocolos) {
   var dadosCert = {};
   var completados = 0;
   var totalBuscas = idsParaBuscar.length;
+  // Consulta de bloqueios em lote das certidoes desta pagina (falha resolve mapa vazio)
+  var pBloqueios = consultarBloqueios(CONFIG.tables.certidoes, idsParaBuscar);
 
   for (var j = 0; j < expedidos.length; j++) {
     (function(certId) {
@@ -177,7 +214,9 @@ function buscarDadosCertidao(protocolos) {
         .then(function() {
           completados++;
           if (completados === totalBuscas) {
-            renderizarResultados(protocolos, dadosCert);
+            pBloqueios.then(function(bloqueados) {
+              renderizarResultados(protocolos, dadosCert, bloqueados);
+            });
           }
         });
     })(expedidos[j].certId);
@@ -186,7 +225,7 @@ function buscarDadosCertidao(protocolos) {
 
 /* ---------- RENDERIZAÇÃO ---------- */
 
-function renderizarResultados(protocolos, dadosCert) {
+function renderizarResultados(protocolos, dadosCert, bloqueados) {
   var container = document.getElementById('resultadosContainer');
   var header = document.getElementById('resultadosHeader');
   var body = document.getElementById('resultadosBody');
@@ -223,6 +262,7 @@ function renderizarResultados(protocolos, dadosCert) {
   // Montar tabela
   var html = '<div class="table-wrapper"><table class="report-table">';
   html += '<thead><tr>';
+  html += '<th class="lock-cell"></th>';
   html += '<th>N\u00ba Protocolo</th>';
   html += '<th>Data Protocolo</th>';
   html += '<th>Interessado</th>';
@@ -242,6 +282,9 @@ function renderizarResultados(protocolos, dadosCert) {
     var cert = (certId && dadosCert[certId]) ? dadosCert[certId] : null;
 
     html += '<tr>';
+
+    // Cadeado de bloqueio (reflete a certidao vinculada; pendente nunca tem cadeado)
+    html += celulaBloqueio(expedida && !!bloqueados[certId]);
 
     // Nº Protocolo
     html += '<td>' + (row[CONFIG.fields.protoNumero] || '\u2014') + '</td>';
@@ -286,7 +329,7 @@ function renderizarResultados(protocolos, dadosCert) {
       var obsTexto = stripMarkdown(obsRaw).replace(/^\s+|\s+$/g, '');
       if (obsTexto) {
         html += '<tr class="obs-row">';
-        html += '<td colspan="8"><div class="obs-content"><i class="ph ph-note"></i>' + obsTexto + '</div></td>';
+        html += '<td colspan="9"><div class="obs-content"><i class="ph ph-note"></i>' + obsTexto + '</div></td>';
         html += '</tr>';
       }
     }
