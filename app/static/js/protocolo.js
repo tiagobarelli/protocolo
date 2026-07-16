@@ -609,10 +609,7 @@ function adicionarAndamento() {
       if (dataInput) dataInput.value = '';
       btn.disabled = false;
       btn.innerHTML = '<i class="ph ph-plus"></i> Adicionar';
-      msgBox.className = 'msg-box success';
-      msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Andamento adicionado.';
-      msgBox.style.display = 'flex';
-      setTimeout(function() { msgBox.style.display = 'none'; }, 3000);
+      mostrarToast('Andamento adicionado.', 'success');
       carregarAndamentos();
     })
     .catch(function(err) {
@@ -1595,16 +1592,13 @@ function uploadArquivo(file) {
       return resp.json();
     })
     .then(function() {
-      msgBox.className = 'msg-box success';
-      msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Arquivo enviado com sucesso.';
-      msgBox.style.display = 'flex';
+      msgBox.style.display = 'none';
+      msgBox.innerHTML = '';
       carregarArquivos();
       // Log de upload
       var logLinha = gerarLinhaLog('Arquivo anexado: "' + file.name + '".');
       salvarLogProtocolo(logLinha);
-      setTimeout(function() {
-        msgBox.style.display = 'none';
-      }, 4000);
+      mostrarToast('Arquivo enviado com sucesso.', 'success');
     })
     .catch(function(err) {
       msgBox.className = 'msg-box error';
@@ -1903,12 +1897,8 @@ function enviarComentario() {
       mentionedUsers = [];
       renderizarTagsMencao();
       carregarComentarios();
-      if (msgBox) {
-        msgBox.className = 'msg-box success';
-        msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Comentário enviado.';
-        msgBox.style.display = 'flex';
-        setTimeout(function() { msgBox.style.display = 'none'; }, 3000);
-      }
+      if (msgBox) { msgBox.style.display = 'none'; }
+      mostrarToast('Comentário enviado.', 'success');
     })
     .catch(function(err) {
       if (msgBox) {

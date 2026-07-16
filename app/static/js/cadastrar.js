@@ -599,7 +599,7 @@
         }
         status.className = 'search-status found';
         status.innerHTML = '<i class="ph ph-check-circle" style="color: var(--success);"></i>';
-        mostrarMsg('clienteInfo', 'success', 'Cliente encontrado: ' + nomeInput.value);
+        mostrarToast('Cliente encontrado: ' + nomeInput.value, 'success');
       } else {
         nomeInput.value = '';
         nomeInput.readOnly = false;
@@ -747,7 +747,7 @@
     document.getElementById('emailAdvogado').readOnly = !!emailVal;
 
     fecharAutoList();
-    mostrarMsg('advogadoInfo', 'success', 'Advogado selecionado: ' + (cli[CONFIG.fields.clienteNome] || ''));
+    mostrarToast('Advogado selecionado: ' + (cli[CONFIG.fields.clienteNome] || ''), 'success');
   }
 
   function desvinculaAdvogado() {
@@ -1174,12 +1174,12 @@
           });
           if (!re.ok) {
             emailEnviado = false;
-            mostrarMsg('emailMsg', 'warning', 'Protocolo cadastrado com sucesso, mas o e-mail de confirmação não pôde ser enviado.');
+            mostrarToast('Protocolo cadastrado com sucesso, mas o e-mail de confirmação não pôde ser enviado.', 'warning');
           }
         } catch (emailErr) {
           emailEnviado = false;
           console.warn('Falha ao enviar e-mail:', emailErr);
-          mostrarMsg('emailMsg', 'warning', 'Protocolo cadastrado com sucesso, mas o e-mail de confirmação não pôde ser enviado.');
+          mostrarToast('Protocolo cadastrado com sucesso, mas o e-mail de confirmação não pôde ser enviado.', 'warning');
         }
       }
 

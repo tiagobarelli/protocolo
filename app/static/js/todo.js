@@ -408,12 +408,7 @@ function concluirTarefa(andamentoId) {
       console.error('Erro ao concluir tarefa:', err);
       // Reverter o estado visual em caso de erro
       if (item) item.className = item.className.replace(' concluindo', '');
-      var msgBox = document.getElementById('todoMsg');
-      if (msgBox) {
-        msgBox.className = 'msg-box error';
-        msgBox.innerHTML = '<i class="ph ph-x-circle"></i> Erro ao concluir tarefa.';
-        msgBox.style.display = 'flex';
-      }
+      mostrarToast('Erro ao concluir tarefa.', 'error', 6000);
     });
 }
 
