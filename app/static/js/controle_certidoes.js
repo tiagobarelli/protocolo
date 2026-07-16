@@ -199,10 +199,10 @@ function buscarPorProtocolo() {
 
           if (results776.length > 0) {
             preencherFormularioExistente(results776[0]);
-            mostrarMsg('formStatusMsg', 'info', 'Registro encontrado — Protocolo ' + protoNumero);
+            mostrarToast('Registro encontrado — Protocolo ' + protoNumero, 'info');
           } else {
             prepararNovoRegistro(protoRow);
-            mostrarMsg('formStatusMsg', 'info', 'Novo registro — Protocolo ' + protoNumero);
+            mostrarToast('Novo registro — Protocolo ' + protoNumero, 'info');
           }
 
           document.getElementById('formCard').style.display = 'block';
@@ -370,7 +370,6 @@ function resetarEstadoFormulario() {
   document.getElementById('observacaoTextarea').value = '';
 
   esconderMsg('formMsg');
-  esconderMsg('formStatusMsg');
   esconderMsg('protocoloInfo');
   esconderMsg('escrituraInfoMsg');
 
@@ -919,8 +918,7 @@ function executarSalvarCertidao() {
       // Bloqueio: no registro recem-criado o botao do master passa a aparecer
       if (bloqueioWidget) bloqueioWidget.carregar();
 
-      mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
-      document.getElementById('formMsg').scrollIntoView({ behavior: 'smooth' });
+      mostrarToast('Registro salvo com sucesso!', 'success');
 
       // Finalizar protocolo se necessario
       if (protocoloSelecionadoId && protocoloStatusId === CONFIG.statusEmAndamento) {
@@ -933,7 +931,7 @@ function executarSalvarCertidao() {
         }).then(function(r2) {
           if (r2.ok) {
             protocoloStatusId = CONFIG.statusFinalizado;
-            mostrarMsg('protocoloInfo', 'success', 'Protocolo atualizado para "Finalizado".');
+            mostrarToast('Protocolo atualizado para "Finalizado".', 'success');
           }
         });
       }
@@ -1114,11 +1112,10 @@ function uploadAnexoCertidao(file) {
       return resp.json();
     })
     .then(function() {
-      msgBox.className = 'msg-box success';
-      msgBox.innerHTML = '<i class="ph ph-check-circle"></i> Arquivo enviado com sucesso.';
-      msgBox.style.display = 'flex';
+      msgBox.style.display = 'none';
+      msgBox.innerHTML = '';
       carregarAnexosCertidao();
-      setTimeout(function() { msgBox.style.display = 'none'; }, 4000);
+      mostrarToast('Arquivo enviado com sucesso.', 'success');
     })
     .catch(function(err) {
       msgBox.className = 'msg-box error';

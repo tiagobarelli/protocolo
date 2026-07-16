@@ -700,7 +700,7 @@ function salvarRegistro(analiseId, ehComunicacao, uploadResult) {
 }
 
 function finalizarSalvamento() {
-  mostrarMsg('formMsg', 'success', 'Registro COAF salvo com sucesso!');
+  mostrarToast('Registro COAF salvo com sucesso!', 'success');
 
   // Lock campos de busca
   document.getElementById('buscaLivro').readOnly = true;
