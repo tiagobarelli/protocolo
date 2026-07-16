@@ -36,6 +36,7 @@ var CONFIG = {
 var paginaAtual = 1;
 var totalRegistros = 0;
 var buscaAtual = null; // { tipo: 'ano' | 'periodo', dataInicio: '', dataFim: '' }
+var ordemDesc = true;  // true = mais novas primeiro (padrao); false = mais antigas primeiro
 
 /* ---------- HELPERS ---------- */
 
@@ -150,7 +151,7 @@ function buscarCertidoes(pagina) {
     '&filter__' + CONFIG.fields.protoServico + '__link_row_has=' + CONFIG.servicoCertidaoId +
     '&filter__' + CONFIG.fields.protoDataEntrada + '__date_after_or_equal=' + encodeURIComponent(buscaAtual.dataInicio) +
     '&filter__' + CONFIG.fields.protoDataEntrada + '__date_before_or_equal=' + encodeURIComponent(buscaAtual.dataFim) +
-    '&order_by=' + CONFIG.fields.protoDataEntrada +
+    '&order_by=' + (ordemDesc ? '-' : '') + CONFIG.fields.protoDataEntrada +
     '&size=' + CONFIG.itensPorPagina +
     '&page=' + pagina;
 
@@ -242,7 +243,20 @@ function renderizarResultados(protocolos, dadosCert, bloqueados) {
     return;
   }
 
-  header.innerHTML = '<i class="ph ph-seal-check"></i> Certid\u00f5es Expedidas';
+  var iconeOrdem = ordemDesc ? 'ph-sort-descending' : 'ph-sort-ascending';
+  var rotuloOrdem = ordemDesc ? 'Mais novas primeiro' : 'Mais antigas primeiro';
+  header.innerHTML = '<span class="header-titulo"><i class="ph ph-seal-check"></i> Certid\u00f5es Expedidas</span>' +
+    '<button type="button" class="btn-ordem" id="btnInverterOrdem" title="Inverter ordem de exibi\u00e7\u00e3o">' +
+    '<i class="ph ' + iconeOrdem + '"></i> ' + rotuloOrdem +
+    '</button>';
+
+  var btnOrdem = document.getElementById('btnInverterOrdem');
+  if (btnOrdem) {
+    btnOrdem.addEventListener('click', function() {
+      ordemDesc = !ordemDesc;
+      buscarCertidoes(1);
+    });
+  }
 
   // Contadores da página
   var expedidasPagina = 0;

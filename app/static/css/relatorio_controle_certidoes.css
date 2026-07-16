@@ -158,3 +158,42 @@ main {
 /* ==================== BLOQUEIO DE EDIÇÃO (cadeado informativo) ==================== */
 .main-content .report-table .lock-cell { width: 28px; text-align: center; }
 .main-content .report-table .lock-cell i { color: var(--text-muted); font-size: 0.9rem; }
+
+/* ==================== ORDENAÇÃO DOS RESULTADOS ==================== */
+.main-content #resultadosHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.main-content #resultadosHeader .header-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.main-content .btn-ordem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.main-content .btn-ordem:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.main-content .btn-ordem i {
+  font-size: 1rem;
+}

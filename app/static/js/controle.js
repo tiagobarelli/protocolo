@@ -435,10 +435,10 @@ function executarBusca(livro, pagina) {
       var results = data.results || [];
       if (results.length > 0) {
         preencherFormularioExistente(results[0]);
-        mostrarMsg('formMsg', 'info', 'Registro encontrado — L_' + livro + '_P_' + pagina);
+        mostrarToast('Registro encontrado — L_' + livro + '_P_' + pagina, 'info');
       } else {
         prepararNovoRegistro(livro, pagina);
-        mostrarMsg('formMsg', 'info', 'Novo registro — L_' + livro + '_P_' + pagina);
+        mostrarToast('Novo registro — L_' + livro + '_P_' + pagina, 'info');
       }
       document.getElementById('formCard').style.display = 'block';
       esconderCamposBusca();
@@ -1390,15 +1390,13 @@ function executarSalvarControle() {
         }).then(function(r2) {
           if (r2.ok) {
             protocoloStatusId = CONFIG.statusFinalizado;
-            mostrarMsg('protocoloInfo', 'success', 'Protocolo atualizado para "Finalizado".');
+            mostrarToast('Protocolo atualizado para "Finalizado".', 'success');
           }
         });
       }
     })
     .then(function() {
-      mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
-      var formMsgEl = document.getElementById('formMsg');
-      if (formMsgEl) { formMsgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+      mostrarToast('Registro salvo com sucesso!', 'success');
       document.getElementById('livroInput').readOnly = true;
       document.getElementById('paginaInput').readOnly = true;
 
@@ -1801,8 +1799,8 @@ function enviarAnexosEscritura(files) {
       renderizarAnexosEscritura(ultimaLista);
     }
     if (falhas.length === 0) {
-      mostrarMsg('escUploadMsg', 'success', total === 1 ? 'Arquivo enviado com sucesso.' : total + ' arquivos enviados com sucesso.');
-      setTimeout(function() { esconderMsg('escUploadMsg'); }, 4000);
+      esconderMsg('escUploadMsg');
+      mostrarToast(total === 1 ? 'Arquivo enviado com sucesso.' : total + ' arquivos enviados com sucesso.', 'success');
     } else {
       var tipo = enviados === 0 ? 'error' : 'warning';
       mostrarMsg('escUploadMsg', tipo, enviados + ' de ' + total + ' anexados. Falhou: ' + falhas.join('; '));
