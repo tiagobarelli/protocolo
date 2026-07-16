@@ -733,7 +733,7 @@ function gravar(btn) {
         btn.disabled = false;
         document.getElementById('tituloPagina').innerHTML =
           '<i class="ph ph-envelope-simple"></i> Ofício ' + window.OFICIO_TIPO;
-        mostrarMsg('formMsg', 'success', 'Ofício criado com sucesso. Agora você pode anexar arquivos.');
+        mostrarToast('Ofício criado com sucesso. Agora você pode anexar arquivos.', 'success');
       })
       .catch(function(e) {
         esconderOverlay();
@@ -761,7 +761,7 @@ function gravar(btn) {
         exibirLogs(data);
         esconderOverlay();
         btn.disabled = false;
-        mostrarMsg('formMsg', 'success', 'Alterações salvas com sucesso.');
+        mostrarToast('Alterações salvas com sucesso.', 'success');
       })
       .catch(function(e) {
         esconderOverlay();
@@ -849,7 +849,7 @@ function enviarAnexo() {
       renderAnexos(data.arquivos || [], base);
       esconderOverlay();
       sincronizarTemAnexos(!!data.tem_anexos);
-      mostrarMsg('formMsg', 'success', 'Anexo enviado.');
+      mostrarToast('Anexo enviado.', 'success');
     })
     .catch(function(e) {
       esconderOverlay();

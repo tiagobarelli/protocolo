@@ -1006,7 +1006,7 @@ function executarPost(btnSalvar) {
       document.getElementById('cnpjInput').readOnly = true;
       esconderOverlay();
       btnSalvar.disabled = false;
-      mostrarMsg('formMsg', 'success', 'Cliente cadastrado com sucesso!');
+      mostrarToast('Cliente cadastrado com sucesso!', 'success');
       habilitarAbaEnderecos(true);
     })
     .catch(function(e) {
@@ -1046,7 +1046,7 @@ function executarPatch(btnSalvar) {
       exibirLogs(data);
       esconderOverlay();
       btnSalvar.disabled = false;
-      mostrarMsg('formMsg', 'success', 'Alterações salvas com sucesso!');
+      mostrarToast('Alterações salvas com sucesso!', 'success');
     })
     .catch(function(e) {
       esconderOverlay();

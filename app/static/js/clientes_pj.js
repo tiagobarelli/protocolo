@@ -781,7 +781,7 @@ function executarPost(btnSalvar) {
       document.getElementById('cnpjInput').readOnly = true;
       esconderOverlay();
       btnSalvar.disabled = false;
-      mostrarMsg('formMsg', 'success', 'Pessoa jurídica cadastrada com sucesso!');
+      mostrarToast('Pessoa jurídica cadastrada com sucesso!', 'success');
       habilitarAbaEnderecos(true);
     })
     .catch(function(e) {
@@ -819,7 +819,7 @@ function executarPatch(btnSalvar) {
       exibirLogs(data);
       esconderOverlay();
       btnSalvar.disabled = false;
-      mostrarMsg('formMsg', 'success', 'Alterações salvas com sucesso!');
+      mostrarToast('Alterações salvas com sucesso!', 'success');
     })
     .catch(function(e) {
       esconderOverlay();

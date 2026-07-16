@@ -133,7 +133,7 @@ function salvarConfiguracoes() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.ok) {
-        mostrarMsg('formMsg', 'success', 'Configurações salvas com sucesso!');
+        mostrarToast('Configurações salvas com sucesso!', 'success');
       } else {
         mostrarMsg('formMsg', 'error', data.erro || 'Erro ao salvar.');
       }
@@ -288,7 +288,7 @@ function publicarMensagemInterna() {
     })
     .then(function(res) {
       if (res.ok) {
-        mostrarMsg('imMsg', 'success', 'Mensagem publicada com sucesso!');
+        mostrarToast('Mensagem publicada com sucesso!', 'success');
         inputTitulo.value = '';
         ta.value = '';
         atualizarPreviewMensagem();
@@ -549,7 +549,7 @@ function salvarRemDest() {
     .then(function() {
       cancelarEdicaoRemDest();
       if (btn) btn.disabled = false;
-      mostrarMsg('remdestMsg', 'success', 'Remetente/destinatário salvo com sucesso.');
+      mostrarToast('Remetente/destinatário salvo com sucesso.', 'success');
       carregarRemDest();
     })
     .catch(function(e) {
@@ -598,7 +598,7 @@ function excluirRemDest(id) {
         return r.json().then(function(e) { throw new Error(e.detail || 'Erro ao excluir.'); });
       }
       cancelarEdicaoRemDest();
-      mostrarMsg('remdestMsg', 'success', 'Remetente/destinatário excluído.');
+      mostrarToast('Remetente/destinatário excluído.', 'success');
       carregarRemDest();
     })
     .catch(function(e) {
