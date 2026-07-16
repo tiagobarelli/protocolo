@@ -290,10 +290,10 @@ function executarBusca(livro, pagina) {
       var results = data.results || [];
       if (results.length > 0) {
         preencherFormularioExistente(results[0]);
-        mostrarMsg('formStatusMsg', 'info', 'Registro encontrado — L_' + livro + '_P_' + pagina);
+        mostrarToast('Registro encontrado — L_' + livro + '_P_' + pagina, 'info');
       } else {
         prepararNovoRegistro(livro, pagina);
-        mostrarMsg('formStatusMsg', 'info', 'Novo registro — L_' + livro + '_P_' + pagina);
+        mostrarToast('Novo registro — L_' + livro + '_P_' + pagina, 'info');
       }
       document.getElementById('formCard').style.display = 'block';
       document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
@@ -420,7 +420,6 @@ function resetarEstadoFormulario() {
   atualizarPreviewObservacao();
 
   esconderMsg('formMsg');
-  esconderMsg('formStatusMsg');
   esconderMsg('protocoloInfo');
 
   // Aba Anexos + card Documentos: desabilitar, limpar as duas visões e voltar para Dados
@@ -961,7 +960,7 @@ function executarSalvarSubstabelecimento() {
       // Bloqueio: no registro recem-criado o botao do master passa a aparecer
       if (bloqueioWidget) bloqueioWidget.carregar();
 
-      mostrarMsg('formMsg', 'success', 'Registro salvo com sucesso!');
+      mostrarToast('Registro salvo com sucesso!', 'success');
       document.getElementById('livroInput').readOnly = true;
       document.getElementById('paginaInput').readOnly = true;
 
@@ -982,7 +981,7 @@ function executarSalvarSubstabelecimento() {
         }).then(function(r2) {
           if (r2.ok) {
             protocoloStatusId = CONFIG.statusFinalizado;
-            mostrarMsg('protocoloInfo', 'success', 'Protocolo atualizado para "Finalizado".');
+            mostrarToast('Protocolo atualizado para "Finalizado".', 'success');
           }
         });
       }

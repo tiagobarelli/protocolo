@@ -387,8 +387,8 @@
           renderizar(ultimaLista);
         }
         if (falhas.length === 0) {
-          mostrarMsgUpload('success', total === 1 ? 'Arquivo enviado com sucesso.' : total + ' arquivos enviados com sucesso.');
-          setTimeout(function() { esconderMsgUpload(); }, 4000);
+          esconderMsgUpload();
+          mostrarToast(total === 1 ? 'Arquivo enviado com sucesso.' : total + ' arquivos enviados com sucesso.', 'success');
         } else {
           var tipo = enviados === 0 ? 'error' : 'warning';
           mostrarMsgUpload(tipo, enviados + ' de ' + total + ' anexados. Falhou: ' + falhas.join('; '));
