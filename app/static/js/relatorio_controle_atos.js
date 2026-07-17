@@ -166,6 +166,7 @@ function consultarLivro(livro) {
       return Promise.all([pContagem, consultarBloqueios(CONFIG.tables.controle, idsBloqueio)])
         .then(function(resLote) {
           renderizarResultados(results, livro, (resLote[0] && resLote[0].paginas) || {}, resLote[1] || {});
+          if (window.AtosAcessorios) { window.AtosAcessorios.consultar(livro, (resLote[0] && resLote[0].paginas) || {}); }
         });
     })
     .catch(function(e) {
@@ -186,11 +187,11 @@ function renderizarResultados(results, livro, contagens, bloqueados) {
 
   if (results.length === 0) {
     header.innerHTML = '<i class="ph ph-book-open-text"></i> Livro ' + livro;
-    body.innerHTML = '<div class="no-results">Nenhum registro cadastrado para o Livro ' + livro + '.</div>';
+    body.innerHTML = '<div class="no-results">Nenhuma escritura cadastrada para o Livro ' + livro + '.</div>';
     return;
   }
 
-  header.innerHTML = '<i class="ph ph-book-open-text"></i> Livro ' + livro + ' \u2014 ' + results.length + ' registro(s) encontrado(s). Observe que esse número exclui as atas retificativas, re-ratificações, substabelecimentos e rebogações de procurações. Esses atos possuem controle próprio.';
+  header.innerHTML = '<i class="ph ph-book-open-text"></i> Livro ' + livro + ' \u2014 ' + results.length + ' escritura(s). Atas retificativas, substabelecimentos e revogações de procurações estão listados no card de atos acessórios abaixo.';
 
   var html = '<div class="table-wrapper"><table class="report-table">';
   html += '<thead><tr>';

@@ -52,6 +52,10 @@
           <div class="card-title" id="resultadosHeader"></div>
           <div id="resultadosBody"></div>
         </div>
+        <div class="card" id="acessoriosCard" style="display: none;">
+          <div class="card-title" id="acessoriosHeader"></div>
+          <div id="acessoriosBody"></div>
+        </div>
       </div>
 
     </div>
@@ -61,4 +65,5 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/relatorio_controle_atos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/relatorio_atos_acessorios.js') }}"></script>
 {% endblock %}
