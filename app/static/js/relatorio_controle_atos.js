@@ -191,7 +191,7 @@ function renderizarResultados(results, livro, contagens, bloqueados) {
     return;
   }
 
-  header.innerHTML = '<i class="ph ph-book-open-text"></i> Livro ' + livro + ' \u2014 ' + results.length + ' escritura(s). Atas retificativas, substabelecimentos e revogações de procurações estão listados no card de atos acessórios abaixo.';
+  header.innerHTML = '<i class="ph ph-book-open-text"></i> <span class="grifo-livro">Livro ' + livro + ' \u2014 ' + results.length + ' escritura(s)</span>. Atas retificativas, substabelecimentos e revogações de procurações estão listados no card de atos acessórios abaixo.';
 
   var html = '<div class="table-wrapper"><table class="report-table">';
   html += '<thead><tr>';

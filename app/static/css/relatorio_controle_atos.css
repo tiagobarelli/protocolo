@@ -104,3 +104,27 @@ main {
 /* ==================== BLOQUEIO DE EDIÇÃO (cadeado informativo) ==================== */
 .main-content .report-table .lock-cell { width: 28px; text-align: center; }
 .main-content .report-table .lock-cell i { color: var(--text-muted); font-size: 0.9rem; }
+
+/* Grifo marca-texto do header de resultados (Leva 2) */
+.main-content #resultadosHeader .grifo-livro {
+  padding: 0.06em 0.28em;
+  margin: -0.06em -0.08em;
+  border-radius: 0.35em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  background-image: linear-gradient(#E9F0C9, #E9F0C9);
+  background-repeat: no-repeat;
+  background-position: 0 55%;
+  background-size: 100% 82%;
+  animation: grifo-varredura-livro 0.8s ease-out 0.15s backwards;
+}
+
+@keyframes grifo-varredura-livro {
+  from { background-size: 0% 82%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-content #resultadosHeader .grifo-livro {
+    animation: none;
+  }
+}
