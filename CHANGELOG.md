@@ -2,6 +2,28 @@
 
 Controle de correções e melhorias do sistema
 
+## [2.5] 2026-07-16
+
+### Adicionado
+
+- **Atos acessórios no Relatório de Controle de Atos:** a consulta por livro passou a apresentar, abaixo da tabela de escrituras (que permanece como era), um segundo card com os **atos acessórios do livro** — retificações, substabelecimentos e revogações de procuração — reunidos em uma única tabela ordenada por página. Cada linha traz o cadeado de bloqueio de edição, a página, o tipo de ato (em selo), a data, o ato vinculado (a escritura retificada ou a procuração), o escrevente, a situação da anotação (com destaque quando está pendente), a contagem de anexos do acervo e um link que abre o registro na página de gestão correspondente. Se a consulta de um dos tipos estiver momentaneamente indisponível, o card apresenta os demais normalmente, sem afetar a tabela principal.
+- **Abertura por endereço nas Retificações:** a página de Retificações passou a aceitar abertura por endereço com busca automática (livro e página direto no endereço), como já acontecia nas demais páginas de atos — é esse o mecanismo usado pelos links do novo card.
+
+### Melhorias
+
+- **Contagens separadas no cabeçalho do relatório:** o cabeçalho do resultado deixou a ressalva de que os atos acessórios "possuem controle próprio" e passou a informar o número de **escrituras** do livro, apontando para o card de atos acessórios logo abaixo, que traz a própria contagem. Quando o livro não tem escrituras, a mensagem agora diz "Nenhuma escritura cadastrada" — o card de atos acessórios é consultado mesmo assim, pois um livro pode ter atos acessórios em páginas sem escritura.
+
+## [2.4] 2026-07-14
+
+### Adicionado
+
+- **Bloqueio de edição por registro:** as seis páginas de gestão notarial (Controle de Escrituras, Controle de Certidões, Retificações, Substabelecimentos, Revogação de Procuração e Lavagem de Dinheiro/COAF) ganharam o recurso de **bloquear a edição** de um registro específico. Bloquear e desbloquear é exclusivo do perfil master; com o registro bloqueado, os demais perfis o abrem em modo somente leitura — campos desabilitados, botão Salvar oculto e anexos travados para envio, nota e exclusão (ver e baixar continuam livres). Um selo com cadeado no topo da página indica a todos que o registro está bloqueado; o master continua editando normalmente. A verificação é refeita no momento de salvar, o que impede a gravação por uma aba aberta antes do bloqueio. O histórico de bloqueios e desbloqueios fica preservado.
+- **Cadeado nos relatórios:** os relatórios de Controle de Atos, de Certidões e de Lavagem de Dinheiro (COAF) ganharam uma coluna discreta com o ícone de cadeado nas linhas cujo registro está bloqueado — informativa e visível a todos os perfis. Se a consulta de bloqueios estiver momentaneamente indisponível, o relatório abre normalmente, apenas sem os cadeados.
+
+### Melhorias
+
+- **Confirmações em aviso flutuante (toast):** as mensagens de sucesso ao gravar e as confirmações de busca ("Registro encontrado" / "Novo registro") deixaram as caixas fixas dos formulários e passaram a aparecer como um **aviso flutuante** no canto da tela, que some sozinho após alguns segundos — padrão adotado em todas as telas do sistema. Validações de formulário, erros de operação e avisos de contexto continuam exibidos junto ao formulário, onde precisam ser lidos com calma. O aviso flutuante também ganhou o tipo **alerta** (amarelo), usado nas advertências rápidas que antes apareciam sem cor própria.
+
 ## [2.3] 2026-07-10
 
 ### Adicionado
