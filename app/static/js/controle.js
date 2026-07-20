@@ -520,6 +520,7 @@ function preencherFormularioExistente(row) {
     for (var i = 0; i < clientesArr.length; i++) {
       adicionarCliente(clientesArr[i].id, clientesArr[i].value);
     }
+    enriquecerFlagsClientes();
   }
 
   // Imoveis (link_row multiplo) — carregar detalhes
@@ -763,6 +764,7 @@ function selecionarProtocolo(row) {
       adicionarCliente(interessados[i].id, interessados[i].value);
       nomes.push(interessados[i].value);
     }
+    enriquecerFlagsClientes();
 
     // Expandir secao de clientes
     document.getElementById('toggleClientes').checked = true;
@@ -844,7 +846,8 @@ function mostrarAutocompleteClientes(resultados) {
 
       item.addEventListener('click', function() {
         var isAdvogado = !!cli['field_7430'];
-        adicionarCliente(cli.id, nome, isAdvogado);
+        var isFalecido = !!cli['field_7453'];
+        adicionarCliente(cli.id, nome, isAdvogado, isFalecido);
         document.getElementById('clienteInput').value = '';
         fecharAutoList('clienteAutoList');
       });
@@ -858,21 +861,23 @@ function mostrarAutocompleteClientes(resultados) {
 // ═══════════════════════════════════════════════════════
 // CHIPS DE CLIENTES
 // ═══════════════════════════════════════════════════════
-function adicionarCliente(id, nome, advogado) {
+function adicionarCliente(id, nome, advogado, falecido) {
   // Verificar duplicata
   for (var i = 0; i < clientesSelecionados.length; i++) {
     if (clientesSelecionados[i].id === id) return;
   }
-  clientesSelecionados.push({ id: id, nome: nome, advogado: !!advogado });
-  renderizarChip(id, nome, !!advogado);
+  clientesSelecionados.push({ id: id, nome: nome, advogado: !!advogado, falecido: !!falecido });
+  renderizarChip(id, nome, !!advogado, !!falecido);
 }
 
-function renderizarChip(id, nome, advogado) {
+function renderizarChip(id, nome, advogado, falecido) {
   var container = document.getElementById('clientesChips');
   var chip = document.createElement('div');
   chip.className = 'chip';
   chip.id = 'chip-' + id;
-  var icone = advogado ? '<i class="ph ph-scales" title="Advogado"></i> ' : '';
+  var icone = '';
+  if (advogado) icone += '<i class="ph ph-scales" title="Advogado"></i> ';
+  if (falecido) icone += '<i class="ph ph-cross" title="Falecido"></i> ';
   // Registro bloqueado (perfil nao-master): chip sem botao de remover
   var podeRemover = !bloqueioTravado();
   chip.innerHTML = icone + '<span>' + nome + '</span>' +
@@ -890,7 +895,7 @@ function rerenderizarChipsClientes() {
   if (!container) return;
   container.innerHTML = '';
   for (var i = 0; i < clientesSelecionados.length; i++) {
-    renderizarChip(clientesSelecionados[i].id, clientesSelecionados[i].nome, !!clientesSelecionados[i].advogado);
+    renderizarChip(clientesSelecionados[i].id, clientesSelecionados[i].nome, !!clientesSelecionados[i].advogado, !!clientesSelecionados[i].falecido);
   }
 }
 
@@ -898,6 +903,42 @@ function removerCliente(id) {
   clientesSelecionados = clientesSelecionados.filter(function(c) { return c.id !== id; });
   var chip = document.getElementById('chip-' + id);
   if (chip) chip.parentNode.removeChild(chip);
+}
+
+// Enriquecimento pos-carga: os link_row so entregam {id, value}; buscar as
+// linhas dos clientes (754) para restaurar as flags dos chips (advogado e
+// falecido). Falha nunca quebra o fluxo principal (chips ficam sem icone).
+function enriquecerFlagsClientes() {
+  if (clientesSelecionados.length === 0) return;
+  var promises = [];
+  for (var i = 0; i < clientesSelecionados.length; i++) {
+    (function(clienteId) {
+      promises.push(
+        fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' + clienteId + '/?user_field_names=false', {
+          headers: apiHeaders()
+        })
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .catch(function() { return null; })
+      );
+    })(clientesSelecionados[i].id);
+  }
+  Promise.all(promises)
+    .then(function(rows) {
+      for (var j = 0; j < rows.length; j++) {
+        if (!rows[j]) continue;
+        for (var k = 0; k < clientesSelecionados.length; k++) {
+          if (clientesSelecionados[k].id === rows[j].id) {
+            clientesSelecionados[k].advogado = !!rows[j]['field_7430'];
+            clientesSelecionados[k].falecido = !!rows[j]['field_7453'];
+            break;
+          }
+        }
+      }
+      rerenderizarChipsClientes();
+    })
+    .catch(function(e) {
+      console.error('Erro ao enriquecer flags dos clientes:', e);
+    });
 }
 
 // ═══════════════════════════════════════════════════════

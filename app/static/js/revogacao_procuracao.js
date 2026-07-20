@@ -365,6 +365,7 @@ function preencherFormularioExistente(row) {
     for (var c = 0; c < cliArr.length; c++) {
       adicionarCliente(cliArr[c].id, cliArr[c].value);
     }
+    enriquecerFlagsClientes();
   }
 
   // Observacao
@@ -672,6 +673,7 @@ function selecionarProtocolo(row) {
       adicionarCliente(interessados[i].id, interessados[i].value);
       nomes.push(interessados[i].value);
     }
+    enriquecerFlagsClientes();
 
     var msgTexto = 'Cliente(s) vinculado(s) ao protocolo: ' + nomes.join(', ');
     if (protocoloStatusId === CONFIG.statusEmAndamento) {
@@ -801,6 +803,41 @@ function removerCliente(id) {
   clientesSelecionados = clientesSelecionados.filter(function(c) { return c.id !== id; });
   var chip = document.getElementById('chip-cliente-' + id);
   if (chip) chip.parentNode.removeChild(chip);
+}
+
+// Enriquecimento pos-carga: os link_row so entregam {id, value}; buscar as
+// linhas dos clientes (754) para restaurar a flag de advogado dos chips.
+// Falha nunca quebra o fluxo principal (chips ficam sem icone).
+function enriquecerFlagsClientes() {
+  if (clientesSelecionados.length === 0) return;
+  var promises = [];
+  for (var i = 0; i < clientesSelecionados.length; i++) {
+    (function(clienteId) {
+      promises.push(
+        fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' + clienteId + '/?user_field_names=false', {
+          headers: apiHeaders()
+        })
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .catch(function() { return null; })
+      );
+    })(clientesSelecionados[i].id);
+  }
+  Promise.all(promises)
+    .then(function(rows) {
+      for (var j = 0; j < rows.length; j++) {
+        if (!rows[j]) continue;
+        for (var k = 0; k < clientesSelecionados.length; k++) {
+          if (clientesSelecionados[k].id === rows[j].id) {
+            clientesSelecionados[k].advogado = !!rows[j]['field_7430'];
+            break;
+          }
+        }
+      }
+      rerenderizarChipsClientes();
+    })
+    .catch(function(e) {
+      console.error('Erro ao enriquecer flags dos clientes:', e);
+    });
 }
 
 // ═══════════════════════════════════════════════════════

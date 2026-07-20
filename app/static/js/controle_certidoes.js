@@ -296,6 +296,7 @@ function preencherFormularioExistente(row) {
     for (var i = 0; i < requeridosArr.length; i++) {
       adicionarRequerido(requeridosArr[i].id, requeridosArr[i].value || ('Cliente ' + requeridosArr[i].id));
     }
+    enriquecerFlagsRequeridos();
   }
 
   // Observacao
@@ -664,6 +665,41 @@ function removerRequerido(id) {
   if (chip) chip.parentNode.removeChild(chip);
 }
 
+// Enriquecimento pos-carga: os link_row so entregam {id, value}; buscar as
+// linhas dos clientes (754) para restaurar a flag de advogado dos chips.
+// Falha nunca quebra o fluxo principal (chips ficam sem icone).
+function enriquecerFlagsRequeridos() {
+  if (requeridosSelecionados.length === 0) return;
+  var promises = [];
+  for (var i = 0; i < requeridosSelecionados.length; i++) {
+    (function(clienteId) {
+      promises.push(
+        fetch(API_BASE + '/database/rows/table/' + CONFIG.tables.clientes + '/' + clienteId + '/?user_field_names=false', {
+          headers: apiHeaders()
+        })
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .catch(function() { return null; })
+      );
+    })(requeridosSelecionados[i].id);
+  }
+  Promise.all(promises)
+    .then(function(rows) {
+      for (var j = 0; j < rows.length; j++) {
+        if (!rows[j]) continue;
+        for (var k = 0; k < requeridosSelecionados.length; k++) {
+          if (requeridosSelecionados[k].id === rows[j].id) {
+            requeridosSelecionados[k].advogado = !!rows[j]['field_7430'];
+            break;
+          }
+        }
+      }
+      rerenderizarChipsRequeridos();
+    })
+    .catch(function(e) {
+      console.error('Erro ao enriquecer flags dos requeridos:', e);
+    });
+}
+
 // ═══════════════════════════════════════════════════════
 // AUTOCOMPLETE — ESCRITURAS (tabela Controle 745)
 // ═══════════════════════════════════════════════════════
@@ -736,6 +772,7 @@ function mostrarAutocompleteEscrituras(resultados) {
           for (var k = 0; k < clientes.length; k++) {
             adicionarRequerido(clientes[k].id, clientes[k].value || ('Cliente ' + clientes[k].id));
           }
+          enriquecerFlagsRequeridos();
         } else {
           mostrarMsg('escrituraInfoMsg', 'info', 'Nenhum cliente cadastrado para esta escritura — preencha manualmente.');
         }
