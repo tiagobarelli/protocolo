@@ -1,0 +1,168 @@
+/* enotariado_detalhe.css - Tela de detalhe/edicao de lancamento (e-Notariado Financeiro).
+   Auto-contida: a pagina so carrega sidebar.css + este arquivo. Nao redeclara tokens
+   globais (usa os do design-system.css). Classes proprias prefixadas com enot-det-;
+   todo seletor escopado em .main-content. Derivada de oficio_detalhe.css, sem editor
+   markdown, sem chips proprios (usa os canonicos), sem oficio-par e sem anexos. */
+
+.main-content .container { max-width: 1280px; margin: 0 auto; padding: 30px 32px; width: 100%; }
+
+/* ---- Cabecalho ---- */
+.main-content .enot-det-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.main-content .enot-det-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+.main-content .enot-det-voltar:hover { color: var(--accent); border-color: var(--accent); }
+.main-content .enot-det-topbar h1 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.main-content .enot-det-topbar h1 i { color: var(--accent); }
+
+/* ---- Secoes (.card e .section-title vem de components.css) ---- */
+.main-content .form-section { margin-bottom: 32px; }
+.main-content .form-section:last-child { margin-bottom: 0; }
+
+/* ---- Form (label, .form-row e .form-group vem de components.css; so overrides) ---- */
+.main-content .form-row:last-child { margin-bottom: 0; }
+.main-content .form-row .form-group { min-width: 0; }   /* permite truncar texto em flex */
+.main-content .form-group.small { flex: 0 0 140px; }    /* override: campos curtos (qtd, datas, valores) */
+.main-content .enot-det-req { color: var(--danger); font-weight: 700; }
+
+/* Campo calculado (valor liquido): somente leitura, sem foco.
+   Especificidade (0,2,1) para vencer o .main-content input[readonly] de components.css. */
+.main-content input.enot-det-readonly {
+  background: var(--accent-soft);
+  color: var(--text-muted);
+  cursor: default;
+}
+.main-content input.enot-det-readonly:focus { box-shadow: none; }
+
+/* ---- Autocomplete ---- */
+.main-content .autocomplete-wrapper { position: relative; }
+.main-content .autocomplete-list {
+  position: absolute;
+  top: 105%;
+  left: 0;
+  right: 0;
+  z-index: 150;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  max-height: 240px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-sm);
+  display: none;
+}
+.main-content .autocomplete-list.open { display: block; }
+.main-content .autocomplete-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--bg-body);
+  transition: background 0.1s;
+}
+.main-content .autocomplete-item:last-child { border-bottom: none; }
+.main-content .autocomplete-item:hover { background: var(--accent-soft); }
+.main-content .autocomplete-item .ac-name { font-weight: 600; font-size: 0.9rem; color: var(--text-dark); }
+.main-content .autocomplete-item .ac-detail { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+/* ---- Chips: canonicos (.chips-container / .chip / .chip-remove em components.css) ---- */
+
+/* ---- Nota informativa (paragrafo logo abaixo de um .form-row) ---- */
+.main-content .enot-det-nota {
+  margin: 0;
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ---- Historico (elemento pre: zera margem e herda a fonte) ---- */
+.main-content .enot-det-log-texto {
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* ---- Mensagens inline ---- */
+.main-content .msg-box {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.main-content .msg-box.success { background: var(--success-bg); border: 1px solid var(--success); color: var(--success); display: flex; }
+.main-content .msg-box.warning { background: var(--warning-bg); border: 1px solid var(--warning); color: var(--warning); display: flex; }
+.main-content .msg-box.error { background: var(--danger-bg); border: 1px solid var(--danger); color: var(--danger); display: flex; }
+.main-content .msg-box.info { background: var(--info-bg); border: 1px solid var(--info); color: var(--info); display: flex; }
+
+/* ---- Barra de acao fixa (botoes vem de components.css) ---- */
+.main-content .form-actions-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  background: rgba(24, 24, 27, 0.92); /* ink a 92%, como no molde de oficios */
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 16px 20px;
+  margin-top: 8px;
+}
+.main-content .form-actions-sticky .btn-row { margin: 0; display: flex; justify-content: flex-end; gap: 12px; }
+.main-content .form-actions-sticky .msg-box { margin-bottom: 12px; }
+
+/* ---- Overlay de carregamento (o #overlay fica dentro de .main-content nesta pagina) ---- */
+.main-content .overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+.main-content .overlay.active { display: flex; }
+.main-content .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: enot-det-spin 0.7s linear infinite;
+}
+@keyframes enot-det-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 720px) {
+  .main-content .form-row { flex-direction: column; }
+  .main-content .form-group.small { flex-basis: auto; }
+}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}e-Notariado Financeiro - Gestão Administrativa{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/enotariado.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+{% include "partials/flash_messages.html" %}
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+<div class="container">
+
+  <!-- Cabeçalho -->
+  <div class="enot-header card">
+    <div class="enot-header-icon"><i class="ph ph-currency-circle-dollar"></i></div>
+    <div>
+      <h1>e-Notariado Financeiro</h1>
+      <p>Controle dos atos realizados na plataforma e-notariado e dos valores arrecadados.</p>
+    </div>
+  </div>
+
+  <!-- Filtros + tabela (card único, sem abas) -->
+  <div class="card">
+    <div class="enot-filtros">
+      <div class="enot-filtro-grupo">
+        <label for="filtroAno">Ano</label>
+        <select id="filtroAno"></select>
+      </div>
+      <div class="enot-filtro-grupo">
+        <label for="filtroEspecie">Espécie</label>
+        <select id="filtroEspecie"><option value="">Todas</option></select>
+      </div>
+      <div class="enot-filtro-grupo enot-filtro-guia">
+        <label for="filtroGuia">Guia semanal</label>
+        <input type="number" id="filtroGuia" min="1" step="1" placeholder="Nº" inputmode="numeric">
+      </div>
+      <div class="enot-filtro-grupo">
+        <label for="filtroStatus">Lançamento</label>
+        <select id="filtroStatus">
+          <option value="">Todos</option>
+          <option value="lancado">Lançados</option>
+          <option value="nao_lancado">Não lançados</option>
+        </select>
+      </div>
+      <div class="enot-filtro-grupo enot-filtro-busca">
+        <label for="filtroBusca">Buscar</label>
+        <input type="text" id="filtroBusca" placeholder="Buscar por nº do pedido ou solicitante" autocomplete="off">
+      </div>
+      <div class="enot-filtro-grupo enot-filtro-novo">
+        <a href="{{ url_for('main.enotariado_lancamento') }}" class="enot-btn-novo">
+          <i class="ph ph-plus-circle"></i> Novo lançamento
+        </a>
+      </div>
+    </div>
+    <div id="tabelaLancamentos"></div>
+  </div>
+
+</div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
+<script src="{{ url_for('static', filename='js/enotariado.js') }}"></script>
+{% endblock %}

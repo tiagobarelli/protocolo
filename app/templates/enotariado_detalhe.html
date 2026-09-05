@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Lançamento e-Notariado - Gestão Administrativa{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/enotariado_detalhe.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+{% include "partials/flash_messages.html" %}
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+<div class="container">
+
+  <!-- Cabeçalho -->
+  <div class="enot-det-topbar">
+    <a href="{{ url_for('main.enotariado') }}" class="enot-det-voltar">
+      <i class="ph ph-arrow-left"></i> Voltar
+    </a>
+    <h1 id="tituloPagina"><i class="ph ph-currency-circle-dollar"></i> Lançamento</h1>
+  </div>
+
+  <div class="card">
+
+    <!-- Seção 1: Dados do pedido -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-receipt"></i> Dados do pedido</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="numeroPedidoInput">Número do pedido <span class="enot-det-req">*</span></label>
+          <input type="text" id="numeroPedidoInput" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="especieSelect">Espécie <span class="enot-det-req">*</span></label>
+          <select id="especieSelect"><option value="">Selecione</option></select>
+        </div>
+        <div class="form-group small">
+          <label for="quantidadeInput">Quantidade <span class="enot-det-req">*</span></label>
+          <input type="number" id="quantidadeInput" min="1" step="1" value="1">
+        </div>
+        <div class="form-group small">
+          <label for="dataRealizacaoInput">Data de realização <span class="enot-det-req">*</span></label>
+          <input type="date" id="dataRealizacaoInput">
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção 2: Solicitantes -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-users"></i> Solicitantes</div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="solicitanteBusca">Buscar cliente por nome <span class="hint">- opcional</span></label>
+          <div class="autocomplete-wrapper">
+            <input type="text" id="solicitanteBusca" placeholder="Digite o nome do cliente..." autocomplete="off">
+            <div class="autocomplete-list" id="solicitanteAutoList"></div>
+          </div>
+          <div class="chips-container" id="solicitantesChips"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção 3: Valores -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-currency-circle-dollar"></i> Valores</div>
+
+      <div class="form-row">
+        <div class="form-group small">
+          <label for="valorBrutoInput">Valor bruto</label>
+          <input type="number" id="valorBrutoInput" min="0" step="0.01" inputmode="decimal" placeholder="0,00">
+        </div>
+        <div class="form-group small">
+          <label for="taxasCobrancaInput">Taxas de cobrança</label>
+          <input type="number" id="taxasCobrancaInput" min="0" step="0.01" inputmode="decimal" placeholder="0,00">
+        </div>
+        <div class="form-group small">
+          <label for="taxaCnbInput">Taxa do CNB</label>
+          <input type="number" id="taxaCnbInput" min="0" step="0.01" inputmode="decimal" placeholder="0,00">
+        </div>
+        <div class="form-group small">
+          <label for="valorLiquidoInput">Valor líquido</label>
+          <input type="text" id="valorLiquidoInput" class="enot-det-readonly" value="0,00" readonly tabindex="-1">
+        </div>
+      </div>
+      <p class="enot-det-nota">O valor bruto é sugerido pela espécie (quantidade x valor unitário) e pode ser ajustado. O líquido é calculado automaticamente.</p>
+    </div>
+
+    <!-- Seção 4: Lançamento no sistema -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-calendar-check"></i> Lançamento no sistema</div>
+
+      <div class="form-row">
+        <div class="form-group small">
+          <label for="dataLancamentoInput">Data de lançamento</label>
+          <input type="date" id="dataLancamentoInput">
+        </div>
+        <div class="form-group small">
+          <label for="guiaSemanalInput">Guia semanal</label>
+          <input type="number" id="guiaSemanalInput" min="1" step="1" inputmode="numeric">
+        </div>
+      </div>
+      <p class="enot-det-nota">Data em branco = ainda não lançado no sistema.</p>
+    </div>
+
+    <!-- Seção 5: Observações -->
+    <div class="form-section">
+      <div class="section-title"><i class="ph ph-note"></i> Observações</div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <textarea id="observacoesInput" placeholder="Anotações internas (texto simples)..." autocomplete="off"></textarea>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.card -->
+
+  <!-- Histórico (oculto até haver logs; preenchido pela Leva 2) -->
+  <div class="card" id="logCard" style="display:none;">
+    <div class="card-title"><i class="ph ph-clock-counter-clockwise"></i> Histórico de alterações</div>
+    <pre id="logContent" class="enot-det-log-texto"></pre>
+  </div>
+
+  <!-- Barra de ação (botões nascem desabilitados nesta leva) -->
+  <div class="form-actions-sticky" id="acoesBar">
+    <div id="formMsg" class="msg-box"></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-danger" id="btnExcluir" style="display:none;" disabled>
+        <i class="ph ph-trash"></i> Excluir
+      </button>
+      <button type="button" class="btn btn-secondary" id="btnLimpar" disabled>
+        <i class="ph ph-eraser"></i> Limpar
+      </button>
+      <button type="button" class="btn btn-secondary" id="btnSalvarNovo" disabled>
+        <i class="ph ph-plus"></i> Salvar e novo
+      </button>
+      <button type="button" class="btn btn-primary" id="btnSalvar" disabled>
+        <i class="ph ph-floppy-disk"></i> Salvar
+      </button>
+    </div>
+  </div>
+
+</div><!-- /.container -->
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+  window.LANCAMENTO_ID = {{ lancamento_id or 'null' }}; /* null em modo novo */
+</script>
+<script src="{{ url_for('static', filename='js/enotariado_detalhe.js') }}"></script>
+{% endblock %}

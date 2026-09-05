@@ -1,0 +1,142 @@
+/* enotariado.css - Modulo e-Notariado Financeiro (listagem). Classes prefixadas com enot-.
+   Nao redeclara tokens globais (usa os do design-system.css); todo seletor escopado
+   em .main-content. Derivado de oficios.css, sem abas e sem previa markdown. */
+
+.main-content .container { max-width: 1280px; margin: 0 auto; padding: 30px 32px; width: 100%; }
+
+/* ---- Cabecalho ---- */
+.main-content .enot-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.main-content .enot-header-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 1.6rem;
+}
+.main-content .enot-header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+}
+.main-content .enot-header p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+/* ---- Barra de filtros ---- */
+.main-content .enot-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+.main-content .enot-filtro-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.main-content .enot-filtro-guia { width: 110px; }
+.main-content .enot-filtro-busca { flex: 1 1 280px; }
+.main-content .enot-filtro-novo {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+.main-content .enot-btn-novo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border-radius: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.main-content .enot-btn-novo:hover { background: var(--accent-hover); }
+.main-content .enot-filtro-grupo label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+.main-content .enot-filtro-grupo select,
+.main-content .enot-filtro-grupo input {
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: var(--text-main);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.main-content .enot-filtro-grupo input { width: 100%; }
+/* Foco dos filtros via components.css (bottom-stroke) */
+
+/* ---- Tabela (base .report-table/.oficios-table em components.css; so os quirks) ---- */
+.main-content .enot-row { cursor: pointer; }
+.main-content .enot-num { font-weight: 600; white-space: nowrap; }
+.main-content .enot-td-num { text-align: right; white-space: nowrap; }
+
+/* ---- Badge de status (forma e cor do canonico .badge .badge-success / .badge-warning) ---- */
+.main-content .enot-badge { white-space: nowrap; }
+
+/* ---- Estado vazio ---- */
+.main-content .enot-vazio {
+  padding: 32px 24px;
+  text-align: center;
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.main-content .enot-vazio i {
+  display: block;
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  font-style: normal;
+  color: var(--border);
+}
+
+/* ---- Overlay de carregamento (o #overlay fica dentro de .main-content nesta pagina) ---- */
+.main-content .overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+.main-content .overlay.active { display: flex; }
+.main-content .spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: enot-spin 0.7s linear infinite;
+}
+@keyframes enot-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 640px) {
+  .main-content .enot-filtro-busca { flex-basis: 100%; }
+  .main-content .enot-filtro-guia { width: auto; }
+}

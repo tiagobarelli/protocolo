@@ -173,6 +173,21 @@ def oficio_enviado(oficio_id=None):
     return render_template("oficio_detalhe.html", tipo="enviado", oficio_id=oficio_id)
 
 
+@main_bp.route("/enotariado")
+@login_required
+@perfil_required("master", "administrador")
+def enotariado():
+    return render_template("enotariado.html")
+
+
+@main_bp.route("/enotariado/lancamento")
+@main_bp.route("/enotariado/lancamento/<int:lancamento_id>")
+@login_required
+@perfil_required("master", "administrador")
+def enotariado_lancamento(lancamento_id=None):
+    return render_template("enotariado_detalhe.html", lancamento_id=lancamento_id)
+
+
 @main_bp.route("/notificacoes")
 @login_required
 def notificacoes():
