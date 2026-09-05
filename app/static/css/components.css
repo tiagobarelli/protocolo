@@ -121,6 +121,39 @@
   font-size: 0.8rem;
 }
 
+/* ── Barra de acoes sticky (formularios de detalhe) ─────
+   Rodape fixo dos formularios longos (clientes PF/PJ, oficios, e-Notariado).
+   Superficie clara com borda superior e a unica sombra "funcional" do sistema
+   (indica conteudo rolando por baixo). Divisao semantica pelo .btn-row-spacer:
+   botoes antes dele ficam a esquerda (acoes administrativas: bloqueio, excluir),
+   depois dele a direita (acoes do formulario); sem spacer, tudo fica a direita.
+   Sempre sticky, nunca fora do fluxo. Estrutura (bottom, z-index, padding,
+   margin, raio) preservada das copias de pagina que este bloco substituiu. */
+.main-content .form-actions-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  margin-top: 8px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+}
+.main-content .form-actions-sticky .btn-row {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.main-content .form-actions-sticky .btn-row-spacer { flex: 1 1 auto; }
+.main-content .form-actions-sticky .msg-box { margin-bottom: 12px; }
+@media (max-width: 768px) {
+  .main-content .form-actions-sticky { padding: 12px 14px; }
+}
+
 /* =====================================================================
    Campos de formulário (escopados ao conteúdo)
    Foco: bottom-stroke de marca, sem layout shift.

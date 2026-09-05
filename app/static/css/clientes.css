@@ -460,23 +460,6 @@ main {
   opacity: 0.8;              /* Deixa um pouco mais elegante */
 }
 
-/* ── Barra de ação sticky (Salvar/Limpar) ── */
-.form-actions-sticky {
-  position: sticky;
-  bottom: 0;
-  z-index: 100;
-  background: rgba(24, 24, 27, 0.92); /* var(--primary) a 92% — baixar p/ ~0.80 dá mais "vidro" */
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  padding: 16px 20px;
-  margin-top: 8px;
-}
-.form-actions-sticky .btn-row { margin: 0; display: flex; justify-content: flex-end; gap: 12px; }
-.form-actions-sticky .msg-box { margin-bottom: 12px; }
-
 /* ── Box de resumo do cliente (somente leitura, topo da aba Cliente) ── */
 .cliente-resumo {
   display: flex;
@@ -517,8 +500,6 @@ main {
 /* ── Acabamento responsivo (Fase 3) ── */
 @media (max-width: 768px) {
   .container { padding: 20px 14px; }
-  .form-actions-sticky { padding: 12px 14px; }
-  .form-actions-sticky .btn-row { flex-wrap: wrap; }
 }
 
 /* ── Eventos Societários (aba PJ) ── */

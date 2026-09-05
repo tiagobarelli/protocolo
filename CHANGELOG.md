@@ -2,6 +2,18 @@
 
 Controle de correções e melhorias do sistema
 
+## [2.6] 2026-09-05
+
+### Melhorias
+
+- **Tela de protocolos e sidebar**. Melhorias na tela de protocolos, com simplificação visual. Sidebar alterada para todo o sistema.
+- **Login**. Errar a senha agora não reseta o e-mail digitado.
+
+### Adicionado
+
+- **Módulo e-notariado**. Adicionado módulo para o controle dos atos praticados por terceiros no enotariado, tais como firmas eletrônicas e enot-provas. Permite anexar documentos e vincular o cliente.
+- **Vida notarial**. Esta seção agora traz atos cadastrados no enotariado em nome do cliente pessoa física e/ou jurídica.
+
 ## [2.5] 2026-07-16
 
 ### Adicionado

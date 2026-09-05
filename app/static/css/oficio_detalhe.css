@@ -271,23 +271,6 @@
 
 /* ── Botões — consolidados em components.css ─────────── */
 
-/* ── Barra de ação fixa ──────────────────────────────── */
-.form-actions-sticky {
-  position: sticky;
-  bottom: 0;
-  z-index: 100;
-  background: rgba(24, 24, 27, 0.92); /* var(--primary) a 92% — baixar p/ ~0.80 dá mais "vidro" */
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  padding: 16px 20px;
-  margin-top: 8px;
-}
-.form-actions-sticky .btn-row { margin: 0; display: flex; justify-content: flex-end; gap: 12px; }
-.form-actions-sticky .msg-box { margin-bottom: 12px; }
-
 /* ── Overlay ─────────────────────────────────────────── */
 .overlay {
   position: fixed;

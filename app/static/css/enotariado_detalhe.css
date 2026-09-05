@@ -187,35 +187,11 @@
 .main-content .file-nota-acoes .btn { padding: 6px 12px; font-size: 0.8rem; }
 .main-content .file-nota-contador { font-size: 0.75rem; color: var(--text-muted); margin-right: auto; }
 
-/* ---- Barra de acao fixa (botoes vem de components.css) ---- */
-.main-content .form-actions-sticky {
-  position: sticky;
-  bottom: 0;
-  z-index: 100;
-  background: rgba(24, 24, 27, 0.92); /* ink a 92%, como no molde de oficios */
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  padding: 16px 20px;
-  margin-top: 8px;
-}
-.main-content .form-actions-sticky .btn-row { margin: 0; display: flex; justify-content: flex-end; gap: 12px; }
-.main-content .form-actions-sticky .msg-box { margin-bottom: 12px; }
-
-/* Botao Bloquear/Desbloquear (bloqueio_registro.js gera .btn.btn-outline, ilegivel na barra escura):
-   recebe o visual do .btn-secondary de components.css (surface / text-main / border-strong).
-   Container vazio (administrador ou registro novo) some para nao sobrar gap no .btn-row.
-   Especificidade (1,4,0) vence .btn-outline (0,1,0) e .btn-outline:hover (0,2,0) sem regra forcada. */
-.main-content .form-actions-sticky #bloqueioBotao:empty { display: none; }
-.main-content .form-actions-sticky #bloqueioBotao .btn.btn-outline {
-  background: var(--surface);
-  color: var(--text-main);
-  border-color: var(--border-strong);
-}
-.main-content .form-actions-sticky #bloqueioBotao .btn.btn-outline:hover { background: var(--surface-hover); }
-.main-content .form-actions-sticky #bloqueioBotao .btn.btn-outline:disabled { opacity: .6; cursor: default; }
+/* ---- Bloqueio na barra de acoes (a barra em si e canonica: components.css) ----
+   Container do botao Bloquear/Desbloquear vazio (administrador ou registro novo)
+   some para nao sobrar gap no .btn-row. O .btn-outline gerado pela fabrica e
+   legivel sobre a superficie clara, sem override. */
+.main-content #bloqueioBotao:empty { display: none; }
 
 /* ---- Overlay de carregamento (o #overlay fica dentro de .main-content nesta pagina) ---- */
 .main-content .overlay {
