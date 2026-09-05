@@ -1,5 +1,5 @@
 // vida_notarial.js — Aba "Vida notarial" das páginas de cliente (PF/PJ)
-// Porta as 5 seções de relatório do Detalhamento de Cliente (standalone) para
+// Porta as 6 seções de relatório (5 do Detalhamento de Cliente standalone + e-Notariado, set/2026) para
 // dentro da página de cliente, com link de abertura do ato via deep link
 // (Leva 1). Sem coluna "Retificada?" e sem impressão (decisões travadas).
 // ES5 estrito (var/function). Lê o cliente atual de window.VIDA_NOTARIAL_CLIENTE_ID.
@@ -15,7 +15,8 @@
     substabelecimentos: 762,
     protocolo: 755,
     certidoes: 776,
-    revogacao: 777
+    revogacao: 777,
+    enotariado: 788
   };
 
   var FIELDS = {
@@ -25,6 +26,7 @@
     revogacoes: 'field_7449',
     protocolos: 'field_7247',
     certidoesRequerido: 'field_7422',
+    enotariado: 'field_7573',
     // Controle (745)
     ctrlLivro: 'field_7189',
     ctrlPagina: 'field_7190',
@@ -48,7 +50,13 @@
     // Certidão (776)
     certProtocolo: 'field_7415',
     certDataEmissao: 'field_7414',
-    certSubtipo: 'field_7417'
+    certSubtipo: 'field_7417',
+    // e-Notariado (788)
+    enotPedido: 'field_7567',
+    enotEspecie: 'field_7569',
+    enotQuantidade: 'field_7570',
+    enotData: 'field_7571',
+    enotExcluido: 'field_7584'
   };
 
   // Gate por perfil: escrevente não acessa /controle, /substabelecimentos,
@@ -62,7 +70,8 @@
     substabelecimentos: { container: 'vnSecaoSubstabelecimentos', vazio: 'Nenhuma participação em substabelecimento localizada.' },
     revogacoes: { container: 'vnSecaoRevogacoes', vazio: 'Nenhuma participação em revogação de procuração localizada.' },
     protocolos: { container: 'vnSecaoProtocolos', vazio: 'Nenhum protocolo localizado.' },
-    certidoes: { container: 'vnSecaoCertidoes', vazio: 'Nenhuma certidão localizada.' }
+    certidoes: { container: 'vnSecaoCertidoes', vazio: 'Nenhuma certidão localizada.' },
+    enotariado: { container: 'vnSecaoEnotariado', vazio: 'Nenhum ato do e-notariado localizado.' }
   };
 
   // Cache interno: último cliente carregado (lazy load — só refaz fetch se o id mudou)
@@ -156,8 +165,10 @@
     return html;
   }
 
-  // Carrega os registros vinculados de uma seção e renderiza a tabela
-  function carregarSecao(chave, linkArr, tableId, campoData, renderizarLinha, headers, comColunaLink) {
+  // Carrega os registros vinculados de uma seção e renderiza a tabela.
+  // filtro (8º parâmetro, opcional): função (registro) -> bool aplicada aos registros
+  // buscados antes da ordenação; lista vazia após o filtro cai no empty-state da seção.
+  function carregarSecao(chave, linkArr, tableId, campoData, renderizarLinha, headers, comColunaLink, filtro) {
     var container = el(SECOES[chave].container);
     if (!container) return;
     linkArr = linkArr || [];
@@ -174,6 +185,17 @@
 
     Promise.all(promises)
       .then(function(registros) {
+        if (typeof filtro === 'function') {
+          var filtrados = [];
+          for (var f = 0; f < registros.length; f++) {
+            if (filtro(registros[f])) filtrados.push(registros[f]);
+          }
+          registros = filtrados;
+          if (registros.length === 0) {
+            setVazia(chave, SECOES[chave].vazio);
+            return;
+          }
+        }
         ordenarPorDataDesc(registros, campoData);
         var linhas = [];
         for (var j = 0; j < registros.length; j++) {
@@ -272,6 +294,27 @@
     return html;
   }
 
+  // e-Notariado: lançamentos excluídos logicamente (field_7584) ficam fora da seção
+  function naoExcluido(reg) {
+    return reg[FIELDS.enotExcluido] !== true;
+  }
+
+  // Sem valores financeiros (visível a todos os perfis); link só para quem abre /enotariado
+  function linhaEnotariado(reg) {
+    var pedido = reg[FIELDS.enotPedido] || '';
+    var especie = textoLinkArr(reg[FIELDS.enotEspecie]);
+    var qtd = parseInt(reg[FIELDS.enotQuantidade], 10);
+
+    var html = '<tr>';
+    html += '<td>' + esc(pedido) + '</td>';
+    html += '<td>' + esc(especie) + '</td>';
+    html += '<td>' + (isNaN(qtd) ? '' : qtd) + '</td>';
+    html += '<td>' + formatarData(reg[FIELDS.enotData]) + '</td>';
+    if (podeAbrirAtos) html += celulaLink('/enotariado/lancamento/' + reg.id, !!reg.id);
+    html += '</tr>';
+    return html;
+  }
+
   // ── Fluxo principal ───────────────────────────────────
   function carregarVidaNotarial() {
     var clienteId = window.VIDA_NOTARIAL_CLIENTE_ID;
@@ -287,6 +330,7 @@
     setVazia('revogacoes', 'Carregando...');
     setVazia('protocolos', 'Carregando...');
     setVazia('certidoes', 'Carregando...');
+    setVazia('enotariado', 'Carregando...');
 
     var url = API_BASE + '/database/rows/table/' + TABLES.clientes +
       '/' + clienteId + '/?user_field_names=false';
@@ -311,6 +355,9 @@
         carregarSecao('certidoes', row[FIELDS.certidoesRequerido], TABLES.certidoes,
           FIELDS.certDataEmissao, linhaCertidao,
           ['Protocolo', 'Subtipo', 'Data de emissão'], podeAbrirAtos);
+        carregarSecao('enotariado', row[FIELDS.enotariado], TABLES.enotariado,
+          FIELDS.enotData, linhaEnotariado,
+          ['Pedido', 'Espécie', 'Qtd', 'Data de realização'], podeAbrirAtos, naoExcluido);
       })
       .catch(function(e) {
         console.error('Erro ao carregar vida notarial:', e);
@@ -320,6 +367,7 @@
         setVazia('revogacoes', 'Erro ao carregar registros.');
         setVazia('protocolos', 'Erro ao carregar registros.');
         setVazia('certidoes', 'Erro ao carregar registros.');
+        setVazia('enotariado', 'Erro ao carregar registros.');
       });
   }
 
@@ -330,6 +378,7 @@
     setVazia('revogacoes', SECOES.revogacoes.vazio);
     setVazia('protocolos', SECOES.protocolos.vazio);
     setVazia('certidoes', SECOES.certidoes.vazio);
+    setVazia('enotariado', SECOES.enotariado.vazio);
   }
 
   // ── API pública ───────────────────────────────────────
