@@ -3,6 +3,8 @@
 // enotariado.js - Listagem do modulo e-Notariado Financeiro (tabela 788). ES5 estrito.
 // Leva 3: busca paginada por ano (server-side, sem excluidos), filtros em memoria
 // (especie, guia semanal, status de lancamento, busca textual) e tabela com linha clicavel.
+// Leva 4b: cadeado informativo de bloqueio (1a coluna) via consulta em lote a /api/bloqueios,
+// fatiada em 500 ids, com degradacao graciosa (falha = sem cadeados, sem erro na tela).
 // Convencao do arquivo: proibido em-dash (caractere ou escape); separadores usam '-' ou '·'.
 
 var API_BASE = '/api/baserow';
@@ -45,6 +47,8 @@ var F_ESP = {
 var lancamentos = [];    /* linhas da 788 do ano do filtro (ja sem excluidos) */
 var especiesLista = [];  /* linhas da 787 (ativas e inativas) */
 var buscaTimer = null;   /* debounce da busca textual */
+var bloqueadosMapa = {}; /* { rowId: true } dos lancamentos com bloqueio vigente (ano carregado) */
+var LOTE_BLOQUEIOS = 500; /* maximo de ids por chamada de /api/bloqueios/<tabela>/consulta */
 
 /* ---------- HELPERS ---------- */
 
@@ -215,23 +219,95 @@ function buscarTodasPaginas(ano, callback) {
   });
 }
 
-/* Refetch do ano selecionado (sem cache); erro vira toast e a tabela mostra o estado vazio */
+/* Refetch do ano selecionado (sem cache); erro vira toast e a tabela mostra o estado vazio.
+   Duas renderizacoes por carga: a primeira assim que as linhas chegam (sem cadeados), a segunda
+   quando o mapa de bloqueios resolve (consulta sem overlay). */
 function carregarLancamentos() {
   var ano = document.getElementById('filtroAno').value;
   mostrarOverlay();
   lancamentos = [];
+  bloqueadosMapa = {};
   buscarTodasPaginas(ano, function(rows) {
     lancamentos = ordenarLancamentos(rows);
+    bloqueadosMapa = {};
     renderLancamentos();
+
+    var ids = [];
+    var i;
+    for (i = 0; i < lancamentos.length; i++) {
+      ids.push(lancamentos[i].id);
+    }
+    consultarBloqueiosLote(ids).then(function(mapa) {
+      bloqueadosMapa = mapa;
+      renderLancamentos();
+    });
   })
     .then(function() {
       esconderOverlay();
     })
     .catch(function(e) {
       esconderOverlay();
+      bloqueadosMapa = {};
       mostrarToast('Erro ao carregar lançamentos: ' + ((e && e.message) ? e.message : 'falha na consulta'), 'error');
       renderLancamentos();
     });
+}
+
+/* ---------- BLOQUEIOS (cadeado informativo; padrao dos relatorios, Decisao 28) ---------- */
+
+/* Mapa { rowId: true } dos ids com bloqueio vigente. Fatia em LOTE_BLOQUEIOS ids por chamada
+   (limite do backend) e encadeia os lotes em sequencia, nunca em paralelo. SEMPRE resolve:
+   falha em um lote vira console.warn e o mapa fica parcial (a listagem renderiza sem cadeados). */
+function consultarBloqueiosLote(ids) {
+  var mapa = {};
+  if (!ids || ids.length === 0) return Promise.resolve(mapa);
+
+  var lotes = [];
+  var i;
+  for (i = 0; i < ids.length; i += LOTE_BLOQUEIOS) {
+    lotes.push(ids.slice(i, i + LOTE_BLOQUEIOS));
+  }
+
+  function consultarLote(bloco) {
+    return fetch('/api/bloqueios/788/consulta', {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify({ row_ids: bloco })
+    })
+      .then(function(r) {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then(function(data) {
+        if (!data || !data.ok) {
+          console.warn('Bloqueios indisponíveis para um lote');
+          return;
+        }
+        var lista = data.bloqueados || [];
+        var k;
+        for (k = 0; k < lista.length; k++) {
+          mapa[lista[k]] = true;
+        }
+      })
+      .catch(function() {
+        console.warn('Bloqueios indisponíveis para um lote');
+      });
+  }
+
+  var cadeia = Promise.resolve();
+  for (i = 0; i < lotes.length; i++) {
+    (function(bloco) {
+      cadeia = cadeia.then(function() { return consultarLote(bloco); });
+    })(lotes[i]);
+  }
+  return cadeia.then(function() { return mapa; });
+}
+
+/* 1a coluna: cadeado muted so quando o lancamento tem bloqueio vigente; senao celula vazia */
+function celulaCadeado(rowId) {
+  return '<td class="lock-cell">' +
+    (bloqueadosMapa[rowId] ? '<i class="ph ph-lock" title="Edição bloqueada"></i>' : '') +
+    '</td>';
 }
 
 /* ---------- FILTROS EM MEMORIA ---------- */
@@ -313,6 +389,7 @@ function renderLancamentos() {
 
   var html = '<div class="oficios-table-wrapper"><table class="oficios-table">';
   html += '<thead><tr>';
+  html += '<th class="lock-cell"></th>';
   html += '<th>Realização</th><th>Pedido</th><th>Espécie</th><th class="enot-td-num">Qtd</th>';
   html += '<th>Solicitantes</th><th class="enot-td-num">Bruto</th><th class="enot-td-num">Taxas</th>';
   html += '<th class="enot-td-num">CNB</th><th class="enot-td-num">Líquido</th><th class="enot-td-num">Guia</th>';
@@ -323,6 +400,7 @@ function renderLancamentos() {
   for (i = 0; i < lista.length; i++) {
     var row = lista[i];
     html += '<tr class="enot-row" data-id="' + row.id + '">';
+    html += celulaCadeado(row.id);
     html += '<td>' + formatarData(row[F.dataRealizacao]) + '</td>';
     html += '<td class="enot-num">' + esc(row[F.numeroPedido] || '-') + '</td>';
     html += '<td>' + esc(valoresLink(row[F.especie])) + '</td>';

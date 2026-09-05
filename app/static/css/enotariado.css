@@ -93,6 +93,11 @@
 .main-content .enot-num { font-weight: 600; white-space: nowrap; }
 .main-content .enot-td-num { text-align: right; white-space: nowrap; }
 
+/* Cadeado de bloqueio informativo (1a coluna, cabecalho vazio): replica de
+   relatorio_controle_certidoes.css:159-160, adaptada de .report-table para .oficios-table */
+.main-content .oficios-table .lock-cell { width: 28px; text-align: center; }
+.main-content .oficios-table .lock-cell i { color: var(--text-muted); font-size: 0.9rem; }
+
 /* ---- Badge de status (forma e cor do canonico .badge .badge-success / .badge-warning) ---- */
 .main-content .enot-badge { white-space: nowrap; }
 

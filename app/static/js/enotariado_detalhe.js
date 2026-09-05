@@ -3,6 +3,7 @@
 // enotariado_detalhe.js - Detalhe/edicao de lancamento do modulo e-Notariado Financeiro (tabela 788). ES5 estrito.
 // Leva 2: catalogo de especies, sugestao do bruto, autocomplete de solicitantes (chips canonicos),
 // carga por id, validacao, log de alteracoes, gravacao (POST/PATCH) e exclusao logica (Leva 3, so master).
+// Leva 4: bloqueio de edicao por registro (bloqueio_registro.js; master bypassa; gate fresco no salvar).
 // Convencao do arquivo: proibido em-dash (caractere ou escape); separadores usam '-' ou '·'.
 
 var API_BASE = '/api/baserow';
@@ -70,6 +71,8 @@ var especies = [];                   /* catalogo da 787 (todas; o select lista s
 var snapshot = null;                 /* estado comparavel apos carregar/salvar */
 var sugestaoBrutoAnterior = null;    /* ultima sugestao aplicada ao bruto */
 var buscaTimer = null;               /* debounce do autocomplete */
+var bloqueioWidget = null;           /* widget de bloqueio_registro.js; null se o script nao carregou */
+var bloqueioTravadoUI = false;       /* true = registro bloqueado e usuario nao-master: campos travados */
 
 /* ========================= HELPERS ========================= */
 
@@ -339,13 +342,15 @@ function renderChipsSolicitantes() {
       chip.className = 'chip';
       chip.id = 'chip-sol-' + sol.id;
       chip.innerHTML = '<span>' + esc(sol.nome) + '</span>';
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'chip-remove';
-      btn.title = 'Remover';
-      btn.innerHTML = '<i class="ph ph-x"></i>';
-      btn.addEventListener('click', function() { removerSolicitante(sol.id); });
-      chip.appendChild(btn);
+      if (!bloqueioTravadoUI) {   /* travado por bloqueio: chip sem o botao de remover */
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'chip-remove';
+        btn.title = 'Remover';
+        btn.innerHTML = '<i class="ph ph-x"></i>';
+        btn.addEventListener('click', function() { removerSolicitante(sol.id); });
+        chip.appendChild(btn);
+      }
       cont.appendChild(chip);
     })(solicitantesSelecionados[i]);
   }
@@ -380,9 +385,10 @@ function carregarLancamento() {
       esconderOverlay();
       if (data[F.excluido] === true) {
         marcarComoExcluido();
-        return;
+      } else {
+        habilitarAcoes();
       }
-      habilitarAcoes();
+      if (bloqueioWidget) bloqueioWidget.carregar();   /* badge informativo tambem no registro excluido */
     })
     .catch(function(e) {
       esconderOverlay();
@@ -588,8 +594,30 @@ function tratarRespostaHttp(r, msgPadrao) {
     });
 }
 
-/* modo: 'salvar' (permanece no registro) | 'salvarNovo' (so em modo novo: grava e limpa) */
+/* Gate do salvar (Leva 4): re-verifica o bloqueio no servidor antes de qualquer gravacao,
+   o que fecha a brecha da aba aberta antes do bloqueio. Master bypassa; modo novo nao tem registro. */
 function gravar(modo) {
+  if (modoNovo || !bloqueioWidget) {
+    executarGravar(modo);
+    return;
+  }
+  bloqueioWidget.verificarAntesDeSalvar().then(function(info) {
+    var ehMaster = !!(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+    if (info.bloqueado && !ehMaster) {
+      mostrarMsg('formMsg', 'error', 'Este registro foi bloqueado para edição por ' +
+        (info.bloqueadoPor || 'outro usuário') + '. Solicite o desbloqueio ao usuário master.');
+      var msgEl = byId('formMsg');
+      if (msgEl && msgEl.scrollIntoView) msgEl.scrollIntoView({ block: 'nearest' });
+      bloqueioWidget.carregar();   /* sincroniza a UI da aba antiga (badge + travamento) */
+      return;
+    }
+    executarGravar(modo);
+  });
+}
+
+/* modo: 'salvar' (permanece no registro) | 'salvarNovo' (so em modo novo: grava e limpa).
+   Corpo original do gravar(); chamado somente pelo gate acima. */
+function executarGravar(modo) {
   esconderMsg('formMsg');
   var erro = validarObrigatorios();
   if (erro) {
@@ -638,6 +666,7 @@ function gravar(modo) {
           history.replaceState(null, '', '/enotariado/lancamento/' + data.id);
         } catch (e) {}
         aplicarRotulos();
+        if (bloqueioWidget) bloqueioWidget.carregar();   /* o botao Bloquear do master passa a existir */
         byId('btnSalvarNovo').style.display = 'none';
         exibirLogs(data);
         mostrarToast('Lançamento criado com sucesso.', 'success');
@@ -759,6 +788,37 @@ function excluirLancamento() {
     });
 }
 
+/* ========================= BLOQUEIO DE EDICAO (bloqueio_registro.js) ========================= */
+
+/* Travado = registro bloqueado e perfil nao-master (master bypassa) */
+function bloqueioTravado() {
+  if (!bloqueioWidget || !bloqueioWidget.estaBloqueado()) return false;
+  return !(window.CURRENT_USER && window.CURRENT_USER.perfil === 'master');
+}
+
+/* Callback do widget: trava/destrava os campos EXCLUSIVAMENTE via disabled (nunca a propriedade
+   de somente leitura), re-renderiza os chips (sem o X quando travado) e oculta o Salvar.
+   Nao toca em valorLiquidoInput (ja e somente leitura) nem em Limpar / Salvar e novo / Excluir. */
+function aplicarBloqueioEnotariado(deveTravar) {
+  var travar = !!deveTravar;
+  bloqueioTravadoUI = travar;
+
+  var ids = ['numeroPedidoInput', 'especieSelect', 'quantidadeInput', 'dataRealizacaoInput',
+    'solicitanteBusca', 'valorBrutoInput', 'taxasCobrancaInput', 'taxaCnbInput',
+    'dataLancamentoInput', 'guiaSemanalInput', 'observacoesInput'];
+  var i;
+  for (i = 0; i < ids.length; i++) {
+    var el = byId(ids[i]);
+    if (el) el.disabled = travar;
+  }
+
+  fecharListaSolicitantes();
+  renderChipsSolicitantes();
+
+  var btnSalvar = byId('btnSalvar');
+  if (btnSalvar) btnSalvar.style.display = travar ? 'none' : '';
+}
+
 /* ========================= ROTULOS ========================= */
 
 function aplicarRotulos() {
@@ -810,6 +870,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var overlayEl = document.querySelector('.sidebar-overlay');
   if (overlayEl) overlayEl.addEventListener('click', toggleSidebar);
+
+  /* Widget de bloqueio de edicao (modulo compartilhado); sem o script a pagina segue sem bloqueio */
+  if (window.criarBloqueioRegistro) {
+    bloqueioWidget = window.criarBloqueioRegistro({
+      tabelaId: TABLE_LANCAMENTOS,
+      badgeContainerId: 'bloqueioBadge',
+      botaoContainerId: 'bloqueioBotao',
+      obterRowId: function() { return modoNovo ? null : window.LANCAMENTO_ID; },
+      aoAplicarBloqueio: aplicarBloqueioEnotariado
+    });
+  }
 
   /* Catalogo de especies primeiro; depois carga do registro (edicao) ou liberacao dos botoes (novo) */
   carregarEspecies(function() {

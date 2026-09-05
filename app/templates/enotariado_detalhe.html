@@ -30,6 +30,7 @@
   </div>
 
   <div class="card">
+    <div id="bloqueioBadge"></div>
 
     <!-- Seção 1: Dados do pedido -->
     <div class="form-section">
@@ -136,6 +137,7 @@
   <div class="form-actions-sticky" id="acoesBar">
     <div id="formMsg" class="msg-box"></div>
     <div class="btn-row">
+      <div id="bloqueioBotao"></div>
       <button type="button" class="btn btn-danger" id="btnExcluir" style="display:none;" disabled>
         <i class="ph ph-trash"></i> Excluir
       </button>
@@ -165,5 +167,6 @@
   };
   window.LANCAMENTO_ID = {{ lancamento_id or 'null' }}; /* null em modo novo */
 </script>
+<script src="{{ url_for('static', filename='js/bloqueio_registro.js') }}"></script>
 <script src="{{ url_for('static', filename='js/enotariado_detalhe.js') }}"></script>
 {% endblock %}

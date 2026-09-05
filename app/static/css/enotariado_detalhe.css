@@ -48,6 +48,8 @@
 .main-content .form-row .form-group { min-width: 0; }   /* permite truncar texto em flex */
 .main-content .form-group.small { flex: 0 0 140px; }    /* override: campos curtos (qtd, datas, valores) */
 .main-content .enot-det-req { color: var(--danger); font-weight: 700; }
+/* Badge de bloqueio de edicao (bloqueio_registro.js): mesma regra por id das paginas de gestao notarial */
+.main-content #bloqueioBadge:not(:empty) { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 
 /* Campo calculado (valor liquido): somente leitura, sem foco.
    Especificidade (0,2,1) para vencer o .main-content input[readonly] de components.css. */
@@ -139,6 +141,19 @@
 }
 .main-content .form-actions-sticky .btn-row { margin: 0; display: flex; justify-content: flex-end; gap: 12px; }
 .main-content .form-actions-sticky .msg-box { margin-bottom: 12px; }
+
+/* Botao Bloquear/Desbloquear (bloqueio_registro.js gera .btn.btn-outline, ilegivel na barra escura):
+   recebe o visual do .btn-secondary de components.css (surface / text-main / border-strong).
+   Container vazio (administrador ou registro novo) some para nao sobrar gap no .btn-row.
+   Especificidade (1,4,0) vence .btn-outline (0,1,0) e .btn-outline:hover (0,2,0) sem regra forcada. */
+.main-content .form-actions-sticky #bloqueioBotao:empty { display: none; }
+.main-content .form-actions-sticky #bloqueioBotao .btn.btn-outline {
+  background: var(--surface);
+  color: var(--text-main);
+  border-color: var(--border-strong);
+}
+.main-content .form-actions-sticky #bloqueioBotao .btn.btn-outline:hover { background: var(--surface-hover); }
+.main-content .form-actions-sticky #bloqueioBotao .btn.btn-outline:disabled { opacity: .6; cursor: default; }
 
 /* ---- Overlay de carregamento (o #overlay fica dentro de .main-content nesta pagina) ---- */
 .main-content .overlay {

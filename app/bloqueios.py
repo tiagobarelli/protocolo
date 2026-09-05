@@ -14,7 +14,8 @@ bloqueios_bp = Blueprint("bloqueios", __name__, url_prefix="/api/bloqueios")
 # Tabelas Baserow com suporte a bloqueio (as 6 páginas de gestão notarial):
 # Controle 745, Certidões 776, Retificações 753, Substabelecimentos 762,
 # Revogação de Procuração 777, COAF 756.
-TABELAS_SUPORTADAS = {745, 776, 753, 762, 777, 756}
+# e-Notariado Financeiro 788.
+TABELAS_SUPORTADAS = {745, 776, 753, 762, 777, 756, 788}
 
 
 def _exigir_master():
