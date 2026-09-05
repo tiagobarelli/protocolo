@@ -1,5 +1,4 @@
 # app/admin.py — Blueprint: gerenciamento de usuários (master only)
-import re
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import login_required
@@ -182,7 +181,6 @@ def configuracoes_salvar():
 
     chaves_permitidas = {
         'protocolo_dias_alerta1', 'protocolo_dias_alerta2',
-        'protocolo_cor_alerta1', 'protocolo_cor_alerta2',
         'cartorio_denominacao', 'cartorio_endereco',
         'cartorio_email', 'cartorio_telefone', 'cartorio_site',
     }
@@ -204,11 +202,6 @@ def configuracoes_salvar():
                 return jsonify(ok=False, erro="O primeiro alerta deve ter menos dias que o segundo."), 400
         except (ValueError, TypeError):
             return jsonify(ok=False, erro="Dias inválidos."), 400
-
-    hex_re = re.compile(r'^#[0-9a-fA-F]{6}$')
-    for ck in ('protocolo_cor_alerta1', 'protocolo_cor_alerta2'):
-        if ck in salvar and not hex_re.match(salvar[ck]):
-            return jsonify(ok=False, erro="Cor inválida: " + salvar[ck]), 400
 
     try:
         Settings.set_many(salvar)

@@ -69,26 +69,28 @@ main {
   margin: 0 0 12px;
 }
 
-/* ── Color picker row ─────────────────────────────────── */
-.color-picker-row {
+/* ── Legenda de faixas de prazo ───────────────────────── */
+.faixa-legenda {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.faixa-pill {
+  display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: var(--radius-circular);
+  font-size: 12px;
+  font-weight: 500;
 }
-.color-picker-row input[type="color"] {
-  width: 44px; height: 36px; padding: 2px;
-  border: 1px solid var(--border); border-radius: 6px;
-  cursor: pointer; background: var(--surface);
-}
-
-/* ── Color preview card ───────────────────────────────── */
-.color-preview-card {
-  width: 80px; height: 48px;
-  border-radius: 8px;
-  border: 1px solid var(--border-strong);
-  border-left-width: 3px;
-  transition: all 0.2s;
-}
+.faixa-pill i { font-size: 13px; }
+.faixa-pill.faixa-ok       { color: var(--success); background: var(--success-bg); }
+.faixa-pill.faixa-atencao  { color: var(--warning); background: var(--warning-bg); }
+.faixa-pill.faixa-atrasado { color: var(--danger);  background: var(--danger-bg); }
 
 /* ── Rodapé / Botão ───────────────────────────────────── */
 .form-footer {

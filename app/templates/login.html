@@ -68,11 +68,12 @@
       <form method="post" action="{{ url_for('auth.login') }}">
         <div class="form-group">
           <label for="email">E-mail</label>
-          <input type="email" id="email" name="email" required autofocus placeholder="nome@cartorioitapolis.com.br">
+          <input type="email" id="email" name="email" required placeholder="nome@cartorioitapolis.com.br"
+                 value="{{ email or '' }}"{% if not email %} autofocus{% endif %}>
         </div>
         <div class="form-group">
           <label for="senha">Senha</label>
-          <input type="password" id="senha" name="senha" required placeholder="••••••••">
+          <input type="password" id="senha" name="senha" required placeholder="••••••••"{% if email %} autofocus{% endif %}>
         </div>
         <button type="submit">Entrar</button>
       </form>

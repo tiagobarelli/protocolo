@@ -21,26 +21,48 @@
 <!-- CONTEÚDO PRINCIPAL -->
   <main class="main-content">
     {% include "partials/flash_messages.html" %}
-    <div class="filters-bar">
-      <div class="filter-group">
-        <label for="filtroResponsavel">Responsável</label>
-        <select id="filtroResponsavel">
-          <option value="">Todos</option>
-        </select>
+
+    <header class="painel-header">
+      <div class="painel-header-texto">
+        <h1 id="painelSaudacao">Olá</h1>
+        <p id="painelSubtitulo"></p>
       </div>
-      <div class="filter-group">
-        <label for="filtroStatus">Status</label>
-        <select id="filtroStatus">
-          <option value="Em andamento" selected>Em andamento</option>
-          <option value="">Todos</option>
-          <option value="Finalizado">Finalizado</option>
-          <option value="Cancelado">Cancelado</option>
-        </select>
+      {% if current_user.perfil in ['master', 'administrador', 'escrevente'] %}
+      <div class="painel-header-acoes">
+        <a href="{{ url_for('main.calendario') }}" class="btn btn-secondary"><i class="ph ph-calendar-blank"></i> Calendário</a>
+        <a href="{{ url_for('main.cadastrar') }}" class="btn btn-primary"><i class="ph ph-plus"></i> Novo protocolo</a>
       </div>
-      <div class="filter-summary" id="filterSummary"></div>
-    </div>
+      {% endif %}
+    </header>
+
+    <section class="painel-filtros">
+      <div class="painel-segmentado" id="filtroStatus" role="group" aria-label="Status">
+        <button type="button" class="painel-seg-btn active" data-status="Em andamento">Em andamento</button>
+        <button type="button" class="painel-seg-btn" data-status="Finalizado">Finalizado</button>
+        <button type="button" class="painel-seg-btn" data-status="Cancelado">Cancelado</button>
+        <button type="button" class="painel-seg-btn" data-status="">Todos</button>
+      </div>
+      <select id="filtroResponsavel" class="painel-select-resp" aria-label="Responsável">
+        <option value="">Todos os responsáveis</option>
+      </select>
+      <div class="painel-filtros-dir">
+        <span class="painel-ordenar-label">Ordenar:</span>
+        <button type="button" class="painel-btn-ordem" id="btnOrdem"><i class="ph ph-arrows-down-up"></i> <span id="btnOrdemLabel">Mais recentes</span></button>
+        <div class="painel-view-toggle">
+          <button type="button" class="painel-view-btn active" id="btnViewGrid" title="Grade"><i class="ph ph-squares-four"></i></button>
+          <button type="button" class="painel-view-btn" id="btnViewList" title="Lista"><i class="ph ph-rows"></i></button>
+        </div>
+      </div>
+    </section>
 
     <div class="protocol-grid" id="protocolGrid"></div>
+
+    <div class="protocol-list" id="protocolList" style="display: none;">
+      <div class="protocol-list-head">
+        <span>Nº</span><span>Interessado</span><span>Serviço</span><span>Responsável</span><span>Aberto há</span><span>Status</span>
+      </div>
+      <div id="protocolListBody"></div>
+    </div>
 
     <div class="loading-state" id="loadingState">
       <div class="spinner"></div>

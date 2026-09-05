@@ -11,6 +11,8 @@ function atualizarBadgeNotificacoes() {
     })
     .then(function(data) {
       var count = data.count || 0;
+      var bell = document.getElementById('notificationBell');
+      if (bell) bell.title = count > 0 ? 'Notifica\u00e7\u00f5es: ' + count + ' n\u00e3o lida' + (count === 1 ? '' : 's') : 'Notifica\u00e7\u00f5es';
       if (count > 0) {
         badge.textContent = count > 99 ? '99+' : String(count);
         badge.style.display = 'flex';

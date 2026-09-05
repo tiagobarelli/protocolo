@@ -43,28 +43,3 @@ class Settings:
                 (key, str(value)),
             )
         db.commit()
-
-
-def derivar_cores_alerta(hex_cor):
-    """Recebe uma cor hex (ex: '#b91c1c') e retorna dict com bg e border derivados.
-    - bg: cor misturada com branco a ~93% (tint muito leve)
-    - border: cor misturada com branco a ~65% (tint medio)
-    """
-    hex_cor = hex_cor.lstrip('#')
-    r, g, b = int(hex_cor[0:2], 16), int(hex_cor[2:4], 16), int(hex_cor[4:6], 16)
-
-    # Background: mistura com branco a 93%
-    bg_r = int(r + (255 - r) * 0.93)
-    bg_g = int(g + (255 - g) * 0.93)
-    bg_b = int(b + (255 - b) * 0.93)
-
-    # Border: mistura com branco a 65%
-    br_r = int(r + (255 - r) * 0.65)
-    br_g = int(g + (255 - g) * 0.65)
-    br_b = int(b + (255 - b) * 0.65)
-
-    return {
-        'bg': '#{:02x}{:02x}{:02x}'.format(bg_r, bg_g, bg_b),
-        'border': '#{:02x}{:02x}{:02x}'.format(br_r, br_g, br_b),
-        'accent': '#' + hex_cor,
-    }

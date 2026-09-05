@@ -5,9 +5,10 @@ main { max-width: none; padding: 0; margin: 0; }
 .app-layout { display: flex; min-height: 100vh; }
 
 .sidebar {
-  width: 260px;
+  width: 240px;
   background: var(--sidebar-bg);
   color: var(--sidebar-text);
+  border-right: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -18,63 +19,66 @@ main { max-width: none; padding: 0; margin: 0; }
   overflow-y: auto;
 }
 
+/* ==================== CABECALHO (marca) ==================== */
 .sidebar-header {
   display: flex;
-  flex-direction: column; /* Empilha os itens verticalmente */
-  align-items: flex-start; /* Alinha à esquerda (use 'center' se quiser centralizado) */
-  padding: 20px;
-}
-
-/* Antes: border-radius: 10px; */
-/*
-.sidebar-logo {
-  width: 40px;
-  height: 40px;
-  background: var(--sidebar-accent);
-  color: var(--sidebar-text-strong);
-  border-radius: var(--radius, 6px);
-  display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 20px;
+  gap: 10px;
+  padding: 18px 16px 20px;
+}
+
+.sidebar-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--sidebar-accent);
+  color: var(--accent-foreground);
+  display: grid;
+  place-items: center;
+  font-size: 17px;
   flex-shrink: 0;
-} */
-
-.sidebar-header h1 {
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
 }
 
-.sidebar-header h6 {
-  margin: 0;
-  font-size: 0.60rem;     /* Tamanho menor para parecer secundário */
-  font-weight: 400;       /* Menos negrito que o h1 */
-  color: var(--sidebar-muted);   /* cor suave (cinza) para dar menos destaque */
-  /*text-transform: uppercase;*/ /* Opcional: deixa em caixa alta para um visual clean */
-  letter-spacing: 1px;    /* Opcional: um pouco de espaço entre letras */
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 16px 12px;
+.sidebar-brand {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  line-height: 1.1;
 }
 
-/* Antes: border-radius: 8px; */
+.sidebar-brand-nome {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--sidebar-text-strong);
+}
+
+.sidebar-brand-sub {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+}
+
+/* ==================== NAVEGACAO ==================== */
+.sidebar-nav {
+  flex: 1;
+  padding: 4px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 12px;
-  border-radius: var(--radius, 6px); /* Alterado */
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
   color: var(--sidebar-text);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 13.5px;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: background .15s, color .15s;
 }
 
 .nav-item:hover {
@@ -85,11 +89,10 @@ main { max-width: none; padding: 0; margin: 0; }
 .nav-item.active {
   background: var(--sidebar-active-bg);
   color: var(--sidebar-text-strong);
-  border-left: 3px solid var(--sidebar-accent);
-  padding-left: 9px;
+  font-weight: 600;
 }
 
-.nav-item i { font-size: 1.15rem; }
+.nav-item i { font-size: 17px; }
 
 /* ==================== NAV GROUP (submenu accordion) ==================== */
 .nav-group {
@@ -103,13 +106,13 @@ main { max-width: none; padding: 0; margin: 0; }
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 7px 12px;
+  padding: 7px 10px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--sidebar-text);
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -131,16 +134,17 @@ main { max-width: none; padding: 0; margin: 0; }
 }
 
 .nav-group-label i {
-  font-size: 1.15rem;
+  font-size: 17px;
 }
 
 .nav-group-arrow {
-  font-size: 0.85rem;
-  transition: transform 0.25s ease;
+  font-size: 11px;
+  color: var(--sidebar-muted);
+  transition: transform .25s ease;
 }
 
 .nav-group.open .nav-group-arrow {
-  transform: rotate(180deg);
+  transform: rotate(90deg);
 }
 
 .nav-group-items {
@@ -157,96 +161,146 @@ main { max-width: none; padding: 0; margin: 0; }
 }
 
 .nav-item.sub {
-  padding-left: 38px;
-  font-size: 0.85rem;
+  padding-left: 37px;
+  font-size: 13px;
 }
 
 .nav-item.sub i {
-  font-size: 1rem;
+  font-size: 15px;
 }
 
 .nav-item.sub.active {
-  padding-left: 35px;
+  padding-left: 37px;
 }
 
+/* ==================== RODAPE ==================== */
 .sidebar-footer {
-  padding: 16px 20px;
+  padding: 12px;
   border-top: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.sidebar-footer .user-info {
-  font-size: 0.85rem;
-  color: var(--sidebar-muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sidebar-footer a {
-  font-size: 0.85rem;
-  color: var(--sidebar-text);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: color 0.2s;
-}
-
-.sidebar-footer a:hover { color: var(--sidebar-text-strong); }
-
-.sidebar-footer a.version-link {
-  font-size: 0.5rem;
-  color: var(--sidebar-muted);
-  text-decoration: none;
-  margin-bottom: 4px;
-}
-
-.sidebar-footer a.version-link:hover {
-  color: var(--sidebar-text);
+  gap: 2px;
 }
 
 .notification-bell {
-  position: relative;
-  color: var(--sidebar-text);
-  font-size: 0.85rem;
-  text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: color 0.2s;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--sidebar-text);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background .15s, color .15s;
 }
+
+.notification-bell i { font-size: 17px; }
+
+.notification-bell .bell-label { flex: 1; }
 
 .notification-bell:hover,
 .notification-bell.active {
+  background: var(--sidebar-hover-bg);
   color: var(--sidebar-text-strong);
 }
 
-.notification-badge {
-  position: static;
-  background: var(--sidebar-badge-notif);
+/* Pill escuro do To Do (contador); o JS alterna display flex/none */
+.notification-badge.badge-pill {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-circular);
+  background: var(--sidebar-accent);
   color: var(--accent-foreground);
-  font-size: 0.65rem;
-  font-weight: 700;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 4px; /* Mais quadradinho e sério */
-  display: flex;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
 }
 
-/* Badge do To Do em verde, para diferenciar das notificações (vermelho) */
-#todoBadge {
-  background: var(--sidebar-badge-todo); /* verde de sucesso — diferencia das notificações (vermelho) */
+/* Ponto vermelho das Notificacoes (o numero fica no title do link) */
+.notification-badge.badge-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  min-width: 0;
+  border-radius: var(--radius-circular);
+  background: var(--sidebar-badge-notif);
+  font-size: 0;
+  color: transparent;
+  overflow: hidden;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 4px;
+  margin-top: 6px;
+}
+
+.sidebar-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-circular);
+  background: var(--sidebar-border);
+  color: var(--sidebar-text-strong);
+  font-size: 11px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.sidebar-user-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.sidebar-user-nome {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sidebar-text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-texto .version-link {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.sidebar-user-texto .version-link:hover {
+  color: var(--sidebar-text-strong);
+}
+
+.sidebar-sair {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--sidebar-muted);
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.sidebar-sair:hover {
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-text-strong);
 }
 
 .main-content {
-  margin-left: 260px;
+  margin-left: 240px;
   flex: 1;
   min-height: 100vh;
   padding: 24px 32px;
@@ -296,23 +350,22 @@ main { max-width: none; padding: 0; margin: 0; }
 /* ==================== NAV SECTION LABELS ==================== */
 
 .nav-section-block {
-  background: var(--sidebar-section-bg);
-  border-radius: 8px;
-  padding: 6px 0 4px 0;
-  margin-bottom: 4px;
-  margin-top: 8px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
 }
 
 .nav-section-label {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 10.5px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--sidebar-accent);
-  padding: 4px 12px 2px 12px;
+  letter-spacing: .08em;
+  color: var(--sidebar-muted);
+  padding: 0 10px 6px;
   pointer-events: none;
   user-select: none;
 }

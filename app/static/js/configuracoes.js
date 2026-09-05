@@ -50,44 +50,26 @@ function ativarAba(nomeAba) {
 }
 
 // ═══════════════════════════════════════════════════════
-// PREVIEW DE CORES
+// LEGENDA DE FAIXAS
 // ═══════════════════════════════════════════════════════
 
-function derivarCores(hexCor) {
-  var hex = hexCor.replace('#', '');
-  var r = parseInt(hex.substring(0, 2), 16);
-  var g = parseInt(hex.substring(2, 4), 16);
-  var b = parseInt(hex.substring(4, 6), 16);
-
-  var bgR = Math.round(r + (255 - r) * 0.93);
-  var bgG = Math.round(g + (255 - g) * 0.93);
-  var bgB = Math.round(b + (255 - b) * 0.93);
-
-  var brR = Math.round(r + (255 - r) * 0.65);
-  var brG = Math.round(g + (255 - g) * 0.65);
-  var brB = Math.round(b + (255 - b) * 0.65);
-
-  function toHex(n) {
-    var h = n.toString(16);
-    return h.length < 2 ? '0' + h : h;
+function atualizarLegendaFaixas() {
+  var d1 = parseInt(document.getElementById('diasAlerta1Input').value, 10);
+  var d2 = parseInt(document.getElementById('diasAlerta2Input').value, 10);
+  var ok = document.getElementById('legendaOk');
+  var at = document.getElementById('legendaAtencao');
+  var atr = document.getElementById('legendaAtrasado');
+  if (!ok || !at || !atr) return;
+  var valido = !isNaN(d1) && !isNaN(d2) && d1 > 0 && d2 > d1;
+  if (!valido) {
+    ok.textContent = 'at\u00e9 ? dias';
+    at.textContent = '? a ? dias';
+    atr.textContent = 'acima de ? dias';
+    return;
   }
-
-  return {
-    bg: '#' + toHex(bgR) + toHex(bgG) + toHex(bgB),
-    border: '#' + toHex(brR) + toHex(brG) + toHex(brB),
-    accent: hexCor
-  };
-}
-
-function atualizarPreview(num) {
-  var input = document.getElementById('corAlerta' + num + 'Input');
-  var preview = document.getElementById('previewAlerta' + num);
-  if (!input || !preview) return;
-  var cores = derivarCores(input.value);
-  preview.style.background = cores.bg;
-  preview.style.borderColor = cores.border;
-  preview.style.borderLeftColor = cores.accent;
-  preview.style.borderLeftWidth = '3px';
+  ok.textContent = 'at\u00e9 ' + d1 + (d1 === 1 ? ' dia' : ' dias');
+  at.textContent = (d1 + 1) + ' a ' + d2 + ' dias';
+  atr.textContent = 'acima de ' + d2 + ' dias';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -112,8 +94,6 @@ function salvarConfiguracoes() {
   var payload = {
     protocolo_dias_alerta1: dias1,
     protocolo_dias_alerta2: dias2,
-    protocolo_cor_alerta1: document.getElementById('corAlerta1Input').value,
-    protocolo_cor_alerta2: document.getElementById('corAlerta2Input').value,
     cartorio_denominacao: document.getElementById('denominacaoInput').value.trim(),
     cartorio_endereco: document.getElementById('enderecoInput').value.trim(),
     cartorio_email: document.getElementById('emailInput').value.trim(),
@@ -611,19 +591,16 @@ function excluirRemDest(id) {
 // ═══════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Color picker listeners
-  var cor1 = document.getElementById('corAlerta1Input');
-  var cor2 = document.getElementById('corAlerta2Input');
-  if (cor1) cor1.addEventListener('input', function() { atualizarPreview(1); });
-  if (cor2) cor2.addEventListener('input', function() { atualizarPreview(2); });
+  // Legenda de faixas de prazo (atualiza ao vivo)
+  var dias1El = document.getElementById('diasAlerta1Input');
+  var dias2El = document.getElementById('diasAlerta2Input');
+  if (dias1El) dias1El.addEventListener('input', atualizarLegendaFaixas);
+  if (dias2El) dias2El.addEventListener('input', atualizarLegendaFaixas);
+  atualizarLegendaFaixas();
 
   // Botão salvar
   var btnSalvar = document.getElementById('btnSalvar');
   if (btnSalvar) btnSalvar.addEventListener('click', salvarConfiguracoes);
-
-  // Preview inicial
-  atualizarPreview(1);
-  atualizarPreview(2);
 
   // Mensagens internas (só existe para master)
   if (document.getElementById('tab-mensagens')) {

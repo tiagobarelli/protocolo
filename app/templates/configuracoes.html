@@ -45,41 +45,30 @@
   <!-- Aba Protocolos -->
   <div class="tab-content active" id="tab-protocolos">
     <div class="card">
-      <div class="section-title"><i class="ph ph-warning-circle"></i> Limiares de Alerta no Painel</div>
-      <p class="section-desc">Configure os dias e cores para destaque dos protocolos em andamento no painel principal.</p>
+      <div class="section-title"><i class="ph ph-clock-countdown"></i> Faixas de prazo no Painel</div>
+      <p class="section-desc">Defina os limites em dias que separam as três faixas de prazo dos protocolos em andamento. As cores são fixas: verde (dentro do prazo), amarelo (atenção) e vermelho (atrasado).</p>
 
       <div class="alerta-grid">
-        <!-- Alerta 1 -->
         <div class="alerta-bloco">
-          <h3>Primeiro alerta</h3>
+          <h3>Primeiro limite</h3>
           <div class="form-group">
-            <label for="diasAlerta1Input">Dias para o primeiro alerta de atraso</label>
+            <label for="diasAlerta1Input">Dias até o fim da faixa verde</label>
             <input type="number" id="diasAlerta1Input" min="1" value="{{ app_settings.get('protocolo_dias_alerta1', '10') }}">
           </div>
-          <div class="form-group">
-            <label for="corAlerta1Input">Cor do primeiro alerta</label>
-            <div class="color-picker-row">
-              <input type="color" id="corAlerta1Input" value="{{ app_settings.get('protocolo_cor_alerta1', '#d97706') }}">
-              <div class="color-preview-card" id="previewAlerta1"></div>
-            </div>
-          </div>
         </div>
-
-        <!-- Alerta 2 -->
         <div class="alerta-bloco">
-          <h3>Segundo alerta</h3>
+          <h3>Segundo limite</h3>
           <div class="form-group">
-            <label for="diasAlerta2Input">Dias para o segundo alerta de atraso</label>
+            <label for="diasAlerta2Input">Dias até o fim da faixa amarela</label>
             <input type="number" id="diasAlerta2Input" min="1" value="{{ app_settings.get('protocolo_dias_alerta2', '20') }}">
           </div>
-          <div class="form-group">
-            <label for="corAlerta2Input">Cor do segundo alerta</label>
-            <div class="color-picker-row">
-              <input type="color" id="corAlerta2Input" value="{{ app_settings.get('protocolo_cor_alerta2', '#b91c1c') }}">
-              <div class="color-preview-card" id="previewAlerta2"></div>
-            </div>
-          </div>
         </div>
+      </div>
+
+      <div class="faixa-legenda" id="faixaLegenda" aria-live="polite">
+        <span class="faixa-pill faixa-ok"><i class="ph ph-clock"></i> <span id="legendaOk"></span></span>
+        <span class="faixa-pill faixa-atencao"><i class="ph ph-clock"></i> <span id="legendaAtencao"></span></span>
+        <span class="faixa-pill faixa-atrasado"><i class="ph ph-clock"></i> <span id="legendaAtrasado"></span></span>
       </div>
     </div>
   </div>
@@ -207,8 +196,6 @@
   window.SETTINGS_ATUAIS = {
     protocolo_dias_alerta1: "{{ app_settings.get('protocolo_dias_alerta1', '10') }}",
     protocolo_dias_alerta2: "{{ app_settings.get('protocolo_dias_alerta2', '20') }}",
-    protocolo_cor_alerta1: "{{ app_settings.get('protocolo_cor_alerta1', '#d97706') }}",
-    protocolo_cor_alerta2: "{{ app_settings.get('protocolo_cor_alerta2', '#b91c1c') }}",
     cartorio_denominacao: "{{ app_settings.get('cartorio_denominacao', '') }}",
     cartorio_endereco: "{{ app_settings.get('cartorio_endereco', '') }}",
     cartorio_email: "{{ app_settings.get('cartorio_email', '') }}",

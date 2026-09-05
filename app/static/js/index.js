@@ -24,6 +24,63 @@ var statusOpcoes = {}; // mapa texto → id (ex: {"Em andamento": 123})
 var paginaAtual = 1;
 var totalRegistros = 0;
 var CARDS_POR_PAGINA = 20;
+var statusAtual = 'Em andamento';          // texto; convertido em id via statusOpcoes na query
+var ordemAtual = 'recentes';               // 'recentes' | 'antigos'
+var viewAtual = 'grid';                    // 'grid' | 'list'
+var ultimosProtocolos = [];                // cache da pagina atual para re-render ao trocar view
+var ultimosContadores = {};
+var STORAGE_PREFIX = 'thoth_painel_';
+
+function chaveStorage(nome) {
+  var uid = (window.CURRENT_USER && window.CURRENT_USER.id) ? String(window.CURRENT_USER.id) : 'anon';
+  return STORAGE_PREFIX + nome + '_' + uid;
+}
+function lerPreferencia(nome, padrao) {
+  try { var v = window.localStorage.getItem(chaveStorage(nome)); return v || padrao; } catch (e) { return padrao; }
+}
+function gravarPreferencia(nome, valor) {
+  try { window.localStorage.setItem(chaveStorage(nome), valor); } catch (e) { /* silencioso */ }
+}
+
+/* ---------- QUERY STRING (status/resp compartilhaveis) ---------- */
+
+var STATUS_SLUGS = { andamento: 'Em andamento', finalizado: 'Finalizado', cancelado: 'Cancelado', todos: '' };
+
+function slugDoStatus(texto) {
+  for (var k in STATUS_SLUGS) {
+    if (Object.prototype.hasOwnProperty.call(STATUS_SLUGS, k) && STATUS_SLUGS[k] === texto) return k;
+  }
+  return 'andamento';
+}
+
+function lerQueryString() {
+  var out = {};
+  var q = window.location.search || '';
+  if (q.charAt(0) === '?') q = q.substring(1);
+  if (!q) return out;
+  var partes = q.split('&');
+  for (var i = 0; i < partes.length; i++) {
+    if (!partes[i]) continue;
+    var par = partes[i].split('=');
+    try {
+      var chave = decodeURIComponent(par[0].replace(/\+/g, ' '));
+      var valor = par.length > 1 ? decodeURIComponent(par.slice(1).join('=').replace(/\+/g, ' ')) : '';
+      out[chave] = valor;
+    } catch (e) {
+      // par malformado (ex.: % solto): ignora sem derrubar o init
+    }
+  }
+  return out;
+}
+
+var respDaUrl = null; // null = sem parametro; '' = todos; 'NN' = id do colaborador
+
+function atualizarUrl() {
+  if (!window.history || !window.history.replaceState) return;
+  var respVal = document.getElementById('filtroResponsavel').value;
+  var qs = '?status=' + slugDoStatus(statusAtual) + '&resp=' + (respVal ? encodeURIComponent(respVal) : 'todos');
+  window.history.replaceState(null, '', window.location.pathname + qs);
+}
 
 function apiHeaders() {
   return { 'Content-Type': 'application/json' };
@@ -58,7 +115,6 @@ function carregarMetadados() {
           var opt = fieldStatus.select_options[j];
           statusOpcoes[opt.value] = opt.id;
         }
-        popularFiltroStatus();
       }
       carregarProtocolos(1);
     })
@@ -78,6 +134,16 @@ function popularFiltroResponsavel() {
     select.appendChild(opt);
   }
 
+  // Parametro resp da URL prevalece sobre a pre-selecao do usuario logado
+  if (respDaUrl !== null) {
+    var selUrl = document.getElementById('filtroResponsavel');
+    if (respDaUrl === '') { selUrl.value = ''; return; }
+    for (var u = 0; u < selUrl.options.length; u++) {
+      if (selUrl.options[u].value === respDaUrl) { selUrl.value = respDaUrl; return; }
+    }
+    // id desconhecido: cai na pre-selecao padrao abaixo
+  }
+
   // Pré-selecionar o usuário logado como responsável
   if (window.CURRENT_USER && window.CURRENT_USER.nome) {
     var nomeUsuario = window.CURRENT_USER.nome;
@@ -94,18 +160,6 @@ function popularFiltroResponsavel() {
   }
 }
 
-function popularFiltroStatus() {
-  var select = document.getElementById('filtroStatus');
-  var valorAtual = select.value;
-  var opcoes = select.querySelectorAll('option');
-  for (var i = 0; i < opcoes.length; i++) {
-    var texto = opcoes[i].value;
-    if (texto && statusOpcoes[texto]) {
-      opcoes[i].value = String(statusOpcoes[texto]);
-    }
-  }
-}
-
 /* ---------- PROTOCOLOS ---------- */
 
 function carregarProtocolos(pagina) {
@@ -117,6 +171,7 @@ function carregarProtocolos(pagina) {
   var empty = document.getElementById('emptyState');
 
   grid.innerHTML = '';
+  document.getElementById('protocolListBody').innerHTML = '';
   loading.style.display = 'block';
   empty.style.display = 'none';
 
@@ -124,9 +179,10 @@ function carregarProtocolos(pagina) {
     '/?user_field_names=false' +
     '&size=' + CARDS_POR_PAGINA +
     '&page=' + pagina +
-    '&order_by=-' + CONFIG.fields.protocolo;
+    '&order_by=' + (ordemAtual === 'antigos' ? '' : '-') + CONFIG.fields.dataEntrada +
+    ',' + (ordemAtual === 'antigos' ? '' : '-') + CONFIG.fields.protocolo;
 
-  var statusFiltro = document.getElementById('filtroStatus').value;
+  var statusFiltro = statusAtual ? String(statusOpcoes[statusAtual] || statusAtual) : '';
   var respFiltro = document.getElementById('filtroResponsavel').value;
 
   if (statusFiltro) {
@@ -143,21 +199,27 @@ function carregarProtocolos(pagina) {
       loading.style.display = 'none';
       var protocolos = data.results || [];
       renderizarPaginacao();
-      atualizarSumario(totalRegistros);
+      atualizarSumario(protocolos.length, totalRegistros);
 
       // Protocolos → tarefas → render com badge (degradação graciosa)
       carregarContadorTarefas()
         .then(function(mapa) {
+          ultimosProtocolos = protocolos;
+          ultimosContadores = mapa;
           renderizarCards(protocolos, mapa);
         })
         .catch(function(err) {
           console.error('Erro ao carregar contador de tarefas:', err);
+          ultimosProtocolos = protocolos;
+          ultimosContadores = {};
           renderizarCards(protocolos, {});
         });
     })
     .catch(function(err) {
       console.error('Erro ao carregar protocolos:', err);
       loading.style.display = 'none';
+      document.getElementById('protocolList').style.display = 'none';
+      grid.style.display = 'grid';
       grid.innerHTML = '<div class="empty-state"><i class="ph ph-warning"></i>Erro ao carregar protocolos.</div>';
     });
 }
@@ -211,30 +273,45 @@ function carregarContadorTarefas() {
   return buscarPagina(1);
 }
 
-function renderizarCards(protocolos, contadores) {
-  var grid = document.getElementById('protocolGrid');
-  var empty = document.getElementById('emptyState');
-  if (!contadores) contadores = {};
+/* ---------- EXTRACAO DE DADOS (compartilhada por grade e lista) ---------- */
 
-  if (protocolos.length === 0) {
-    grid.innerHTML = '';
-    empty.style.display = 'block';
-    return;
+var ICONES_SERVICO = [
+  { chave: 'certid\u00e3o notarial', icone: 'ph-seal-check' },
+  { chave: 'nomea\u00e7\u00e3o',      icone: 'ph-user-check' },
+  { chave: 'invent\u00e1rio',         icone: 'ph-scroll' },
+  { chave: 'doa\u00e7\u00e3o',        icone: 'ph-hand-heart' },
+  { chave: 'retifica',                icone: 'ph-note-pencil' },
+  { chave: 'permuta',                 icone: 'ph-swap' },
+  { chave: 'ata notarial',            icone: 'ph-file-text' },
+  { chave: 'procura\u00e7\u00e3o',    icone: 'ph-signature' }
+];
+
+// Ordem de precedencia intencional: "Nomeacao Inventariante" casa 'nomeacao' antes de 'inventario'.
+function iconeServico(nome) {
+  var n = (nome || '').toLowerCase();
+  for (var i = 0; i < ICONES_SERVICO.length; i++) {
+    if (n.indexOf(ICONES_SERVICO[i].chave) !== -1) return ICONES_SERVICO[i].icone;
   }
-
-  empty.style.display = 'none';
-  var html = '';
-
-  for (var i = 0; i < protocolos.length; i++) {
-    var p = protocolos[i];
-    html += construirCard(p, contadores[p.id] || 0);
-  }
-
-  grid.innerHTML = html;
+  return 'ph-file-text';
 }
 
-function construirCard(p, contadorTarefas) {
-  if (!contadorTarefas) contadorTarefas = 0;
+function classificarFaixa(dias) {
+  var d1 = (window.ALERTA_CONFIG && window.ALERTA_CONFIG.dias1) || 10;
+  var d2 = (window.ALERTA_CONFIG && window.ALERTA_CONFIG.dias2) || 20;
+  if (dias > d2) return 'atrasado';
+  if (dias > d1) return 'atencao';
+  return 'ok';
+}
+
+function iniciaisNome(nome) {
+  if (!nome || nome === '\u2014') return '';
+  var partes = nome.trim().split(/\s+/);
+  var a = partes[0].charAt(0);
+  var b = partes.length > 1 ? partes[partes.length - 1].charAt(0) : '';
+  return (a + b).toUpperCase();
+}
+
+function extrairDadosCard(p, contadorTarefas) {
   var numero = p[CONFIG.fields.protocolo] || '—';
   var statusObj = p[CONFIG.fields.status];
   var statusTexto = statusObj ? (statusObj.value || '') : '';
@@ -255,64 +332,103 @@ function construirCard(p, contadorTarefas) {
   var dataEntrada = p[CONFIG.fields.dataEntrada] || '';
   var agendado = p[CONFIG.fields.agendadoPara] || '';
 
-  var diasAberto = '';
-  var diasClasse = 'dias-aberto';
+  var dias = null, faixa = '', diasLabel = '', barPct = 0;
   if (statusTexto === 'Em andamento' && dataEntrada) {
-    var dias = calcularDiasAberto(dataEntrada);
-    diasAberto = dias + (dias === 1 ? ' dia' : ' dias');
-    if (dias > 30) diasClasse += ' urgente';
+    dias = calcularDiasAberto(dataEntrada);
+    faixa = classificarFaixa(dias);
+    diasLabel = dias === 0 ? 'hoje' : (dias === 1 ? '1 dia' : dias + ' dias');
+    barPct = Math.min(100, Math.round((dias / 180) * 100));
   }
+  return {
+    id: p.id,
+    numero: numero, statusTexto: statusTexto, statusClasse: statusClasse,
+    interessado: interessado, advogado: advogado, servico: servico,
+    servicoIcone: iconeServico(servico),
+    certidao: !!(servico && servico.toLowerCase().indexOf('certid\u00e3o notarial') !== -1),
+    responsavel: responsavel, iniciais: iniciaisNome(responsavel),
+    agendado: agendado, tarefas: contadorTarefas || 0,
+    dias: dias, faixa: faixa, diasLabel: diasLabel, barPct: barPct
+  };
+}
 
-  var statusIcon = '';
-  if (statusClasse === 'andamento') statusIcon = 'ph-clock';
-  else if (statusClasse === 'finalizado') statusIcon = 'ph-check-circle';
-  else if (statusClasse === 'cancelado') statusIcon = 'ph-x-circle';
+/* Bloco de prazo / agenda / tarefas, compartilhado pelos dois renderizadores */
+function htmlPrazoPill(d) {
+  if (!d.diasLabel) return '';
+  return '<span class="prazo-pill prazo-' + d.faixa + '"><i class="ph ph-clock"></i> ' + d.diasLabel + '</span>';
+}
+function htmlExtrasCard(d) {
+  var h = '';
+  if (d.agendado) h += '<span class="card-agendado"><i class="ph ph-calendar-blank"></i> ' + formatarData(d.agendado) + '</span>';
+  if (d.tarefas >= 1) h += '<span class="card-tarefas-badge"><i class="ph ph-list-checks"></i> ' + d.tarefas + '</span>';
+  return h;
+}
 
-  var cardClasses = 'protocol-card';
-  if (statusTexto === 'Em andamento' && dataEntrada) {
-    var diasNum = calcularDiasAberto(dataEntrada);
-    var limDanger = (window.ALERTA_CONFIG && window.ALERTA_CONFIG.dias2) || 20;
-    var limWarning = (window.ALERTA_CONFIG && window.ALERTA_CONFIG.dias1) || 10;
-    if (diasNum > limDanger) cardClasses += ' card-danger';
-    else if (diasNum > limWarning) cardClasses += ' card-warning';
+/* ---------- RENDERIZADORES (grade e lista) ---------- */
+
+function construirCard(p, contadorTarefas) {
+  var d = extrairDadosCard(p, contadorTarefas);
+  var cls = 'protocol-card' + (d.certidao ? ' card-certidao' : '');
+  var h = '<a href="/protocolo/' + d.id + '" class="' + cls + '">';
+  h += '<div class="card-header"><span class="proto-number">N\u00ba ' + escapeHtml(d.numero) + '</span>' + htmlPrazoPill(d) + '</div>';
+  h += '<div class="card-body">';
+  h += '<div class="card-interessado">' + escapeHtml(d.interessado) + '</div>';
+  if (d.advogado) h += '<div class="card-advogado"><i class="ph ph-gavel"></i> ' + escapeHtml(d.advogado) + '</div>';
+  h += '<div class="card-field-servico"><i class="ph ' + d.servicoIcone + '"></i> <span class="card-servico-nome">' + escapeHtml(d.servico) + '</span></div>';
+  h += '</div>';
+  h += '<div class="card-footer">';
+  h += '<span class="card-resp"><span class="card-avatar">' + escapeHtml(d.iniciais) + '</span>' + escapeHtml(d.responsavel) + '</span>';
+  h += '<span class="card-footer-dir">' + htmlExtrasCard(d);
+  h += '<span class="status-badge ' + d.statusClasse + '">' + escapeHtml(d.statusTexto) + '</span></span>';
+  h += '</div>';
+  if (d.faixa) h += '<div class="card-aging"><div class="card-aging-fill prazo-' + d.faixa + '" style="width:' + d.barPct + '%"></div></div>';
+  h += '</a>';
+  return h;
+}
+
+function construirLinhaLista(p, contadorTarefas) {
+  var d = extrairDadosCard(p, contadorTarefas);
+  var h = '<a href="/protocolo/' + d.id + '" class="protocol-row' + (d.certidao ? ' row-certidao' : '') + '">';
+  h += '<span class="row-num">' + escapeHtml(d.numero) + '</span>';
+  h += '<span class="row-interessado">' + escapeHtml(d.interessado) + '</span>';
+  h += '<span class="row-servico"><i class="ph ' + d.servicoIcone + '"></i> ' + escapeHtml(d.servico) + '</span>';
+  h += '<span class="row-resp">' + escapeHtml(d.responsavel) + '</span>';
+  h += '<span class="row-prazo">' + htmlPrazoPill(d) + htmlExtrasCard(d) + '</span>';
+  h += '<span class="status-badge ' + d.statusClasse + '">' + escapeHtml(d.statusTexto) + '</span>';
+  h += '</a>';
+  return h;
+}
+
+function renderizarCards(protocolos, contadores) {
+  var grid = document.getElementById('protocolGrid');
+  var lista = document.getElementById('protocolList');
+  var listaBody = document.getElementById('protocolListBody');
+  var empty = document.getElementById('emptyState');
+  if (!contadores) contadores = {};
+
+  grid.innerHTML = '';
+  listaBody.innerHTML = '';
+  if (protocolos.length === 0) {
+    grid.style.display = 'none';
+    lista.style.display = 'none';
+    empty.style.display = 'block';
+    return;
   }
-  if (servico && servico.toLowerCase().indexOf('certid\u00e3o notarial') !== -1) {
-    cardClasses += ' card-certidao';
+  empty.style.display = 'none';
+
+  var html = '';
+  for (var i = 0; i < protocolos.length; i++) {
+    var p = protocolos[i];
+    html += (viewAtual === 'list') ? construirLinhaLista(p, contadores[p.id] || 0) : construirCard(p, contadores[p.id] || 0);
   }
-
-  var cardHtml = '<a href="/protocolo/' + p.id + '" class="' + cardClasses + '">';
-  cardHtml += '<div class="card-header">';
-  cardHtml += '<span class="proto-number">' + escapeHtml(numero) + '</span>';
-  cardHtml += '<span class="status-badge ' + statusClasse + '">';
-  if (statusIcon) cardHtml += '<i class="ph ' + statusIcon + '"></i> ';
-  cardHtml += escapeHtml(statusTexto) + '</span>';
-  cardHtml += '</div>';
-
-  cardHtml += '<div class="card-body">';
-  cardHtml += '<div class="card-field"><i class="ph ph-user"></i> ' + escapeHtml(interessado) + '</div>';
-  if (advogado) {
-    cardHtml += '<div class="card-field secondary"><i class="ph ph-gavel"></i> ' + escapeHtml(advogado) + '</div>';
+  if (viewAtual === 'list') {
+    listaBody.innerHTML = html;
+    grid.style.display = 'none';
+    lista.style.display = 'block';
+  } else {
+    grid.innerHTML = html;
+    lista.style.display = 'none';
+    grid.style.display = 'grid';
   }
-  cardHtml += '<div class="card-field card-field-servico"><i class="ph ph-file-text"></i> ' + escapeHtml(servico) + '</div>';
-  cardHtml += '<div class="card-field"><i class="ph ph-identification-badge"></i> ' + escapeHtml(responsavel) + '</div>';
-  cardHtml += '</div>';
-
-  if (diasAberto || agendado || contadorTarefas >= 1) {
-    cardHtml += '<div class="card-footer">';
-    if (diasAberto) {
-      cardHtml += '<span class="' + diasClasse + '"><i class="ph ph-clock"></i> ' + diasAberto + '</span>';
-    }
-    if (agendado) {
-      cardHtml += '<span><i class="ph ph-calendar-blank"></i> ' + formatarData(agendado) + '</span>';
-    }
-    if (contadorTarefas >= 1) {
-      cardHtml += '<span class="card-tarefas-badge"><i class="ph ph-list-checks"></i> ' + contadorTarefas + '</span>';
-    }
-    cardHtml += '</div>';
-  }
-
-  cardHtml += '</a>';
-  return cardHtml;
 }
 
 /* ---------- HELPERS ---------- */
@@ -379,7 +495,7 @@ function renderizarPaginacao() {
     if (paginaAtual > 1) {
       paginaAtual--;
       carregarProtocolos(paginaAtual);
-      document.getElementById('protocolGrid').scrollIntoView({ behavior: 'smooth' });
+      scrollTopoResultados();
     }
   });
 
@@ -387,20 +503,42 @@ function renderizarPaginacao() {
     if (paginaAtual < totalPaginas) {
       paginaAtual++;
       carregarProtocolos(paginaAtual);
-      document.getElementById('protocolGrid').scrollIntoView({ behavior: 'smooth' });
+      scrollTopoResultados();
     }
   });
 }
 
-function atualizarSumario(count) {
-  var el = document.getElementById('filterSummary');
-  if (count === 0) {
-    el.textContent = 'Nenhum protocolo encontrado';
-  } else if (count === 1) {
-    el.textContent = 'Exibindo 1 protocolo';
-  } else {
-    el.textContent = 'Exibindo ' + count + ' protocolos';
-  }
+function scrollTopoResultados() {
+  var alvo = document.getElementById(viewAtual === 'list' ? 'protocolList' : 'protocolGrid');
+  if (alvo) alvo.scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ---------- SAUDACAO E SUBTITULO ---------- */
+
+function atualizarSaudacao() {
+  var el = document.getElementById('painelSaudacao');
+  if (!el) return;
+  var h = new Date().getHours();
+  var prefixo = h < 12 ? 'Bom dia' : (h < 18 ? 'Boa tarde' : 'Boa noite');
+  var nome = (window.CURRENT_USER && window.CURRENT_USER.nome) ? window.CURRENT_USER.nome : '';
+  var primeiro = nome ? nome.split(' ')[0] : '';
+  el.textContent = primeiro ? prefixo + ', ' + primeiro : prefixo;
+}
+
+function dataHojeExtenso() {
+  var d = new Date();
+  var txt = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+
+function atualizarSumario(naPagina, total) {
+  var el = document.getElementById('painelSubtitulo');
+  if (!el) return;
+  var resumo;
+  if (total === 0) resumo = 'nenhum protocolo encontrado';
+  else if (total === 1) resumo = 'exibindo 1 protocolo';
+  else resumo = 'exibindo ' + naPagina + ' de ' + total + ' protocolos';
+  el.textContent = dataHojeExtenso() + ' \u00b7 ' + resumo;
 }
 
 /* ---------- HAMBURGER (fallback mobile) ---------- */
@@ -412,16 +550,80 @@ function toggleSidebar() {
   overlay.classList.toggle('open');
 }
 
+/* ---------- CONTROLES (segmentado, ordem, view) ---------- */
+
+function definirStatus(texto, btn) {
+  statusAtual = texto;
+  var btns = document.querySelectorAll('#filtroStatus .painel-seg-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  btn.classList.add('active');
+  atualizarUrl();
+  aplicarFiltros();
+}
+
+function alternarOrdem() {
+  ordemAtual = (ordemAtual === 'recentes') ? 'antigos' : 'recentes';
+  gravarPreferencia('ordem', ordemAtual);
+  atualizarLabelOrdem();
+  aplicarFiltros();
+}
+function atualizarLabelOrdem() {
+  var el = document.getElementById('btnOrdemLabel');
+  if (el) el.textContent = (ordemAtual === 'antigos') ? 'Mais antigos' : 'Mais recentes';
+}
+
+function atualizarBotoesView() {
+  var bg = document.getElementById('btnViewGrid');
+  var bl = document.getElementById('btnViewList');
+  if (bg) bg.classList.toggle('active', viewAtual === 'grid');
+  if (bl) bl.classList.toggle('active', viewAtual === 'list');
+}
+function definirView(v) {
+  viewAtual = (v === 'list') ? 'list' : 'grid';
+  gravarPreferencia('view', viewAtual);
+  atualizarBotoesView();
+  renderizarCards(ultimosProtocolos, ultimosContadores); // re-render sem novo fetch
+}
+
 /* ---------- INIT ---------- */
 
 document.addEventListener('DOMContentLoaded', function() {
+  ordemAtual = (lerPreferencia('ordem', 'recentes') === 'antigos') ? 'antigos' : 'recentes';
+  viewAtual = (lerPreferencia('view', 'grid') === 'list') ? 'list' : 'grid';
+
+  // Filtros vindos da URL (links compartilhaveis): status e resp prevalecem
+  var params = lerQueryString();
+  if (params.status && Object.prototype.hasOwnProperty.call(STATUS_SLUGS, params.status)) {
+    statusAtual = STATUS_SLUGS[params.status];
+    var segs = document.querySelectorAll('#filtroStatus .painel-seg-btn');
+    for (var s = 0; s < segs.length; s++) {
+      segs[s].classList.toggle('active', (segs[s].getAttribute('data-status') || '') === statusAtual);
+    }
+  }
+  if (Object.prototype.hasOwnProperty.call(params, 'resp')) {
+    respDaUrl = (params.resp === 'todos') ? '' : params.resp;
+  }
+
+  atualizarSaudacao();
+  atualizarLabelOrdem();
+  atualizarBotoesView(); // so ajusta os botoes; o primeiro render vem de carregarProtocolos
+
   carregarMetadados();
 
-  document.getElementById('filtroStatus').addEventListener('change', aplicarFiltros);
-  document.getElementById('filtroResponsavel').addEventListener('change', aplicarFiltros);
+  var segBtns = document.querySelectorAll('#filtroStatus .painel-seg-btn');
+  for (var i = 0; i < segBtns.length; i++) {
+    (function(b) {
+      b.addEventListener('click', function() { definirStatus(b.getAttribute('data-status') || '', b); });
+    })(segBtns[i]);
+  }
+  document.getElementById('filtroResponsavel').addEventListener('change', function() {
+    atualizarUrl();
+    aplicarFiltros();
+  });
+  document.getElementById('btnOrdem').addEventListener('click', alternarOrdem);
+  document.getElementById('btnViewGrid').addEventListener('click', function() { definirView('grid'); });
+  document.getElementById('btnViewList').addEventListener('click', function() { definirView('list'); });
 
   var overlay = document.querySelector('.sidebar-overlay');
-  if (overlay) {
-    overlay.addEventListener('click', toggleSidebar);
-  }
+  if (overlay) overlay.addEventListener('click', toggleSidebar);
 });

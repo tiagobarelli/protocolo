@@ -15,14 +15,14 @@ def login():
     senha = request.form.get("senha") or ""
     if not email or not senha:
         flash("Informe e-mail e senha.", "error")
-        return render_template("login.html"), 400
+        return render_template("login.html", email=email), 400
     user = User.get_by_email(email)
     if user is None or not user.ativo:
         flash("E-mail ou senha inválidos.", "error")
-        return render_template("login.html"), 401
+        return render_template("login.html", email=email), 401
     if not user.check_password(senha):
         flash("E-mail ou senha inválidos.", "error")
-        return render_template("login.html"), 401
+        return render_template("login.html", email=email), 401
     login_user(user, remember=False)
     return redirect(url_for("main.index"))
 
