@@ -44,6 +44,9 @@ class BaseConfig:
     # Anexos de escrituras (acervo por livro/página — pasta legível por humano)
     ESCRITURAS_FOLDER = os.environ.get("ESCRITURAS_FOLDER", str(BASE_DIR / "data" / "escrituras_anexos"))
 
+    # Anexos dos lançamentos do e-Notariado Financeiro (tabela 788; pasta legível por humano: ano/pedido/row_id)
+    ENOTARIADO_FOLDER = os.environ.get("ENOTARIADO_FOLDER", str(BASE_DIR / "data" / "enotariado_anexos"))
+
     # Paperless-ngx (proxy somente leitura)
     PAPERLESS_URL = os.environ.get("PAPERLESS_URL", "http://192.168.0.31:8094").rstrip("/")
     PAPERLESS_TOKEN = os.environ.get("PAPERLESS_TOKEN", "")
