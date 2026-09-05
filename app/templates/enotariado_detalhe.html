@@ -32,6 +32,14 @@
   <div class="card">
     <div id="bloqueioBadge"></div>
 
+    <!-- Abas (padrão das páginas de atos; bindings no JS, sem handler inline) -->
+    <div class="tabs-header">
+      <button type="button" class="tab-btn active" data-tab="dados"><i class="ph ph-list-dashes"></i> Dados</button>
+      <button type="button" class="tab-btn" data-tab="anexos" id="enotTabBtnAnexos" disabled title="Salve o registro para anexar arquivos"><i class="ph ph-paperclip"></i> Anexos</button>
+    </div>
+
+    <div class="tab-content active" id="tab-dados">
+
     <!-- Seção 1: Dados do pedido -->
     <div class="form-section">
       <div class="section-title"><i class="ph ph-receipt"></i> Dados do pedido</div>
@@ -124,6 +132,21 @@
         </div>
       </div>
     </div>
+    </div><!-- /#tab-dados -->
+
+    <!-- Aba Anexos (widget local de enotariado_detalhe.js; acervo /api/enotariado-anexos) -->
+    <div class="tab-content" id="tab-anexos">
+      <div class="form-section">
+        <div class="section-title"><i class="ph ph-paperclip"></i> Anexos do lançamento</div>
+        <div class="upload-area" id="enotUploadArea">
+          <input type="file" id="enotFileInput" multiple style="display:none;" accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff,.doc,.docx,.odt,.txt,.md">
+          <button type="button" class="btn btn-outline" id="btnEnotSelectFiles"><i class="ph ph-upload-simple"></i> Selecionar arquivos</button>
+          <span class="upload-hint">PDF, JPG, PNG, TIF, DOC, DOCX, ODT, TXT ou MD. Máx: 100 MB por arquivo.</span>
+        </div>
+        <div class="msg-box" id="enotUploadMsg"></div>
+        <div class="files-list" id="enotFilesList"><div class="files-empty">Nenhum anexo.</div></div>
+      </div>
+    </div><!-- /#tab-anexos -->
 
   </div><!-- /.card -->
 

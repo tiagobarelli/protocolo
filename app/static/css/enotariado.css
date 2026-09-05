@@ -98,6 +98,9 @@
 .main-content .oficios-table .lock-cell { width: 28px; text-align: center; }
 .main-content .oficios-table .lock-cell i { color: var(--text-muted); font-size: 0.9rem; }
 
+/* Clipe de "lancamento com anexos" ao lado do numero do pedido (field_7586) */
+.main-content .enot-clipe { color: var(--text-muted); font-size: 13px; margin-left: 4px; vertical-align: middle; }
+
 /* ---- Badge de status (forma e cor do canonico .badge .badge-success / .badge-warning) ---- */
 .main-content .enot-badge { white-space: nowrap; }
 

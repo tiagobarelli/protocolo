@@ -32,7 +32,8 @@ var F = {
   criadoEm: 'field_7582',
   atualizadoEm: 'field_7583',
   excluido: 'field_7584',
-  logs: 'field_7585'
+  logs: 'field_7585',
+  temAnexos: 'field_7586'       /* boolean sincronizado pelo acervo de anexos (clipe na coluna Pedido) */
 };
 
 /* Field IDs - especies_enotariado (787) */
@@ -402,7 +403,8 @@ function renderLancamentos() {
     html += '<tr class="enot-row" data-id="' + row.id + '">';
     html += celulaCadeado(row.id);
     html += '<td>' + formatarData(row[F.dataRealizacao]) + '</td>';
-    html += '<td class="enot-num">' + esc(row[F.numeroPedido] || '-') + '</td>';
+    html += '<td class="enot-num">' + esc(row[F.numeroPedido] || '-') +
+      (row[F.temAnexos] === true ? ' <i class="ph ph-paperclip enot-clipe" title="Com anexos"></i>' : '') + '</td>';
     html += '<td>' + esc(valoresLink(row[F.especie])) + '</td>';
     html += '<td class="enot-td-num">' + formatarInteiro(row[F.quantidade]) + '</td>';
     html += '<td>' + esc(valoresLink(row[F.solicitantes])) + '</td>';

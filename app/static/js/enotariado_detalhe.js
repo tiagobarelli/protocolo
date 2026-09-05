@@ -4,12 +4,20 @@
 // Leva 2: catalogo de especies, sugestao do bruto, autocomplete de solicitantes (chips canonicos),
 // carga por id, validacao, log de alteracoes, gravacao (POST/PATCH) e exclusao logica (Leva 3, so master).
 // Leva 4: bloqueio de edicao por registro (bloqueio_registro.js; master bypassa; gate fresco no salvar).
+// Leva 6: abas Dados | Anexos, widget local de anexos (/api/enotariado-anexos, copia adaptada do widget
+// dos atos, sem card espelho e sem alert), lock de numero/data por tem_anexos (field_7586).
 // Convencao do arquivo: proibido em-dash (caractere ou escape); separadores usam '-' ou '·'.
 
 var API_BASE = '/api/baserow';
 var TABLE_LANCAMENTOS = 788;
 var TABLE_ESPECIES = 787;
 var TABLE_CLIENTES = 754;
+
+/* Acervo de anexos por lancamento (backend enotariado_arquivos.py) */
+var API_ANEXOS = '/api/enotariado-anexos';
+var ANEXOS_EXT = ['pdf', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'doc', 'docx', 'odt', 'txt', 'md'];
+var ANEXOS_MAX_SIZE = 100 * 1024 * 1024;   /* 100 MB (o servidor e o backstop real) */
+var NOTA_MAX = 1000;
 
 /* Field IDs - lancamentos_enotariado (788) */
 var F = {
@@ -30,7 +38,8 @@ var F = {
   criadoEm: 'field_7582',
   atualizadoEm: 'field_7583',
   excluido: 'field_7584',
-  logs: 'field_7585'
+  logs: 'field_7585',
+  temAnexos: 'field_7586'       /* boolean do acervo de anexos: lido ao carregar, escrito so em sincronizarTemAnexos */
 };
 
 /* Field IDs - especies_enotariado (787) */
@@ -73,6 +82,8 @@ var sugestaoBrutoAnterior = null;    /* ultima sugestao aplicada ao bruto */
 var buscaTimer = null;               /* debounce do autocomplete */
 var bloqueioWidget = null;           /* widget de bloqueio_registro.js; null se o script nao carregou */
 var bloqueioTravadoUI = false;       /* true = registro bloqueado e usuario nao-master: campos travados */
+var anexosWidget = null;             /* widget local de anexos (criarWidgetAnexos); null se falhar a criacao */
+var temAnexos = false;               /* espelho de field_7586: trava numero do pedido e data de realizacao */
 
 /* ========================= HELPERS ========================= */
 
@@ -388,6 +399,9 @@ function carregarLancamento() {
       } else {
         habilitarAcoes();
       }
+      /* Aba Anexos: registro existente habilita e carrega (eager; excluido abre em leitura) */
+      habilitarAbaAnexos(true);
+      if (anexosWidget) anexosWidget.carregar();
       if (bloqueioWidget) bloqueioWidget.carregar();   /* badge informativo tambem no registro excluido */
     })
     .catch(function(e) {
@@ -436,6 +450,10 @@ function preencherFormulario(row) {
   }
 
   byId('observacoesInput').value = row[F.observacoes] || '';
+
+  /* Anexos: com anexos no acervo, numero do pedido e data de realizacao (a chave da pasta) travam */
+  temAnexos = (row[F.temAnexos] === true);
+  aplicarLockAnexos();
 
   sugestaoBrutoAnterior = null;   /* bruto carregado e dado, nao sugestao */
   calcularLiquido();
@@ -666,6 +684,8 @@ function executarGravar(modo) {
           history.replaceState(null, '', '/enotariado/lancamento/' + data.id);
         } catch (e) {}
         aplicarRotulos();
+        habilitarAbaAnexos(true);   /* registro recem-criado: aba Anexos libera sem trocar de aba */
+        if (anexosWidget) anexosWidget.limpar();
         if (bloqueioWidget) bloqueioWidget.carregar();   /* o botao Bloquear do master passa a existir */
         byId('btnSalvarNovo').style.display = 'none';
         exibirLogs(data);
@@ -703,6 +723,13 @@ function limparParaNovo() {
   sugestaoBrutoAnterior = null;
   calcularLiquido();
   esconderMsg('formMsg');
+
+  /* Anexos: formulario novo nao tem acervo (aba desabilitada, lista vazia, campos destravados) */
+  if (anexosWidget) anexosWidget.limpar();
+  habilitarAbaAnexos(false);
+  ativarAba('dados');
+  temAnexos = false;
+  aplicarLockAnexos();
 }
 
 /* Botao Limpar: modo novo zera tudo (inclusive guia e data de lancamento); edicao restaura o banco */
@@ -779,6 +806,7 @@ function excluirLancamento() {
       exibirLogs(data);
       esconderOverlay();
       marcarComoExcluido();
+      if (anexosWidget) anexosWidget.carregar();   /* aba Anexos passa a somente leitura */
       mostrarToast('Lançamento excluído.', 'success');
     })
     .catch(function(e) {
@@ -801,6 +829,7 @@ function bloqueioTravado() {
    Nao toca em valorLiquidoInput (ja e somente leitura) nem em Limpar / Salvar e novo / Excluir. */
 function aplicarBloqueioEnotariado(deveTravar) {
   var travar = !!deveTravar;
+  var mudou = (travar !== bloqueioTravadoUI);
   bloqueioTravadoUI = travar;
 
   var ids = ['numeroPedidoInput', 'especieSelect', 'quantidadeInput', 'dataRealizacaoInput',
@@ -817,6 +846,472 @@ function aplicarBloqueioEnotariado(deveTravar) {
 
   var btnSalvar = byId('btnSalvar');
   if (btnSalvar) btnSalvar.style.display = travar ? 'none' : '';
+
+  /* Anexos: re-render sob o novo estado (area de upload e botoes de nota/exclusao) */
+  if (mudou && anexosWidget) anexosWidget.carregar();
+}
+
+/* ========================= ANEXOS (acervo /api/enotariado-anexos) ========================= */
+
+/* Anexar e editar notas: master e administrador (excluir usa podeExcluir: so master) */
+function podeAnexar() {
+  var perfil = window.CURRENT_USER ? window.CURRENT_USER.perfil : '';
+  return perfil === 'master' || perfil === 'administrador';
+}
+
+/* Anexos em somente leitura: bloqueio travado para o usuario OU registro excluido.
+   Leitura e download nunca travam. */
+function anexosTravados() {
+  return bloqueioTravado() || (lancamentoAtual !== null && lancamentoAtual[F.excluido] === true);
+}
+
+function formatarTamanho(bytes) {
+  if (!bytes || bytes === 0) return '0 KB';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1).replace('.', ',') + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
+}
+
+function iconeExtensao(ext) {
+  var e = (ext || '').toLowerCase();
+  if (e === 'pdf') return 'ph-file-pdf';
+  if (e === 'doc' || e === 'docx' || e === 'odt') return 'ph-file-doc';
+  if (e === 'jpg' || e === 'jpeg' || e === 'png' || e === 'tif' || e === 'tiff') return 'ph-file-image';
+  if (e === 'txt' || e === 'md') return 'ph-file-text';
+  return 'ph-file';
+}
+
+/* Feedback da aba Anexos (progresso, falha parcial, erros): msg-box propria da aba */
+function mostrarMsgUpload(tipo, texto) {
+  mostrarMsg('enotUploadMsg', tipo, texto);
+}
+
+function esconderMsgUpload() {
+  esconderMsg('enotUploadMsg');
+}
+
+/* Widget local de anexos (copia adaptada do widget das paginas de atos: sem card espelho,
+   sem alert, chave ano/pedido/row_id). config = { ids: {fileInput, btnSelect, uploadMsg, filesList},
+   getAno, getPedido, getRowId, estaTravado, aoMudarTemAnexos }. Devolve {carregar, renderizar, limpar}. */
+function criarWidgetAnexos(config) {
+  var OBRIGATORIOS = ['fileInput', 'btnSelect', 'uploadMsg', 'filesList'];
+  if (!config || !config.ids) {
+    throw new Error('criarWidgetAnexos: config.ids é obrigatório');
+  }
+  var o;
+  for (o = 0; o < OBRIGATORIOS.length; o++) {
+    if (!config.ids[OBRIGATORIOS[o]]) {
+      throw new Error('criarWidgetAnexos: ids.' + OBRIGATORIOS[o] + ' é obrigatório');
+    }
+  }
+  if (typeof config.getAno !== 'function' || typeof config.getPedido !== 'function' ||
+      typeof config.getRowId !== 'function') {
+    throw new Error('criarWidgetAnexos: getAno, getPedido e getRowId são obrigatórios');
+  }
+  if (typeof config.estaTravado !== 'function' || typeof config.aoMudarTemAnexos !== 'function') {
+    throw new Error('criarWidgetAnexos: estaTravado e aoMudarTemAnexos são obrigatórios');
+  }
+
+  var ids = config.ids;
+  var notaAberta = null;   /* nome do anexo com editor de nota aberto */
+
+  /* Chave corrente do registro; null enquanto nao houver ano (4 digitos), pedido e row_id */
+  function chave() {
+    var ano = String(config.getAno() || '');
+    var pedido = String(config.getPedido() || '').trim();
+    var rowId = config.getRowId();
+    if (!/^[0-9]{4}$/.test(ano) || !pedido || rowId === null || rowId === undefined) return null;
+    return { ano: ano, pedido: pedido, rowId: rowId };
+  }
+
+  function qs(c) {
+    return '?ano=' + encodeURIComponent(c.ano) +
+      '&pedido=' + encodeURIComponent(c.pedido) +
+      '&row_id=' + encodeURIComponent(c.rowId);
+  }
+
+  /* Resposta do backend de anexos: ok devolve o JSON; erro vira Error com o campo "erro" */
+  function lerJson(resp, msgPadrao) {
+    if (resp.ok) return resp.json();
+    return resp.json()
+      .catch(function() { return {}; })
+      .then(function(data) { throw new Error(data.erro || msgPadrao); });
+  }
+
+  /* Area de upload visivel so para quem pode anexar e sem travamento; reavaliada a cada render */
+  function atualizarAreaUpload() {
+    var btn = byId(ids.btnSelect);
+    if (!btn) return;
+    var pode = podeAnexar() && !config.estaTravado();
+    var area = btn.closest ? btn.closest('.upload-area') : null;
+    if (area) area.style.display = pode ? '' : 'none';
+    else btn.style.display = pode ? '' : 'none';
+  }
+
+  function renderizar(arquivos) {
+    atualizarAreaUpload();
+    var container = byId(ids.filesList);
+    if (!container) return;
+    notaAberta = null;
+    container.innerHTML = '';
+    if (!arquivos || arquivos.length === 0) {
+      container.innerHTML = '<div class="files-empty">Nenhum anexo.</div>';
+      return;
+    }
+    var i;
+    for (i = 0; i < arquivos.length; i++) {
+      container.appendChild(criarItemAnexo(arquivos[i]));
+    }
+  }
+
+  function criarItemAnexo(f) {
+    var c = chave();
+    var item = document.createElement('div');
+    item.className = 'file-item';
+
+    var icone = document.createElement('i');
+    icone.className = 'ph ' + iconeExtensao(f.extensao) + ' file-icon';
+    item.appendChild(icone);
+
+    var info = document.createElement('div');
+    info.className = 'file-info';
+
+    var link = document.createElement('a');
+    link.className = 'file-name';
+    link.href = c ? (API_ANEXOS + '/download' + qs(c) + '&nome=' + encodeURIComponent(f.nome)) : '#';
+    link.textContent = f.nome;
+    info.appendChild(link);
+
+    var meta = document.createElement('span');
+    meta.className = 'file-meta';
+    meta.textContent = formatarTamanho(f.tamanho);
+    info.appendChild(meta);
+
+    if (f.nota) {
+      var nota = document.createElement('div');
+      nota.className = 'file-nota';
+      nota.textContent = f.nota;
+      info.appendChild(nota);
+    }
+
+    item.appendChild(info);
+
+    if (podeAnexar() && !config.estaTravado()) {
+      var btnNota = document.createElement('button');
+      btnNota.type = 'button';
+      btnNota.className = 'file-action';
+      btnNota.title = f.nota ? 'Editar nota' : 'Adicionar nota';
+      btnNota.innerHTML = '<i class="ph ph-note-pencil"></i>';
+      btnNota.addEventListener('click', function() {
+        if (config.estaTravado()) return;   /* seguro extra: botao renderizado antes do travamento */
+        abrirEditorNota(f, info);
+      });
+      item.appendChild(btnNota);
+    }
+
+    if (podeExcluir() && !config.estaTravado()) {
+      var btnExcluirAnexo = document.createElement('button');
+      btnExcluirAnexo.type = 'button';
+      btnExcluirAnexo.className = 'file-delete';
+      btnExcluirAnexo.title = 'Excluir anexo';
+      btnExcluirAnexo.innerHTML = '<i class="ph ph-trash"></i>';
+      btnExcluirAnexo.addEventListener('click', function() {
+        if (config.estaTravado()) return;
+        excluirAnexo(f.nome);
+      });
+      item.appendChild(btnExcluirAnexo);
+    }
+
+    return item;
+  }
+
+  function fecharEditorNota() {
+    var aberto = document.querySelector('#' + ids.filesList + ' .file-nota-editor');
+    if (aberto && aberto.parentNode) aberto.parentNode.removeChild(aberto);
+    notaAberta = null;
+  }
+
+  /* Editor inline (um por vez; clicar de novo no mesmo anexo fecha) */
+  function abrirEditorNota(item, itemEl) {
+    if (notaAberta === item.nome) { fecharEditorNota(); return; }
+    fecharEditorNota();
+    notaAberta = item.nome;
+
+    var editor = document.createElement('div');
+    editor.className = 'file-nota-editor';
+
+    var ta = document.createElement('textarea');
+    ta.maxLength = NOTA_MAX;
+    ta.placeholder = 'Nota explicativa do anexo...';
+    ta.value = item.nota || '';
+    editor.appendChild(ta);
+
+    var acoes = document.createElement('div');
+    acoes.className = 'file-nota-acoes';
+
+    var contador = document.createElement('span');
+    contador.className = 'file-nota-contador';
+    var atualizarContador = function() {
+      contador.textContent = (NOTA_MAX - ta.value.length) + ' caracteres restantes';
+    };
+    ta.addEventListener('input', atualizarContador);
+    atualizarContador();
+    acoes.appendChild(contador);
+
+    var btnCancelar = document.createElement('button');
+    btnCancelar.type = 'button';
+    btnCancelar.className = 'btn btn-outline';
+    btnCancelar.innerHTML = '<i class="ph ph-x"></i> Cancelar';
+    btnCancelar.addEventListener('click', fecharEditorNota);
+    acoes.appendChild(btnCancelar);
+
+    var btnSalvarNota = document.createElement('button');
+    btnSalvarNota.type = 'button';
+    btnSalvarNota.className = 'btn btn-primary';
+    btnSalvarNota.innerHTML = '<i class="ph ph-check"></i> Salvar';
+    btnSalvarNota.addEventListener('click', function() {
+      salvarNota(item.nome, ta.value, btnSalvarNota);
+    });
+    acoes.appendChild(btnSalvarNota);
+
+    editor.appendChild(acoes);
+    itemEl.appendChild(editor);
+    ta.focus();
+  }
+
+  function salvarNota(nome, texto, btnEl) {
+    if (texto.length > NOTA_MAX) {
+      mostrarMsgUpload('warning', 'A nota excede o limite de ' + NOTA_MAX + ' caracteres.');
+      return;
+    }
+    var c = chave();
+    if (!c) return;
+    if (btnEl) btnEl.disabled = true;
+    var fd = new FormData();
+    fd.append('ano', c.ano);
+    fd.append('pedido', c.pedido);
+    fd.append('row_id', c.rowId);
+    fd.append('nome', nome);
+    fd.append('texto', texto);
+    fetch(API_ANEXOS + '/nota', { method: 'POST', body: fd })
+      .then(function(resp) { return lerJson(resp, 'Erro ao salvar a nota.'); })
+      .then(function(data) {
+        esconderMsgUpload();
+        renderizar(data.arquivos || []);   /* a lista completa volta; o re-render fecha o editor */
+      })
+      .catch(function(err) {
+        if (btnEl) btnEl.disabled = false;
+        mostrarMsgUpload('error', err.message || 'Erro ao salvar a nota.');
+      });
+  }
+
+  function excluirAnexo(nome) {
+    if (!window.confirm('Deseja excluir o anexo "' + nome + '"?')) return;
+    var c = chave();
+    if (!c) return;
+    fetch(API_ANEXOS + '/excluir' + qs(c) + '&nome=' + encodeURIComponent(nome),
+      { method: 'DELETE', headers: apiHeaders() })
+      .then(function(resp) { return lerJson(resp, 'Erro ao excluir anexo.'); })
+      .then(function(data) {
+        esconderMsgUpload();
+        renderizar(data.arquivos || []);
+        config.aoMudarTemAnexos(!!data.tem_anexos);
+      })
+      .catch(function(err) {
+        mostrarMsgUpload('error', err.message || 'Erro ao excluir anexo.');
+      });
+  }
+
+  /* Upload multiplo SEQUENCIAL (cadeia de then): validacao client-side de extensao e tamanho,
+     progresso "Enviando i de N", sumario de falha parcial e re-render unico ao final */
+  function enviarAnexos(files) {
+    var c = chave();
+    if (!c) {
+      mostrarMsgUpload('warning', 'Salve o lançamento antes de anexar arquivos.');
+      return;
+    }
+    var total = files.length;
+    var enviados = 0;
+    var falhas = [];
+    var ultimaResposta = null;
+    var cadeia = Promise.resolve();
+    var i;
+
+    for (i = 0; i < total; i++) {
+      (function(file, idx) {
+        cadeia = cadeia.then(function() {
+          mostrarMsgUpload('info', 'Enviando ' + (idx + 1) + ' de ' + total + '...');
+
+          var ext = file.name.indexOf('.') !== -1 ? file.name.split('.').pop().toLowerCase() : '';
+          if (ANEXOS_EXT.indexOf(ext) === -1) {
+            falhas.push(esc(file.name) + ' - Extensão ".' + esc(ext) + '" não permitida.');
+            return;
+          }
+          if (file.size > ANEXOS_MAX_SIZE) {
+            falhas.push(esc(file.name) + ' - Arquivo excede o tamanho máximo de 100 MB.');
+            return;
+          }
+
+          var fd = new FormData();
+          fd.append('ano', c.ano);
+          fd.append('pedido', c.pedido);
+          fd.append('row_id', c.rowId);
+          fd.append('arquivo', file);
+          return fetch(API_ANEXOS + '/upload', { method: 'POST', body: fd })
+            .then(function(resp) { return lerJson(resp, 'Erro ao enviar arquivo.'); })
+            .then(function(data) {
+              enviados++;
+              ultimaResposta = data;
+            })
+            .catch(function(err) {
+              falhas.push(esc(file.name) + ' - ' + esc(err.message || 'Erro ao enviar arquivo.'));
+            });
+        });
+      })(files[i], i);
+    }
+
+    cadeia.then(function() {
+      if (ultimaResposta && ultimaResposta.arquivos) {
+        renderizar(ultimaResposta.arquivos);
+      }
+      if (falhas.length === 0) {
+        esconderMsgUpload();
+        mostrarToast(total === 1 ? 'Arquivo enviado com sucesso.' : total + ' arquivos enviados com sucesso.', 'success');
+      } else {
+        mostrarMsgUpload(enviados === 0 ? 'error' : 'warning',
+          enviados + ' de ' + total + ' anexados. Falhou: ' + falhas.join('; '));
+      }
+      if (enviados > 0 && ultimaResposta) {
+        config.aoMudarTemAnexos(!!ultimaResposta.tem_anexos);
+      }
+    });
+  }
+
+  function carregar() {
+    var c = chave();
+    if (!c) {
+      renderizar([]);
+      return;
+    }
+    fetch(API_ANEXOS + '/listar' + qs(c), { headers: apiHeaders() })
+      .then(function(resp) { return lerJson(resp, 'Erro ao carregar anexos.'); })
+      .then(function(data) {
+        renderizar(data.arquivos || []);
+      })
+      .catch(function(err) {
+        renderizar([]);
+        mostrarMsgUpload('error', err.message || 'Erro ao carregar anexos.');
+      });
+  }
+
+  function limpar() {
+    renderizar([]);
+    esconderMsgUpload();
+  }
+
+  /* Wiring */
+  var btnSelect = byId(ids.btnSelect);
+  var fileInput = byId(ids.fileInput);
+  if (btnSelect && fileInput) {
+    atualizarAreaUpload();
+    btnSelect.addEventListener('click', function() { fileInput.click(); });
+    fileInput.addEventListener('change', function() {
+      if (config.estaTravado()) { fileInput.value = ''; return; }
+      var lista = fileInput.files;
+      if (!lista || lista.length === 0) return;
+      /* Copia para array antes de limpar o input (limpar esvazia o FileList) */
+      var files = [];
+      var fi;
+      for (fi = 0; fi < lista.length; fi++) {
+        files.push(lista[fi]);
+      }
+      fileInput.value = '';
+      enviarAnexos(files);
+    });
+  }
+
+  return {
+    carregar: carregar,
+    renderizar: renderizar,
+    limpar: limpar
+  };
+}
+
+/* ========================= ABAS (Dados | Anexos) ========================= */
+
+function ativarAba(nome) {
+  var alvo = document.querySelector('.tab-btn[data-tab="' + nome + '"]');
+  if (alvo && alvo.disabled) return;
+  var btns = document.querySelectorAll('.tab-btn');
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute('data-tab') === nome) btns[i].classList.add('active');
+    else btns[i].classList.remove('active');
+  }
+  var paineis = document.querySelectorAll('.tab-content');
+  var j;
+  for (j = 0; j < paineis.length; j++) {
+    if (paineis[j].id === 'tab-' + nome) paineis[j].classList.add('active');
+    else paineis[j].classList.remove('active');
+  }
+}
+
+/* Aba Anexos so com registro salvo; ao desabilitar com ela ativa, volta para Dados */
+function habilitarAbaAnexos(habilitar) {
+  var btn = byId('enotTabBtnAnexos');
+  if (!btn) return;
+  var podeAbrir = !!habilitar && !modoNovo &&
+    window.LANCAMENTO_ID !== null && window.LANCAMENTO_ID !== undefined;
+  btn.disabled = !podeAbrir;
+  btn.title = podeAbrir ? '' : 'Salve o registro para anexar arquivos';
+  if (!podeAbrir && btn.classList.contains('active')) {
+    ativarAba('dados');
+  }
+}
+
+/* ========================= LOCK POR tem_anexos + SINCRONIZACAO ========================= */
+
+/* Com anexos no acervo, numero do pedido e data de realizacao (chave da pasta) ficam somente
+   leitura. Gerido so pela pagina; o disabled do bloqueio de edicao nao interfere. */
+function aplicarLockAnexos() {
+  var campos = ['numeroPedidoInput', 'dataRealizacaoInput'];
+  var i;
+  for (i = 0; i < campos.length; i++) {
+    var el = byId(campos[i]);
+    if (!el) continue;
+    el.readOnly = temAnexos;
+    if (temAnexos) {
+      el.classList.add('enot-det-readonly');
+      el.title = 'Campo travado: o lançamento possui anexos.';
+    } else {
+      el.classList.remove('enot-det-readonly');
+      el.title = '';
+    }
+  }
+}
+
+/* Espelha o estado do acervo em field_7586 (PATCH so com esse campo; sem atualizado_em e sem log).
+   Chamado pelo widget apos upload/exclusao. Falha: aviso na aba e lock com o valor antigo. */
+function sincronizarTemAnexos(temAgora) {
+  temAgora = !!temAgora;
+  if (temAgora === temAnexos || !lancamentoAtual) {
+    aplicarLockAnexos();
+    return;
+  }
+  var payload = {};
+  payload[F.temAnexos] = temAgora;
+  fetch(API_BASE + '/database/rows/table/' + TABLE_LANCAMENTOS + '/' + lancamentoAtual.id + '/?user_field_names=false',
+    { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(payload) })
+    .then(function(r) { return tratarRespostaHttp(r, 'Erro ao sincronizar anexos'); })
+    .then(function() {
+      lancamentoAtual[F.temAnexos] = temAgora;
+      temAnexos = temAgora;
+      aplicarLockAnexos();
+    })
+    .catch(function() {
+      mostrarMsgUpload('warning', 'Não foi possível sincronizar o indicador de anexos no cadastro.');
+      aplicarLockAnexos();
+    });
 }
 
 /* ========================= ROTULOS ========================= */
@@ -870,6 +1365,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var overlayEl = document.querySelector('.sidebar-overlay');
   if (overlayEl) overlayEl.addEventListener('click', toggleSidebar);
+
+  /* Abas Dados | Anexos: bindings no JS (sem onclick inline); Anexos so com registro salvo */
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  for (i = 0; i < tabBtns.length; i++) {
+    tabBtns[i].addEventListener('click', function() { ativarAba(this.getAttribute('data-tab')); });
+  }
+  habilitarAbaAnexos(false);
+  aplicarLockAnexos();
+
+  /* Widget local de anexos: criado antes do bloqueio (cujo callback pode recarrega-lo) e da carga */
+  try {
+    anexosWidget = criarWidgetAnexos({
+      ids: { fileInput: 'enotFileInput', btnSelect: 'btnEnotSelectFiles', uploadMsg: 'enotUploadMsg', filesList: 'enotFilesList' },
+      getAno: function() { return byId('dataRealizacaoInput').value.slice(0, 4); },
+      getPedido: function() { return byId('numeroPedidoInput').value.trim(); },
+      getRowId: function() { return window.LANCAMENTO_ID; },
+      estaTravado: anexosTravados,
+      aoMudarTemAnexos: sincronizarTemAnexos
+    });
+  } catch (e) {
+    console.error('Widget de anexos indisponível:', e);
+  }
 
   /* Widget de bloqueio de edicao (modulo compartilhado); sem o script a pagina segue sem bloqueio */
   if (window.criarBloqueioRegistro) {
