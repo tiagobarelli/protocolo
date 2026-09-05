@@ -2,7 +2,7 @@
 
 // enotariado_detalhe.js - Detalhe/edicao de lancamento do modulo e-Notariado Financeiro (tabela 788). ES5 estrito.
 // Leva 2: catalogo de especies, sugestao do bruto, autocomplete de solicitantes (chips canonicos),
-// carga por id, validacao, log de alteracoes e gravacao (POST/PATCH). Exclusao logica chega na Leva 3.
+// carga por id, validacao, log de alteracoes, gravacao (POST/PATCH) e exclusao logica (Leva 3, so master).
 // Convencao do arquivo: proibido em-dash (caractere ou escape); separadores usam '-' ou '·'.
 
 var API_BASE = '/api/baserow';
@@ -379,7 +379,7 @@ function carregarLancamento() {
       exibirLogs(data);
       esconderOverlay();
       if (data[F.excluido] === true) {
-        mostrarMsg('formMsg', 'warning', 'Este lançamento foi excluído e não pode ser editado.');
+        marcarComoExcluido();
         return;
       }
       habilitarAcoes();
@@ -492,17 +492,22 @@ function capturarSnapshot() {
   return capturarEstadoAtual();
 }
 
-/* Uma linha por campo alterado: '{usuario}. {dd/mm/aaaa hh:mm}: O campo X foi alterado. Valor anterior: Y.'
-   Observacoes: so 'Observações alteradas.' (sem conteudo). */
-function gerarLinhasLog(snapAnterior, estadoAtual) {
-  if (!snapAnterior) return [];
+/* Data/hora local 'dd/mm/aaaa hh:mm' das linhas de log (formato do molde de oficios) */
+function dataHoraAtual() {
   var agora = new Date();
   var dia = ('0' + agora.getDate()).slice(-2);
   var mes = ('0' + (agora.getMonth() + 1)).slice(-2);
   var ano = agora.getFullYear();
   var hora = ('0' + agora.getHours()).slice(-2);
   var min = ('0' + agora.getMinutes()).slice(-2);
-  var dataHora = dia + '/' + mes + '/' + ano + ' ' + hora + ':' + min;
+  return dia + '/' + mes + '/' + ano + ' ' + hora + ':' + min;
+}
+
+/* Uma linha por campo alterado: '{usuario}. {dd/mm/aaaa hh:mm}: O campo X foi alterado. Valor anterior: Y.'
+   Observacoes: so 'Observações alteradas.' (sem conteudo). */
+function gerarLinhasLog(snapAnterior, estadoAtual) {
+  if (!snapAnterior) return [];
+  var dataHora = dataHoraAtual();
   var usuario = nomeUsuario();
 
   var linhas = [];
@@ -685,19 +690,73 @@ function limparFormulario() {
 
 /* ========================= HABILITACAO ========================= */
 
-/* Excluir (btnExcluir) nao e tocado aqui: Leva 3 */
+/* Excluir aparece so para master, so em edicao e so em registro ainda nao excluido */
 function habilitarAcoes() {
   byId('btnSalvar').disabled = false;
   byId('btnLimpar').disabled = false;
   var btnNovo = byId('btnSalvarNovo');
   btnNovo.disabled = false;
   if (!modoNovo) btnNovo.style.display = 'none';
+
+  var btnExcluir = byId('btnExcluir');
+  var jaExcluido = !!(lancamentoAtual && lancamentoAtual[F.excluido] === true);
+  if (!modoNovo && podeExcluir() && !jaExcluido) {
+    btnExcluir.style.display = '';
+    btnExcluir.disabled = false;
+  } else {
+    btnExcluir.style.display = 'none';
+    btnExcluir.disabled = true;
+  }
 }
 
 function desabilitarAcoes() {
   byId('btnSalvar').disabled = true;
   byId('btnLimpar').disabled = true;
   byId('btnSalvarNovo').disabled = true;
+  byId('btnExcluir').disabled = true;
+}
+
+/* ========================= EXCLUSAO LOGICA ========================= */
+
+/* Estado de registro excluido: aviso inline, botoes desabilitados, Excluir oculto (sem restauracao) */
+function marcarComoExcluido() {
+  mostrarMsg('formMsg', 'warning', 'Este lançamento foi excluído e não pode ser editado.');
+  desabilitarAcoes();
+  byId('btnExcluir').style.display = 'none';
+}
+
+/* PATCH: excluido = true, atualizado_em e linha de log no topo; a pagina permanece aberta em
+   estado de excluido. Unico ponto do arquivo que escreve field_7584. */
+function excluirLancamento() {
+  if (modoNovo || !lancamentoAtual) return;
+  if (!window.confirm('Excluir este lançamento? Ele deixará de aparecer na listagem.')) return;
+
+  mostrarOverlay();
+  desabilitarAcoes();
+  var agora = new Date().toISOString();
+  var linha = nomeUsuario() + '. ' + dataHoraAtual() + ': Lançamento excluído.';
+  var existentes = lancamentoAtual[F.logs] || '';
+  var payload = {};
+  payload[F.excluido] = true;
+  payload[F.atualizadoEm] = agora;
+  payload[F.logs] = linha + (existentes ? '\n' + existentes : '');
+
+  fetch(API_BASE + '/database/rows/table/' + TABLE_LANCAMENTOS + '/' + lancamentoAtual.id + '/?user_field_names=false',
+    { method: 'PATCH', headers: apiHeaders(), body: JSON.stringify(payload) })
+    .then(function(r) { return tratarRespostaHttp(r, 'Erro ao excluir'); })
+    .then(function(data) {
+      lancamentoAtual = data;
+      snapshot = capturarSnapshot();
+      exibirLogs(data);
+      esconderOverlay();
+      marcarComoExcluido();
+      mostrarToast('Lançamento excluído.', 'success');
+    })
+    .catch(function(e) {
+      esconderOverlay();
+      habilitarAcoes();
+      mostrarMsg('formMsg', 'error', e.message || 'Erro ao excluir.');
+    });
 }
 
 /* ========================= ROTULOS ========================= */
@@ -747,6 +806,7 @@ document.addEventListener('DOMContentLoaded', function() {
   byId('btnSalvar').addEventListener('click', function() { gravar('salvar'); });
   byId('btnSalvarNovo').addEventListener('click', function() { gravar('salvarNovo'); });
   byId('btnLimpar').addEventListener('click', limparFormulario);
+  byId('btnExcluir').addEventListener('click', excluirLancamento);
 
   var overlayEl = document.querySelector('.sidebar-overlay');
   if (overlayEl) overlayEl.addEventListener('click', toggleSidebar);
