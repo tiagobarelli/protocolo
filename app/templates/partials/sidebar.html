@@ -17,6 +17,7 @@
   {% set oficios_active = request.endpoint == 'main.oficios' %}
   {% set estatisticas_active = request.endpoint == 'main.estatisticas' %}
   {% set enotariado_active = request.endpoint in ['main.enotariado', 'main.enotariado_lancamento'] %}
+  {% set ferias_active = request.endpoint == 'main.ferias' %}
 
   <nav class="sidebar-nav">
     <a href="{{ url_for('main.index') }}" class="nav-item {% if request.endpoint == 'main.index' %}active{% endif %}">
@@ -53,7 +54,7 @@
     <div class="nav-section-block">
       <div class="nav-section-label">GESTÃO</div>
     <!-- Submenu: Gest&atilde;o Administrativa -->
-    <div class="nav-group {% if oficios_active or enotariado_active or estatisticas_active %}open{% endif %}">
+    <div class="nav-group {% if oficios_active or enotariado_active or estatisticas_active or ferias_active %}open{% endif %}">
       <button type="button" class="nav-group-toggle" onclick="toggleNavGroup(this)">
         <span class="nav-group-label"><i class="ph ph-briefcase"></i> Gest&atilde;o Administrativa</span>
         <i class="ph ph-caret-right nav-group-arrow"></i>
@@ -70,6 +71,9 @@
         {% if current_user.perfil == 'master' %}
         <a href="{{ url_for('main.estatisticas') }}" class="nav-item sub {% if estatisticas_active %}active{% endif %}">
           <i class="ph ph-chart-bar"></i> Estat&iacute;sticas
+        </a>
+        <a href="{{ url_for('main.ferias') }}" class="nav-item sub {% if ferias_active %}active{% endif %}">
+          <i class="ph ph-island"></i> Controle de F&eacute;rias
         </a>
         {% endif %}
       </div>

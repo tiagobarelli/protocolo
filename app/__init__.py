@@ -51,6 +51,7 @@ def create_app(config=None):
     from app.protocolo_api import protocolo_api_bp
     from app.internal_messages import internal_messages_bp
     from app.bloqueios import bloqueios_bp
+    from app.ferias import ferias_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -71,5 +72,6 @@ def create_app(config=None):
     app.register_blueprint(protocolo_api_bp)
     app.register_blueprint(internal_messages_bp)
     app.register_blueprint(bloqueios_bp)
+    app.register_blueprint(ferias_bp)
 
     return app

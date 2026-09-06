@@ -1,0 +1,152 @@
+/* ferias.css - Controle de Ferias (pagina /ferias). Zero em-dash neste arquivo.
+   Tokens vem de design-system.css; componentes (btn, card, form, badge, tabela,
+   abas) vem de components.css. Aqui so o layout proprio da pagina, escopado
+   em .main-content (o overlay mora fora do main, como nas outras paginas). */
+
+/* Layout base (mesmo padrao de estatisticas.css) */
+.main-content {
+  background-color: var(--bg-body);
+  padding-bottom: 40px;
+}
+.main-content .container { max-width: 1280px; margin: 0 auto; padding: 30px 32px; width: 100%; }
+
+/* Cabecalho da pagina */
+.main-content .page-title {
+  display: flex; align-items: flex-start; gap: 16px;
+}
+.main-content .page-icon { font-size: 2rem; color: var(--accent); margin-top: 2px; }
+.main-content .page-title h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-dark); margin: 0; }
+.main-content .page-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-top: 4px; }
+
+/* Linha de topo da aba: titulo de secao + controles */
+.main-content .ferias-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.main-content .ferias-topo .section-title {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.main-content .ferias-controles {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.main-content .ferias-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-main);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Formulario inline (novo / editar) */
+.main-content .ferias-form {
+  margin: 0 0 20px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-body);
+}
+.main-content .ferias-form-titulo {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+}
+.main-content .ferias-form .form-row { margin-bottom: 0; }
+.main-content .ferias-form .form-group.ferias-campo-cor { flex: 0 0 96px; }
+.main-content .ferias-form input[type="color"] {
+  width: 64px;
+  height: 38px;
+  padding: 2px 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+}
+.main-content .ferias-form-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+/* Tabela de funcionarios */
+.main-content .ferias-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  vertical-align: middle;
+}
+.main-content .ferias-col-cor { width: 40px; text-align: center; }
+.main-content .ferias-col-acoes { width: 96px; text-align: right; white-space: nowrap; }
+.main-content .ferias-col-acoes .btn-icon + .btn-icon { margin-left: 6px; }
+.main-content .ferias-linha-inativa td,
+.main-content .ferias-linha-concluida td { opacity: 0.6; }
+
+/* Aba Periodos Aquisitivos */
+.main-content .ferias-controles .form-group { margin-bottom: 0; }
+.main-content #perFuncionario { min-width: 220px; }
+.main-content .ferias-saldo-negativo { color: var(--danger); font-weight: 600; }
+.main-content .ferias-aviso {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--warning);
+  font-weight: 600;
+  cursor: help;
+}
+
+/* Estados vazios e abas ainda sem conteudo */
+.main-content .ferias-vazio,
+.main-content .ferias-placeholder {
+  margin: 0;
+  padding: 24px 12px;
+  text-align: center;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Overlay / Spinner (fora do .main-content no template, por isso sem escopo) */
+.overlay {
+  position: fixed; inset: 0; background: rgba(255, 255, 255, 0.7);
+  display: none; align-items: center; justify-content: center;
+  z-index: 1000; backdrop-filter: blur(2px);
+}
+.overlay.active { display: flex; }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Responsivo */
+@media (max-width: 640px) {
+  .main-content .container { padding: 20px 16px; }
+  .main-content .ferias-topo { flex-direction: column; align-items: stretch; }
+  .main-content .ferias-controles { justify-content: space-between; }
+  .main-content .ferias-form .form-row { flex-direction: column; gap: 12px; }
+  .main-content .ferias-form .form-group.small,
+  .main-content .ferias-form .form-group.ferias-campo-cor { flex: 1 1 auto; }
+  .tabs-header { overflow-x: auto; }
+}

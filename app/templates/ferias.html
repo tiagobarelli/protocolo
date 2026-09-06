@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Controle de Férias · Thṓth{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ferias.css') }}">
+{% endblock %}
+
+{% block flash_messages %}{% endblock %}
+{% block content %}
+<button type="button" class="hamburger-btn" onclick="toggleSidebar()">
+  <i class="ph ph-list"></i>
+</button>
+<div class="sidebar-overlay"></div>
+
+<!-- Overlay de loading -->
+<div class="overlay" id="overlay"><div class="spinner"></div></div>
+
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <main class="main-content">
+    {% include "partials/flash_messages.html" %}
+    <div class="container">
+
+      <!-- Cabecalho da pagina -->
+      <div class="card">
+        <div class="page-title">
+          <i class="ph ph-island page-icon"></i>
+          <div>
+            <h1>Controle de Férias</h1>
+            <p class="page-subtitle">Funcionários, períodos aquisitivos e gozo de férias.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Abas (eventos ligados no ferias.js) -->
+      <div class="tabs-header">
+        <button type="button" class="tab-btn active" data-tab="funcionarios"><i class="ph ph-users"></i> Funcionários</button>
+        <button type="button" class="tab-btn" data-tab="periodos"><i class="ph ph-calendar-blank"></i> Períodos Aquisitivos</button>
+        <button type="button" class="tab-btn" data-tab="ferias"><i class="ph ph-island"></i> Férias</button>
+      </div>
+
+      <!-- Aba Funcionarios -->
+      <div class="tab-content active" id="tab-funcionarios">
+        <div class="card">
+          <div class="ferias-topo">
+            <div class="section-title"><i class="ph ph-users"></i> Funcionários</div>
+            <div class="ferias-controles">
+              <label class="ferias-check" for="chkMostrarInativos">
+                <input type="checkbox" id="chkMostrarInativos"> Mostrar inativos
+              </label>
+              <button type="button" class="btn btn-primary" id="btnNovoFuncionario"><i class="ph ph-plus"></i> Novo funcionário</button>
+            </div>
+          </div>
+
+          <!-- Formulario inline (sem tag form: o Enter no nome salva via JS) -->
+          <div id="funcForm" class="ferias-form" style="display:none;">
+            <div class="ferias-form-titulo" id="funcFormTitulo">Novo funcionário</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="funcNome">Nome</label>
+                <input type="text" id="funcNome" maxlength="120" autocomplete="off" required>
+              </div>
+              <div class="form-group small ferias-campo-cor">
+                <label for="funcCor">Cor</label>
+                <input type="color" id="funcCor" value="#2563EB">
+              </div>
+              <div class="form-group small">
+                <label for="funcAdmissao">Admissão</label>
+                <input type="date" id="funcAdmissao">
+              </div>
+            </div>
+            <input type="hidden" id="funcId">
+            <div class="ferias-form-acoes">
+              <button type="button" class="btn btn-secondary" id="btnCancelarFuncionario">Cancelar</button>
+              <button type="button" class="btn btn-primary" id="btnSalvarFuncionario"><i class="ph ph-check"></i> Salvar</button>
+            </div>
+          </div>
+
+          <!-- Tabela renderizada pelo JS -->
+          <div id="funcTabela"></div>
+        </div>
+      </div>
+
+      <!-- Aba Periodos Aquisitivos -->
+      <div class="tab-content" id="tab-periodos">
+        <div class="card">
+          <div class="ferias-topo">
+            <div class="section-title"><i class="ph ph-calendar-blank"></i> Períodos Aquisitivos</div>
+            <div class="ferias-controles">
+              <div class="form-group">
+                <label for="perFuncionario">Funcionário</label>
+                <select id="perFuncionario">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+              <label class="ferias-check" for="chkMostrarConcluidos">
+                <input type="checkbox" id="chkMostrarConcluidos"> Mostrar concluídos
+              </label>
+              <button type="button" class="btn btn-primary" id="btnNovoPeriodo" disabled><i class="ph ph-plus"></i> Novo período</button>
+            </div>
+          </div>
+
+          <!-- Formulario inline do periodo (sem tag form; Enter em dias de direito salva via JS) -->
+          <div id="perForm" class="ferias-form" style="display:none;">
+            <div class="ferias-form-titulo" id="perFormTitulo">Novo período</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="perInicio">Início</label>
+                <input type="date" id="perInicio">
+              </div>
+              <div class="form-group">
+                <label for="perFim">Fim</label>
+                <input type="date" id="perFim">
+              </div>
+              <div class="form-group small">
+                <label for="perDiasDireito">Dias de direito</label>
+                <input type="number" id="perDiasDireito" min="0" max="60" value="30">
+              </div>
+            </div>
+            <input type="hidden" id="perId">
+            <div class="ferias-form-acoes">
+              <button type="button" class="btn btn-secondary" id="btnCancelarPeriodo">Cancelar</button>
+              <button type="button" class="btn btn-primary" id="btnSalvarPeriodo"><i class="ph ph-check"></i> Salvar</button>
+            </div>
+          </div>
+
+          <!-- Tabela renderizada pelo JS -->
+          <div id="perTabela"></div>
+        </div>
+      </div>
+
+      <!-- Aba Ferias (esqueleto) -->
+      <div class="tab-content" id="tab-ferias">
+        <div class="card">
+          <p class="ferias-placeholder">Disponível na próxima etapa.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ current_user.id }},
+    nome: "{{ current_user.nome }}",
+    perfil: "{{ current_user.perfil }}"
+  };
+</script>
+<script src="{{ url_for('static', filename='js/ferias.js') }}"></script>
+{% endblock %}

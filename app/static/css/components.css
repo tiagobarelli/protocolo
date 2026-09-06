@@ -490,3 +490,38 @@
 .user-table tbody tr:last-child td {
   border-bottom: none;
 }
+
+/* =====================================================================
+   Abas (componente canônico; consolidado em set/2026 a partir de oficios.css)
+   As cópias por página (oficios, configuracoes, clientes, controle,
+   controle_certidoes, retificacoes, substabelecimentos, revogacao_procuracao,
+   enotariado_detalhe) permanecem até a leva de higiene.
+   ===================================================================== */
+.tabs-header {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+.tab-btn {
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-btn:hover { color: var(--text-dark); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }

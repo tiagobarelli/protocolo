@@ -86,6 +86,13 @@ def estatisticas():
     return render_template("estatisticas.html")
 
 
+@main_bp.route("/ferias")
+@login_required
+@perfil_required("master")
+def ferias():
+    return render_template("ferias.html")
+
+
 @main_bp.route("/retificacoes")
 @login_required
 @perfil_required("master", "administrador")

@@ -138,6 +138,52 @@ def init_db(app):
             );
             CREATE INDEX IF NOT EXISTS idx_registro_bloqueios_registro
                 ON registro_bloqueios(tabela_id, row_id);
+
+            CREATE TABLE IF NOT EXISTS ferias_funcionarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                cor TEXT NOT NULL,
+                data_admissao TEXT,
+                ativo INTEGER NOT NULL DEFAULT 1,
+                criado_por_id INTEGER NOT NULL,
+                criado_por_nome TEXT NOT NULL,
+                criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+                atualizado_em DATETIME
+            );
+            CREATE TABLE IF NOT EXISTS ferias_periodos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                funcionario_id INTEGER NOT NULL REFERENCES ferias_funcionarios(id),
+                inicio TEXT NOT NULL,
+                fim TEXT NOT NULL,
+                dias_direito INTEGER NOT NULL DEFAULT 30,
+                abono_dias INTEGER NOT NULL DEFAULT 0,
+                observacoes TEXT,
+                criado_por_id INTEGER NOT NULL,
+                criado_por_nome TEXT NOT NULL,
+                criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+                atualizado_em DATETIME,
+                excluido_por_id INTEGER,
+                excluido_por_nome TEXT,
+                excluido_em DATETIME
+            );
+            CREATE TABLE IF NOT EXISTS ferias_blocos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                periodo_id INTEGER NOT NULL REFERENCES ferias_periodos(id),
+                inicio TEXT NOT NULL,
+                fim TEXT NOT NULL,
+                criado_por_id INTEGER NOT NULL,
+                criado_por_nome TEXT NOT NULL,
+                criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+                excluido_por_id INTEGER,
+                excluido_por_nome TEXT,
+                excluido_em DATETIME
+            );
+            CREATE INDEX IF NOT EXISTS idx_ferias_periodos_funcionario
+                ON ferias_periodos(funcionario_id);
+            CREATE INDEX IF NOT EXISTS idx_ferias_blocos_periodo
+                ON ferias_blocos(periodo_id);
+            CREATE INDEX IF NOT EXISTS idx_ferias_blocos_datas
+                ON ferias_blocos(inicio, fim);
         """)
         conn.commit()
         conn.close()
