@@ -18,6 +18,9 @@
 # funcionário, em qualquer período vigente). Não se valida que o bloco caia
 # dentro do período aquisitivo (as férias são gozadas depois dele) nem a
 # sobreposição de blocos (é aviso, nunca bloqueio).
+# Leva 4: GET /calendario, o único endpoint aberto aos três perfis (só
+# login), que alimenta as barras de férias do /calendario com nome, cor e
+# datas dos blocos vigentes (funcionários inativos incluídos: histórico).
 #
 # Convenções: datas sem hora trafegam como string 'YYYY-MM-DD', validadas
 # mas nunca convertidas; timestamps de auditoria (CURRENT_TIMESTAMP, UTC) só
@@ -787,3 +790,37 @@ def excluir_bloco(bloco_id):
     )
     db.commit()
     return _responder_periodo(db, bloco["periodo_id"])
+
+
+# ---------------------------------------------------------------------------
+# Rotas: calendário (todos os perfis autenticados)
+# ---------------------------------------------------------------------------
+
+@ferias_bp.route("/calendario", methods=["GET"])
+@login_required
+def calendario_blocos():
+    """Blocos de férias vigentes de todos os funcionários, para as barras do
+    /calendario. Aberto aos três perfis (só login; sem checagem de master).
+    Inativos incluídos: férias passadas de ex-colaboradores seguem no
+    histórico. Devolve apenas funcionario_id, nome, cor, inicio e fim (nunca
+    saldo, abono, observações, período ou ids de bloco). Sem parâmetros de
+    query: o cliente faz uma carga única."""
+    rows = get_db().execute(
+        "SELECT b.inicio, b.fim, f.id AS funcionario_id, f.nome, f.cor "
+        "FROM ferias_blocos b "
+        "JOIN ferias_periodos p ON p.id = b.periodo_id "
+        "JOIN ferias_funcionarios f ON f.id = p.funcionario_id "
+        "WHERE b.excluido_em IS NULL AND p.excluido_em IS NULL "
+        "ORDER BY b.inicio, f.nome COLLATE NOCASE"
+    ).fetchall()
+    blocos = [
+        {
+            "funcionario_id": r["funcionario_id"],
+            "nome": r["nome"],
+            "cor": r["cor"],
+            "inicio": r["inicio"],
+            "fim": r["fim"],
+        }
+        for r in rows
+    ]
+    return jsonify(ok=True, pode_gerir=(current_user.perfil == "master"), blocos=blocos)

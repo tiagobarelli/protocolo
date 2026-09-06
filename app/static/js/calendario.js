@@ -102,6 +102,9 @@ function carregarProtocolos() {
     var url = API_BASE + '/database/rows/table/' + CONFIG.tables.protocolo + '/'
       + '?user_field_names=false'
       + '&filter__' + CONFIG.fields.status + '__single_select_equal=' + CONFIG.statusEmAndamento
+      + '&filter__' + CONFIG.fields.agendadoPara + '__not_empty=true'
+      + '&include=' + [CONFIG.fields.protocolo, CONFIG.fields.interessado,
+                       CONFIG.fields.agendadoPara, CONFIG.fields.status].join(',')
       + '&page_size=200'
       + '&page=' + pagina;
 
@@ -193,6 +196,7 @@ function renderizarCalendario() {
     diaNum.className = 'cal-dia-num';
     diaNum.textContent = d;
     cell.appendChild(diaNum);
+    if (window.FeriasCalendario) { window.FeriasCalendario.renderizarDia(cell, anoAtual, mesAtual, d); }
 
     // Filtrar protocolos deste dia
     var eventosDoDia = [];

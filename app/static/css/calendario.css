@@ -180,3 +180,33 @@
 
 .dot-hora { background: var(--accent, #6366f1); }
 .dot-dia  { background: var(--event-bg); border-left: 3px solid var(--event-accent); }
+
+/* Barras de ferias (modulo ferias_calendario.js) */
+.cal-ferias {
+  display: block;
+  height: 18px;
+  line-height: 18px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0 5px;
+  margin: 0 -7px 2px -7px;   /* cobre padding (6px) + borda (1px) da celula para a barra parecer continua */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.cal-ferias-inicio, .cal-ferias-seg-ini {
+  margin-left: 0;
+}
+.cal-ferias-fim, .cal-ferias-seg-fim {
+  margin-right: 0;
+}
+.cal-ferias-inicio { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+.cal-ferias-fim    { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+a.cal-ferias:hover { opacity: 0.85; }
+.cal-ferias-vazio {
+  display: block;
+  height: 18px;
+  margin-bottom: 2px;
+}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Calendário de Agendamentos{% endblock %}
+{% block title %}Calendário de Eventos{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
@@ -28,8 +28,8 @@
         <div class="page-title">
           <i class="ph ph-calendar-blank page-icon"></i>
           <div>
-            <h1>Calendário de Agendamentos</h1>
-            <p class="page-subtitle">Protocolos em andamento com data de agendamento.</p>
+            <h1>Calendário de Eventos</h1>
+            <p class="page-subtitle">Protocolos agendados e férias.</p>
           </div>
         </div>
 
@@ -66,5 +66,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/ferias_calendario.js') }}"></script>
 <script src="{{ url_for('static', filename='js/calendario.js') }}"></script>
 {% endblock %}
