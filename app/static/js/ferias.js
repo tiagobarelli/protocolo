@@ -6,6 +6,12 @@
    via GET /api/ferias/periodos/<id> e /api/ferias/blocos (POST, PATCH,
    POST /excluir); toda resposta traz o periodo recalculado. Deep link
    ?funcionario=<id> abre a aba Ferias com o funcionario selecionado.
+   Leva 5: alerta de vencimento do periodo concessivo. O campo "vencimento"
+   de cada periodo vem calculado do servidor (situacao ok/proximo/vencido +
+   mensagem); o card #cardVencimentos no topo (GET /api/ferias/vencimentos,
+   em segundo plano) lista os proximos/vencidos de funcionarios ativos e o
+   clique num item abre o painel da aba Ferias via os ids pendentes do deep
+   link; a aba Periodos ganha um badge extra e o painel uma linha de prazo.
    Convencoes: datas sem hora sao strings 'YYYY-MM-DD' comparadas por string;
    a aritmetica de data (sugestao de fim do periodo, duracao de um bloco) e
    sempre construida a partir das partes (ano, mes, dia), nunca da string ISO.
@@ -41,6 +47,12 @@
   var ferMostrarConcluidos = false;
   var editandoBlocoId = null;
   var ferPreSelecionarId = null;
+  var ferPreSelecionarPeriodoId = null;
+
+  /* ---------- Estado: vencimentos do periodo concessivo ---------- */
+
+  var vencimentos = [];
+  var vencJanelaDias = 0;
 
   /* ---------- Helpers ---------- */
 
@@ -366,6 +378,7 @@
       mostrarToast(editando ? 'Funcionário atualizado.' : 'Funcionário cadastrado.', 'success');
       fecharForm();
       carregarFuncionarios();
+      if (editando) carregarVencimentos();
     }, function(e) {
       btn.disabled = false;
       mostrarToast(e.message, 'error');
@@ -386,6 +399,7 @@
       mostrarToast(novoAtivo ? 'Funcionário reativado.' : 'Funcionário inativado.', 'success');
       if (editandoId === id) fecharForm();
       carregarFuncionarios();
+      carregarVencimentos();
     }, function(e) {
       mostrarToast(e.message, 'error');
     });
@@ -516,6 +530,15 @@
       var badge = p.concluido
         ? '<span class="badge badge-neutral">Concluído</span>'
         : '<span class="badge badge-success">Aberto</span>';
+      var venc = p.vencimento || null;
+      var vencido = !!(venc && venc.situacao === 'vencido');
+      if (venc && venc.situacao !== 'ok') {
+        badge += ' <span class="badge ' + classeBadgeVenc(venc.situacao) + '" title="' + escapeHtml(venc.mensagem || '') + '">'
+          + escapeHtml(textoBadgeVenc(venc, true)) + '</span>';
+      }
+      var classesLinha = [];
+      if (p.concluido) classesLinha.push('ferias-linha-concluida');
+      if (vencido) classesLinha.push('ferias-linha-vencida');
       var avisoHtml = avisos.length
         ? '<span class="ferias-aviso" title="' + escapeHtml(avisos.join(' · ')) + '"><i class="ph ph-warning"></i> ' + avisos.length + '</span>'
         : '';
@@ -523,7 +546,7 @@
         + (temBlocos ? ' disabled title="Há blocos de férias registrados"' : ' title="Excluir"')
         + '><i class="ph ph-trash"></i></button>';
 
-      html += '<tr' + (p.concluido ? ' class="ferias-linha-concluida"' : '') + '>'
+      html += '<tr' + (classesLinha.length ? ' class="' + classesLinha.join(' ') + '"' : '') + '>'
         + '<td>' + escapeHtml(formatarPeriodo(p)) + '</td>'
         + '<td>' + inteiroOuZero(p.dias_direito) + '</td>'
         + '<td>' + inteiroOuZero(p.abono_dias) + '</td>'
@@ -647,6 +670,7 @@
       mostrarToast(editando ? 'Período atualizado.' : 'Período cadastrado.', 'success');
       fecharFormPeriodo();
       carregarPeriodos();
+      carregarVencimentos();
     }, function(e) {
       btn.disabled = false;
       mostrarToast(e.message, 'error');
@@ -663,6 +687,7 @@
       mostrarToast('Período excluído.', 'success');
       if (editandoPeriodoId === id) fecharFormPeriodo();
       carregarPeriodos();
+      carregarVencimentos();
     }, function(e) {
       mostrarToast(e.message, 'error');
     });
@@ -759,6 +784,9 @@
       return;
     }
     var selecionadoAntes = ferPeriodoAtual ? String(ferPeriodoAtual.id) : (sel.value || '');
+    /* Periodo pendente (clique no card de vencimentos): consumido aqui. */
+    var periodoPendente = ferPreSelecionarPeriodoId;
+    ferPreSelecionarPeriodoId = null;
     if (!silencioso) mostrarOverlay(true);
 
     var url = API + '/periodos?funcionario_id=' + ferFuncionarioId
@@ -767,12 +795,14 @@
       ferPeriodos = json.periodos || [];
       var html = '<option value="">Selecione...</option>';
       var aindaExiste = false;
+      var pendenteExiste = false;
       for (var i = 0; i < ferPeriodos.length; i++) {
         var p = ferPeriodos[i];
         html += '<option value="' + parseInt(p.id, 10) + '">'
           + escapeHtml(formatarPeriodo(p)) + (p.concluido ? ' (concluído)' : '')
           + '</option>';
         if (String(p.id) === selecionadoAntes) aindaExiste = true;
+        if (periodoPendente && parseInt(p.id, 10) === periodoPendente) pendenteExiste = true;
       }
       if (ferPeriodoAtual && !aindaExiste && ferPeriodoAtual.funcionario_id === ferFuncionarioId) {
         html += '<option value="' + parseInt(ferPeriodoAtual.id, 10) + '">'
@@ -783,7 +813,13 @@
       sel.innerHTML = html;
       sel.disabled = false;
 
-      if (aindaExiste) {
+      if (periodoPendente && !pendenteExiste) {
+        mostrarToast('Período não encontrado.', 'warning');
+      }
+      if (pendenteExiste) {
+        sel.value = String(periodoPendente);
+        carregarPainel(periodoPendente);
+      } else if (aindaExiste) {
         sel.value = selecionadoAntes;
       } else if (ferPeriodos.length === 1 && !selecionadoAntes) {
         sel.value = String(ferPeriodos[0].id);
@@ -865,6 +901,8 @@
       ul.style.display = 'none';
     }
 
+    renderizarPrazo(p.vencimento || null);
+
     var saldo = inteiroOuZero(p.saldo);
     document.getElementById('ferDireito').textContent = String(inteiroOuZero(p.dias_direito));
     document.getElementById('ferAbonoValor').textContent = String(inteiroOuZero(p.abono_dias));
@@ -937,6 +975,7 @@
       renderizarPainel(false);
       mostrarToast('Abono e observações salvos.', 'success');
       carregarPeriodosFerias(true);
+      carregarVencimentos();
     }, function(e) {
       btn.disabled = false;
       mostrarOverlay(false);
@@ -1094,6 +1133,7 @@
       renderizarPainel(true);
       mostrarToast(editando ? 'Bloco atualizado.' : 'Bloco registrado.', 'success');
       carregarPeriodosFerias(true);
+      carregarVencimentos();
     }, function(e) {
       btn.disabled = false;
       mostrarOverlay(false);
@@ -1115,6 +1155,7 @@
       renderizarPainel(true);
       mostrarToast('Bloco excluído.', 'success');
       carregarPeriodosFerias(true);
+      carregarVencimentos();
     }, function(e) {
       mostrarOverlay(false);
       mostrarToast(e.message, 'error');
@@ -1139,6 +1180,119 @@
     } else if (acao === 'excluir-bloco') {
       excluirBloco(id);
     }
+  }
+
+  /* ---------- Vencimentos do periodo concessivo ---------- */
+
+  function classeBadgeVenc(situacao) {
+    return situacao === 'vencido' ? 'badge-danger' : 'badge-warning';
+  }
+
+  /* Texto do badge: curto na tabela de periodos, completo no card. */
+  function textoBadgeVenc(venc, curto) {
+    var dias = inteiroOuZero(venc.dias_para_limite);
+    if (venc.situacao === 'vencido') {
+      return curto ? 'Vencido' : 'Vencido há ' + pluralDias(-dias);
+    }
+    if (dias === 0) return 'Vence hoje';
+    return curto ? 'Vence em ' + dias + ' d' : 'Vence em ' + pluralDias(dias);
+  }
+
+  /* Linha de prazo do painel da aba Ferias (sempre visivel para periodo
+     aberto, com tom por situacao; oculta quando o vencimento e null). */
+  function renderizarPrazo(venc) {
+    var el = document.getElementById('ferPrazo');
+    if (!el) return;
+    el.innerHTML = '';
+    if (!venc) {
+      el.style.display = 'none';
+      el.className = 'ferias-prazo';
+      return;
+    }
+    var situacao = venc.situacao === 'vencido' ? 'vencido' : (venc.situacao === 'proximo' ? 'proximo' : 'ok');
+    var icone = document.createElement('i');
+    icone.className = 'ph ' + (situacao === 'vencido' ? 'ph-warning-circle' : (situacao === 'proximo' ? 'ph-alarm' : 'ph-clock'));
+    var texto = document.createElement('span');
+    texto.textContent = String(venc.mensagem || '');
+    el.appendChild(icone);
+    el.appendChild(texto);
+    el.className = 'ferias-prazo ferias-prazo-' + situacao;
+    el.style.display = '';
+  }
+
+  /* Carga em segundo plano (sem overlay); em erro so console.warn, para o
+     card nunca derrubar a pagina. */
+  function carregarVencimentos() {
+    requisitar('GET', API + '/vencimentos').then(function(json) {
+      vencimentos = json.vencimentos || [];
+      vencJanelaDias = inteiroOuZero(json.antecedencia_dias);
+      renderizarVencimentos();
+    }, function(e) {
+      if (window.console && window.console.warn) {
+        window.console.warn('Vencimentos indisponíveis: ' + (e && e.message ? e.message : e));
+      }
+    });
+  }
+
+  function renderizarVencimentos() {
+    var card = document.getElementById('cardVencimentos');
+    var resumo = document.getElementById('vencResumo');
+    var lista = document.getElementById('vencLista');
+    if (!card || !resumo || !lista) return;
+
+    if (!vencimentos.length) {
+      card.style.display = 'none';
+      lista.innerHTML = '';
+      resumo.textContent = '';
+      return;
+    }
+
+    var n = vencimentos.length;
+    resumo.textContent = (n === 1 ? '1 período' : n + ' períodos')
+      + ' com vencimento nos próximos ' + vencJanelaDias + ' dias ou já '
+      + (n === 1 ? 'vencido' : 'vencidos') + '.';
+
+    var html = '';
+    for (var i = 0; i < n; i++) {
+      var v = vencimentos[i];
+      var funcionarioId = parseInt(v.funcionario_id, 10);
+      var periodoId = parseInt(v.periodo_id, 10);
+      var situacao = v.situacao === 'vencido' ? 'vencido' : 'proximo';
+      var cor = COR_RE.test(String(v.funcionario_cor || '')) ? String(v.funcionario_cor) : '';
+      var swatch = cor
+        ? '<span class="ferias-swatch" style="background:' + cor + '"></span>'
+        : '<span class="ferias-swatch"></span>';
+      html += '<li class="ferias-venc-item ferias-venc-' + situacao + '" data-funcionario="' + funcionarioId + '" data-periodo="' + periodoId + '" title="Abrir na aba Férias">'
+        + swatch
+        + '<strong>' + escapeHtml(v.funcionario_nome || '') + '</strong>'
+        + '<span>' + escapeHtml(formatarPeriodo(v)) + '</span>'
+        + '<span class="badge ' + classeBadgeVenc(situacao) + '">' + escapeHtml(textoBadgeVenc(v, false)) + '</span>'
+        + '<small class="ferias-hint">' + escapeHtml(v.mensagem || '') + '</small>'
+        + '</li>';
+    }
+    lista.innerHTML = html;
+    card.style.display = '';
+  }
+
+  /* Abre a aba Ferias com funcionario e periodo selecionados, reutilizando o
+     mecanismo de ids pendentes do deep link (consumidos na carga dos selects). */
+  function irParaPainel(funcionarioId, periodoId) {
+    ferPreSelecionarId = funcionarioId;
+    ferPreSelecionarPeriodoId = periodoId;
+    ativarAba('ferias');
+  }
+
+  function aoClicarVencimentos(ev) {
+    var alvo = ev.target;
+    while (alvo && alvo !== this) {
+      if (alvo.getAttribute && alvo.getAttribute('data-periodo')) break;
+      alvo = alvo.parentNode;
+    }
+    if (!alvo || alvo === this) return;
+    var funcionarioId = parseInt(alvo.getAttribute('data-funcionario'), 10);
+    var periodoId = parseInt(alvo.getAttribute('data-periodo'), 10);
+    if (!funcionarioId || !periodoId) return;
+    irParaPainel(funcionarioId, periodoId);
   }
 
   /* ---------- Inicializacao ---------- */
@@ -1269,8 +1423,13 @@
     var blocoTabela = document.getElementById('blocoTabela');
     if (blocoTabela) blocoTabela.addEventListener('click', aoClicarTabelaBlocos);
 
+    /* Card de vencimentos */
+    var vencLista = document.getElementById('vencLista');
+    if (vencLista) vencLista.addEventListener('click', aoClicarVencimentos);
+
     renderizarPeriodos();
     carregarFuncionarios();
+    carregarVencimentos();
 
     /* Deep link ?funcionario=<id>: abre a aba Ferias com ele selecionado.
        A URL fica como veio. */

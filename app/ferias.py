@@ -21,6 +21,12 @@
 # Leva 4: GET /calendario, o único endpoint aberto aos três perfis (só
 # login), que alimenta as barras de férias do /calendario com nome, cor e
 # datas dos blocos vigentes (funcionários inativos incluídos: histórico).
+# Leva 5: alerta de vencimento do período concessivo (12 meses após o fim
+# do aquisitivo; as férias devem ser gozadas dentro dele). Campo derivado
+# "vencimento" em _calcular_periodo (None quando saldo <= 0) e GET
+# /vencimentos com os períodos de funcionários ativos próximos do limite ou
+# vencidos. "Hoje" vem de date.today() nos pontos de entrada, uma vez por
+# requisição; nunca do SQLite.
 #
 # Convenções: datas sem hora trafegam como string 'YYYY-MM-DD', validadas
 # mas nunca convertidas; timestamps de auditoria (CURRENT_TIMESTAMP, UTC) só
@@ -28,7 +34,7 @@
 # REFERENCES no esquema é documental (o app não ativa PRAGMA foreign_keys);
 # a integridade entre tabelas é garantida aqui, antes de cada INSERT.
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
@@ -42,6 +48,7 @@ OBSERVACOES_MAX_CHARS = 2000
 DIAS_DIREITO_PADRAO = 30
 DIAS_MAX = 60
 ID_MAX = 10 ** 9
+ANTECEDENCIA_ALERTA_DIAS = 90
 
 _DATA_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _COR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
@@ -165,6 +172,81 @@ def _normalizar_nome(valor):
 def _dias_entre(inicio, fim):
     """Dias corridos entre duas datas 'YYYY-MM-DD', inclusivas nas duas pontas."""
     return (date.fromisoformat(fim) - date.fromisoformat(inicio)).days + 1
+
+
+# ---------------------------------------------------------------------------
+# Vencimento do período concessivo
+# ---------------------------------------------------------------------------
+
+def _somar_um_ano(d):
+    """d + 1 ano; 29/02 vira 28/02 no ano seguinte."""
+    try:
+        return d.replace(year=d.year + 1)
+    except ValueError:
+        return d.replace(year=d.year + 1, day=28)
+
+
+def _formatar_br(d):
+    """date para 'dd/mm/aaaa'."""
+    return d.strftime("%d/%m/%Y")
+
+
+def _texto_dias(n):
+    """'1 dia' ou 'N dias'."""
+    return "1 dia" if n == 1 else "{} dias".format(n)
+
+
+def _calcular_vencimento(fim_aquisitivo, saldo, hoje):
+    """Alerta de vencimento do período concessivo para um período com saldo.
+
+    Regra: o concessivo são os 12 meses após o fim do aquisitivo e as férias
+    devem ser gozadas dentro dele; a data-limite de início é o último dia em
+    que as férias podem começar para o saldo inteiro terminar no prazo
+    (fim do concessivo - saldo + 1 dia). None quando saldo <= 0: um bloco
+    futuro já registrado reduz o saldo e, ao zerá-lo, encerra o alerta
+    (planejado = resolvido). hoje vem do chamador; nunca é lido aqui.
+    """
+    if saldo <= 0:
+        return None
+
+    fim_conc = _somar_um_ano(date.fromisoformat(fim_aquisitivo))
+    limite_inicio = fim_conc - timedelta(days=saldo - 1)
+    dias = (limite_inicio - hoje).days
+    if dias < 0:
+        situacao = "vencido"
+    elif dias <= ANTECEDENCIA_ALERTA_DIAS:
+        situacao = "proximo"
+    else:
+        situacao = "ok"
+
+    verbo = "terminou" if fim_conc < hoje else "termina"
+    x = abs(dias)
+    if situacao == "vencido":
+        mensagem = (
+            "Saldo de {saldo}. O período concessivo {verbo} em {fim_conc}; o último dia para "
+            "iniciar as férias dentro do prazo foi {limite} (há {x}). Férias concedidas após o "
+            "prazo devem ser pagas em dobro (CLT, arts. 134 e 137)."
+        ).format(
+            saldo=_texto_dias(saldo), verbo=verbo, fim_conc=_formatar_br(fim_conc),
+            limite=_formatar_br(limite_inicio), x=_texto_dias(x),
+        )
+    else:
+        quando = "hoje" if x == 0 else "em {}".format(_texto_dias(x))
+        mensagem = (
+            "Saldo de {saldo}. O período concessivo {verbo} em {fim_conc}; para gozar todo o "
+            "saldo dentro do prazo, as férias devem começar até {limite} ({quando})."
+        ).format(
+            saldo=_texto_dias(saldo), verbo=verbo, fim_conc=_formatar_br(fim_conc),
+            limite=_formatar_br(limite_inicio), quando=quando,
+        )
+
+    return {
+        "fim_concessivo": fim_conc.isoformat(),
+        "limite_inicio": limite_inicio.isoformat(),
+        "dias_para_limite": dias,
+        "situacao": situacao,
+        "mensagem": mensagem,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -391,18 +473,24 @@ def _responder_periodo(db, periodo_id, status=200):
         p for p in _periodos_ativos_do_funcionario(db, row["funcionario_id"])
         if p["id"] != periodo_id
     ]
-    return jsonify(ok=True, periodo=_calcular_periodo(db, row, outros)), status
+    hoje = date.today()
+    return jsonify(ok=True, periodo=_calcular_periodo(db, row, outros, hoje=hoje)), status
 
 
-def _calcular_periodo(db, row, outros=None, blocos_funcionario=None):
-    """Serializa o período com saldo, blocos vigentes e avisos.
+def _calcular_periodo(db, row, outros=None, blocos_funcionario=None, hoje=None):
+    """Serializa o período com saldo, blocos vigentes, avisos e vencimento.
 
     outros: lista dos demais períodos vigentes do mesmo funcionário, para a
     checagem de sobreposição de períodos sem repetir a consulta; None =
     consultar aqui. blocos_funcionario: blocos vigentes do funcionário em
     todos os períodos vigentes, para o aviso de bloco sobreposto; idem.
-    Os avisos são informativos e nunca bloqueiam operação alguma.
+    hoje: data de referência do vencimento (None = date.today()); as
+    listagens calculam uma vez e repassam. Os avisos são informativos e nunca
+    bloqueiam operação alguma; o vencimento é campo próprio, fora de avisos.
     """
+    if hoje is None:
+        hoje = date.today()
+
     blocos = []
     dias_gozados = 0
     for b in _blocos_ativos(db, row["id"]):
@@ -466,6 +554,7 @@ def _calcular_periodo(db, row, outros=None, blocos_funcionario=None):
         "saldo": saldo,
         "concluido": saldo <= 0,
         "avisos": avisos,
+        "vencimento": _calcular_vencimento(row["fim"], saldo, hoje),
     }
 
 
@@ -494,10 +583,11 @@ def listar_periodos():
     incluir_concluidos = request.args.get("incluir_concluidos") == "1"
     rows = _periodos_ativos_do_funcionario(db, funcionario_id)
     blocos_funcionario = _blocos_ativos_do_funcionario(db, funcionario_id)
+    hoje = date.today()
     periodos = []
     for row in rows:
         outros = [p for p in rows if p["id"] != row["id"]]
-        calculado = _calcular_periodo(db, row, outros, blocos_funcionario)
+        calculado = _calcular_periodo(db, row, outros, blocos_funcionario, hoje=hoje)
         if calculado["concluido"] and not incluir_concluidos:
             continue
         periodos.append(calculado)
@@ -824,3 +914,56 @@ def calendario_blocos():
         for r in rows
     ]
     return jsonify(ok=True, pode_gerir=(current_user.perfil == "master"), blocos=blocos)
+
+
+# ---------------------------------------------------------------------------
+# Rotas: vencimentos do período concessivo (master)
+# ---------------------------------------------------------------------------
+
+@ferias_bp.route("/vencimentos", methods=["GET"])
+@login_required
+def listar_vencimentos():
+    """Períodos vigentes de funcionários ativos cujo vencimento está próximo
+    (até ANTECEDENCIA_ALERTA_DIAS) ou já passou, ordenados pela data-limite de
+    início. Só master. Sem observações nem blocos na resposta."""
+    erro = _exigir_master()
+    if erro:
+        return erro
+
+    db = get_db()
+    hoje = date.today()
+    rows = db.execute(
+        "SELECT p.*, f.nome AS funcionario_nome, f.cor AS funcionario_cor "
+        "FROM ferias_periodos p "
+        "JOIN ferias_funcionarios f ON f.id = p.funcionario_id "
+        "WHERE p.excluido_em IS NULL AND f.ativo = 1"
+    ).fetchall()
+
+    itens = []
+    for row in rows:
+        calculado = _calcular_periodo(db, row, hoje=hoje)
+        vencimento = calculado["vencimento"]
+        if vencimento is None or vencimento["situacao"] not in ("proximo", "vencido"):
+            continue
+        itens.append({
+            "funcionario_id": row["funcionario_id"],
+            "funcionario_nome": row["funcionario_nome"],
+            "funcionario_cor": row["funcionario_cor"],
+            "periodo_id": row["id"],
+            "inicio": row["inicio"],
+            "fim": row["fim"],
+            "saldo": calculado["saldo"],
+            "fim_concessivo": vencimento["fim_concessivo"],
+            "limite_inicio": vencimento["limite_inicio"],
+            "dias_para_limite": vencimento["dias_para_limite"],
+            "situacao": vencimento["situacao"],
+            "mensagem": vencimento["mensagem"],
+        })
+    itens.sort(key=lambda item: (item["limite_inicio"], (item["funcionario_nome"] or "").casefold()))
+
+    return jsonify(
+        ok=True,
+        hoje=hoje.isoformat(),
+        antecedencia_dias=ANTECEDENCIA_ALERTA_DIAS,
+        vencimentos=itens,
+    )

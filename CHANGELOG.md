@@ -2,6 +2,12 @@
 
 Controle de correções e melhorias do sistema
 
+## [2.7] 2026-09-07
+
+### Adicionado
+
+- **Férias**. O calendário do sistema agora exibe o calendário de férias dos escreventes. Adicionado módulo de controle para o usuário Master.
+
 ## [2.6] 2026-09-05
 
 ### Melhorias

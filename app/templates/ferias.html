@@ -34,6 +34,13 @@
         </div>
       </div>
 
+      <!-- Vencimentos do periodo concessivo (renderizado pelo JS; oculto quando vazio) -->
+      <div class="card ferias-card-venc" id="cardVencimentos" style="display:none;">
+        <div class="section-title"><i class="ph ph-alarm"></i> Vencimentos do per&iacute;odo concessivo</div>
+        <p class="ferias-hint" id="vencResumo"></p>
+        <ul class="ferias-venc-lista" id="vencLista"></ul>
+      </div>
+
       <!-- Abas (eventos ligados no ferias.js) -->
       <div class="tabs-header">
         <button type="button" class="tab-btn active" data-tab="funcionarios"><i class="ph ph-users"></i> Funcionários</button>
@@ -168,6 +175,7 @@
               <span class="badge badge-success" id="ferStatus">Aberto</span>
             </div>
             <ul id="ferAvisos" class="ferias-avisos" style="display:none;"></ul>
+            <p id="ferPrazo" class="ferias-prazo" style="display:none;"></p>
 
             <div class="ferias-resumo">
               <div class="ferias-tile">
