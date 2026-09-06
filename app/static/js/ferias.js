@@ -2,11 +2,14 @@
    Leva 1: aba Funcionarios via /api/ferias/funcionarios (GET, POST, PATCH).
    Leva 2: aba Periodos Aquisitivos via /api/ferias/periodos (GET, POST, PATCH,
    POST /excluir); saldo e avisos vem calculados do servidor.
-   A aba Ferias segue como esqueleto nesta leva.
+   Leva 3: aba Ferias (painel do periodo: abono, observacoes, blocos de gozo)
+   via GET /api/ferias/periodos/<id> e /api/ferias/blocos (POST, PATCH,
+   POST /excluir); toda resposta traz o periodo recalculado. Deep link
+   ?funcionario=<id> abre a aba Ferias com o funcionario selecionado.
    Convencoes: datas sem hora sao strings 'YYYY-MM-DD' comparadas por string;
-   a unica aritmetica de data e a sugestao de fim do periodo, construida a
-   partir das partes (ano, mes, dia) e lida de volta com getFullYear/getMonth/
-   getDate. Feedback pelo mostrarToast global de base.html; zero em-dash. */
+   a aritmetica de data (sugestao de fim do periodo, duracao de um bloco) e
+   sempre construida a partir das partes (ano, mes, dia), nunca da string ISO.
+   Feedback pelo mostrarToast global de base.html; zero em-dash. */
 (function() {
   'use strict';
 
@@ -14,6 +17,7 @@
   var COR_RE = /^#[0-9A-Fa-f]{6}$/;
   var COR_PADRAO = '#2563EB';
   var DIAS_DIREITO_PADRAO = 30;
+  var MS_POR_DIA = 86400000;
 
   /* ---------- Estado: funcionarios ---------- */
 
@@ -28,6 +32,15 @@
   var editandoPeriodoId = null;
   var perFuncionarioId = null;
   var perSugestaoFim = '';
+
+  /* ---------- Estado: aba ferias ---------- */
+
+  var ferFuncionarioId = null;
+  var ferPeriodos = [];
+  var ferPeriodoAtual = null;
+  var ferMostrarConcluidos = false;
+  var editandoBlocoId = null;
+  var ferPreSelecionarId = null;
 
   /* ---------- Helpers ---------- */
 
@@ -95,6 +108,54 @@
     return isNaN(n) ? 0 : n;
   }
 
+  function pluralDias(n) {
+    return n === 1 ? '1 dia' : n + ' dias';
+  }
+
+  /* Partes numericas de 'YYYY-MM-DD' ([ano, mes, dia]) ou null. */
+  function partesData(iso) {
+    var partes = String(iso || '').split('-');
+    if (partes.length < 3) return null;
+    var ano = parseInt(partes[0], 10);
+    var mes = parseInt(partes[1], 10);
+    var dia = parseInt(partes[2], 10);
+    if (isNaN(ano) || isNaN(mes) || isNaN(dia)) return null;
+    return [ano, mes, dia];
+  }
+
+  /* Dias corridos entre duas datas ISO, inclusivas nas pontas (espelho do
+     _dias_entre do servidor). Usa Date.UTC a partir das partes, que nao sofre
+     de fuso nem de horario de verao; NaN se alguma data for invalida. */
+  function diasEntreIso(inicio, fim) {
+    var a = partesData(inicio);
+    var b = partesData(fim);
+    if (!a || !b) return NaN;
+    var ms = Date.UTC(b[0], b[1] - 1, b[2]) - Date.UTC(a[0], a[1] - 1, a[2]);
+    return Math.round(ms / MS_POR_DIA) + 1;
+  }
+
+  /* Leitura da query string (copia do padrao do Painel v2, index.js):
+     parser manual, tolerante a par malformado. */
+  function lerQueryString() {
+    var out = {};
+    var q = window.location.search || '';
+    if (q.charAt(0) === '?') q = q.substring(1);
+    if (!q) return out;
+    var partes = q.split('&');
+    for (var i = 0; i < partes.length; i++) {
+      if (!partes[i]) continue;
+      var par = partes[i].split('=');
+      try {
+        var chave = decodeURIComponent(par[0].replace(/\+/g, ' '));
+        var valor = par.length > 1 ? decodeURIComponent(par.slice(1).join('=').replace(/\+/g, ' ')) : '';
+        out[chave] = valor;
+      } catch (e) {
+        // par malformado (ex.: % solto): ignora sem derrubar o init
+      }
+    }
+    return out;
+  }
+
   /* Sugestao de fim do periodo aquisitivo: inicio + 1 ano - 1 dia.
      Constroi a data a partir das partes (nunca a partir da string ISO) e
      formata de volta com pad; devolve '' se o inicio for invalido. */
@@ -134,7 +195,34 @@
     }
     if (nome === 'periodos') {
       carregarSelectFuncionarios();
+    } else if (nome === 'ferias') {
+      carregarSelectFuncionariosFerias();
     }
+  }
+
+  /* Preenche um select com os funcionarios ativos, preservando a selecao
+     atual se ela ainda existir; chama aoTerminar(lista) so em sucesso.
+     Compartilhado pelas abas Periodos e Ferias. */
+  function preencherSelectFuncionarios(selectId, aoTerminar) {
+    var sel = document.getElementById(selectId);
+    if (!sel) return;
+    var selecionadoAntes = sel.value;
+
+    requisitar('GET', API + '/funcionarios').then(function(json) {
+      var lista = json.funcionarios || [];
+      var html = '<option value="">Selecione...</option>';
+      var aindaExiste = false;
+      for (var i = 0; i < lista.length; i++) {
+        var id = parseInt(lista[i].id, 10);
+        html += '<option value="' + id + '">' + escapeHtml(lista[i].nome) + '</option>';
+        if (String(id) === selecionadoAntes) aindaExiste = true;
+      }
+      sel.innerHTML = html;
+      sel.value = aindaExiste ? selecionadoAntes : '';
+      if (aoTerminar) aoTerminar(lista);
+    }, function(e) {
+      mostrarToast(e.message, 'error');
+    });
   }
 
   /* ---------- Funcionarios: carga e tabela ---------- */
@@ -338,21 +426,7 @@
      Funcionarios sem recarregar a pagina. Lista so os ativos e preserva a
      selecao atual se ela ainda existir. */
   function carregarSelectFuncionarios() {
-    var sel = document.getElementById('perFuncionario');
-    if (!sel) return;
-    var selecionadoAntes = sel.value;
-
-    requisitar('GET', API + '/funcionarios').then(function(json) {
-      var lista = json.funcionarios || [];
-      var html = '<option value="">Selecione...</option>';
-      var aindaExiste = false;
-      for (var i = 0; i < lista.length; i++) {
-        var id = parseInt(lista[i].id, 10);
-        html += '<option value="' + id + '">' + escapeHtml(lista[i].nome) + '</option>';
-        if (String(id) === selecionadoAntes) aindaExiste = true;
-      }
-      sel.innerHTML = html;
-      sel.value = aindaExiste ? selecionadoAntes : '';
+    preencherSelectFuncionarios('perFuncionario', function() {
       sincronizarFuncionarioSelecionado();
       if (perFuncionarioId) {
         carregarPeriodos();
@@ -361,8 +435,6 @@
         periodos = [];
         renderizarPeriodos();
       }
-    }, function(e) {
-      mostrarToast(e.message, 'error');
     });
   }
 
@@ -616,6 +688,459 @@
     }
   }
 
+  /* ---------- Ferias: selecao de funcionario e periodo ---------- */
+
+  function limparSelectPeriodosFerias() {
+    var sel = document.getElementById('ferPeriodo');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Selecione...</option>';
+    sel.value = '';
+    sel.disabled = true;
+    ferPeriodos = [];
+  }
+
+  function lerFuncionarioFerias() {
+    var sel = document.getElementById('ferFuncionario');
+    var valor = sel ? parseInt(sel.value, 10) : NaN;
+    return valor > 0 ? valor : null;
+  }
+
+  /* Chamada a cada ativacao da aba Ferias (e pelo deep link): recarrega o
+     select de funcionarios ativos; se a selecao sobreviveu, recarrega os
+     periodos; senao, reseta o painel. ferPreSelecionarId (deep link) e
+     consumido aqui uma unica vez. */
+  function carregarSelectFuncionariosFerias() {
+    var pendente = ferPreSelecionarId;
+    ferPreSelecionarId = null;
+
+    preencherSelectFuncionarios('ferFuncionario', function(lista) {
+      var sel = document.getElementById('ferFuncionario');
+      if (pendente) {
+        var existe = false;
+        for (var i = 0; i < lista.length; i++) {
+          if (parseInt(lista[i].id, 10) === pendente) existe = true;
+        }
+        if (existe) {
+          sel.value = String(pendente);
+        } else {
+          sel.value = '';
+          mostrarToast('Funcionário não encontrado ou inativo.', 'warning');
+        }
+      }
+      var novoId = lerFuncionarioFerias();
+      var mudou = novoId !== ferFuncionarioId;
+      ferFuncionarioId = novoId;
+      if (!ferFuncionarioId || mudou) {
+        limparSelectPeriodosFerias();
+        resetarPainel();
+      }
+      if (ferFuncionarioId) carregarPeriodosFerias(false);
+    });
+  }
+
+  function aoTrocarFuncionarioFerias() {
+    ferFuncionarioId = lerFuncionarioFerias();
+    limparSelectPeriodosFerias();
+    resetarPainel();
+    if (ferFuncionarioId) carregarPeriodosFerias(false);
+  }
+
+  /* Recarrega o select de periodos do funcionario. silencioso = true nas
+     atualizacoes em segundo plano (sem overlay). Mantem a selecao quando
+     possivel; se o periodo atual acabou de sair da lista (concluiu com o
+     toggle desligado), sua option e acrescentada ao final. Com um unico
+     periodo e nenhuma selecao previa, seleciona-o e abre o painel. */
+  function carregarPeriodosFerias(silencioso) {
+    var sel = document.getElementById('ferPeriodo');
+    if (!sel) return;
+    if (!ferFuncionarioId) {
+      limparSelectPeriodosFerias();
+      resetarPainel();
+      return;
+    }
+    var selecionadoAntes = ferPeriodoAtual ? String(ferPeriodoAtual.id) : (sel.value || '');
+    if (!silencioso) mostrarOverlay(true);
+
+    var url = API + '/periodos?funcionario_id=' + ferFuncionarioId
+      + (ferMostrarConcluidos ? '&incluir_concluidos=1' : '');
+    requisitar('GET', url).then(function(json) {
+      ferPeriodos = json.periodos || [];
+      var html = '<option value="">Selecione...</option>';
+      var aindaExiste = false;
+      for (var i = 0; i < ferPeriodos.length; i++) {
+        var p = ferPeriodos[i];
+        html += '<option value="' + parseInt(p.id, 10) + '">'
+          + escapeHtml(formatarPeriodo(p)) + (p.concluido ? ' (concluído)' : '')
+          + '</option>';
+        if (String(p.id) === selecionadoAntes) aindaExiste = true;
+      }
+      if (ferPeriodoAtual && !aindaExiste && ferPeriodoAtual.funcionario_id === ferFuncionarioId) {
+        html += '<option value="' + parseInt(ferPeriodoAtual.id, 10) + '">'
+          + escapeHtml(formatarPeriodo(ferPeriodoAtual)) + (ferPeriodoAtual.concluido ? ' (concluído)' : '')
+          + '</option>';
+        aindaExiste = true;
+      }
+      sel.innerHTML = html;
+      sel.disabled = false;
+
+      if (aindaExiste) {
+        sel.value = selecionadoAntes;
+      } else if (ferPeriodos.length === 1 && !selecionadoAntes) {
+        sel.value = String(ferPeriodos[0].id);
+        carregarPainel(parseInt(ferPeriodos[0].id, 10));
+      } else {
+        sel.value = '';
+        resetarPainel();
+      }
+      if (!silencioso) mostrarOverlay(false);
+    }, function(e) {
+      if (!silencioso) mostrarOverlay(false);
+      limparSelectPeriodosFerias();
+      resetarPainel();
+      mostrarToast(e.message, 'error');
+    });
+  }
+
+  function aoTrocarPeriodoFerias() {
+    var sel = document.getElementById('ferPeriodo');
+    var id = sel ? parseInt(sel.value, 10) : NaN;
+    if (id > 0) {
+      carregarPainel(id);
+    } else {
+      resetarPainel();
+    }
+  }
+
+  /* ---------- Ferias: painel do periodo ---------- */
+
+  function carregarPainel(id) {
+    mostrarOverlay(true);
+    requisitar('GET', API + '/periodos/' + id).then(function(json) {
+      ferPeriodoAtual = json.periodo || null;
+      fecharFormBloco();
+      renderizarPainel(false);
+      mostrarOverlay(false);
+    }, function(e) {
+      mostrarOverlay(false);
+      resetarPainel();
+      mostrarToast(e.message, 'error');
+    });
+  }
+
+  function nomeFuncionarioSelecionadoFerias() {
+    var sel = document.getElementById('ferFuncionario');
+    if (!sel || sel.selectedIndex < 0) return '';
+    return sel.options[sel.selectedIndex].text || '';
+  }
+
+  /* manterCampos = true preserva o que estiver digitado em abono/observacoes
+     (usado apos operacoes de bloco, para nao descartar uma edicao em curso). */
+  function renderizarPainel(manterCampos) {
+    var p = ferPeriodoAtual;
+    if (!p) {
+      resetarPainel();
+      return;
+    }
+    document.getElementById('ferVazio').style.display = 'none';
+    document.getElementById('ferPainel').style.display = '';
+
+    document.getElementById('ferPainelTitulo').textContent =
+      nomeFuncionarioSelecionadoFerias() + ' · ' + formatarPeriodo(p);
+
+    var status = document.getElementById('ferStatus');
+    status.textContent = p.concluido ? 'Concluído' : 'Aberto';
+    status.className = 'badge ' + (p.concluido ? 'badge-neutral' : 'badge-success');
+
+    var ul = document.getElementById('ferAvisos');
+    var avisos = p.avisos || [];
+    if (avisos.length) {
+      var htmlAvisos = '';
+      for (var i = 0; i < avisos.length; i++) {
+        htmlAvisos += '<li><i class="ph ph-warning"></i> ' + escapeHtml(avisos[i]) + '</li>';
+      }
+      ul.innerHTML = htmlAvisos;
+      ul.style.display = '';
+    } else {
+      ul.innerHTML = '';
+      ul.style.display = 'none';
+    }
+
+    var saldo = inteiroOuZero(p.saldo);
+    document.getElementById('ferDireito').textContent = String(inteiroOuZero(p.dias_direito));
+    document.getElementById('ferAbonoValor').textContent = String(inteiroOuZero(p.abono_dias));
+    document.getElementById('ferGozados').textContent = String(inteiroOuZero(p.dias_gozados));
+    var saldoEl = document.getElementById('ferSaldo');
+    saldoEl.textContent = String(saldo);
+    if (saldo < 0) {
+      saldoEl.classList.add('ferias-saldo-negativo');
+    } else {
+      saldoEl.classList.remove('ferias-saldo-negativo');
+    }
+
+    if (!manterCampos) {
+      document.getElementById('ferAbono').value = String(inteiroOuZero(p.abono_dias));
+      document.getElementById('ferObs').value = p.observacoes || '';
+    }
+    atualizarSaldoPreview();
+    renderizarBlocos();
+  }
+
+  function resetarPainel() {
+    ferPeriodoAtual = null;
+    var painel = document.getElementById('ferPainel');
+    var vazio = document.getElementById('ferVazio');
+    if (painel) painel.style.display = 'none';
+    if (vazio) vazio.style.display = '';
+    fecharFormBloco();
+  }
+
+  /* Saldo projetado com o abono digitado (so aritmetica local; o valor
+     oficial vem do servidor apos salvar). Vazio se igual ao abono atual ou
+     se o campo estiver invalido. */
+  function atualizarSaldoPreview() {
+    var out = document.getElementById('ferSaldoPreview');
+    var p = ferPeriodoAtual;
+    if (!out) return;
+    if (!p) {
+      out.textContent = '';
+      return;
+    }
+    var valor = document.getElementById('ferAbono').value;
+    var abono = valor === '' ? NaN : parseInt(valor, 10);
+    if (isNaN(abono) || abono < 0 || abono > 60 || abono === inteiroOuZero(p.abono_dias)) {
+      out.textContent = '';
+      return;
+    }
+    var saldo = inteiroOuZero(p.dias_direito) - abono - inteiroOuZero(p.dias_gozados);
+    out.textContent = 'Saldo após salvar: ' + pluralDias(saldo);
+  }
+
+  function salvarDadosPeriodo() {
+    var p = ferPeriodoAtual;
+    if (!p) return;
+    var abonoInput = document.getElementById('ferAbono');
+    var abono = abonoInput.value === '' ? 0 : parseInt(abonoInput.value, 10);
+    if (isNaN(abono) || abono < 0 || abono > 60) {
+      mostrarToast('Dias de abono inválidos (0 a 60).', 'error');
+      abonoInput.focus();
+      return;
+    }
+    var observacoes = document.getElementById('ferObs').value;
+    var btn = document.getElementById('btnSalvarPeriodoDados');
+
+    btn.disabled = true;
+    mostrarOverlay(true);
+    requisitar('PATCH', API + '/periodos/' + p.id, { abono_dias: abono, observacoes: observacoes }).then(function(json) {
+      btn.disabled = false;
+      mostrarOverlay(false);
+      ferPeriodoAtual = json.periodo || ferPeriodoAtual;
+      renderizarPainel(false);
+      mostrarToast('Abono e observações salvos.', 'success');
+      carregarPeriodosFerias(true);
+    }, function(e) {
+      btn.disabled = false;
+      mostrarOverlay(false);
+      mostrarToast(e.message, 'error');
+    });
+  }
+
+  /* ---------- Ferias: blocos de gozo ---------- */
+
+  function blocosAtuais() {
+    return ferPeriodoAtual ? (ferPeriodoAtual.blocos || []) : [];
+  }
+
+  function encontrarBloco(id) {
+    var blocos = blocosAtuais();
+    for (var i = 0; i < blocos.length; i++) {
+      if (blocos[i].id === id) return blocos[i];
+    }
+    return null;
+  }
+
+  function renderizarBlocos() {
+    var cont = document.getElementById('blocoTabela');
+    if (!cont) return;
+    var blocos = blocosAtuais();
+    if (!blocos.length) {
+      cont.innerHTML = '<p class="ferias-vazio">Nenhum bloco registrado.</p>';
+      return;
+    }
+
+    var html = '<div class="table-wrapper"><table class="report-table ferias-tabela"><thead><tr>'
+      + '<th>Início</th>'
+      + '<th>Fim</th>'
+      + '<th>Dias</th>'
+      + '<th class="ferias-col-acoes">Ações</th>'
+      + '</tr></thead><tbody>';
+
+    for (var i = 0; i < blocos.length; i++) {
+      var b = blocos[i];
+      var id = parseInt(b.id, 10);
+      html += '<tr>'
+        + '<td>' + escapeHtml(formatarDataBR(b.inicio)) + '</td>'
+        + '<td>' + escapeHtml(formatarDataBR(b.fim)) + '</td>'
+        + '<td>' + inteiroOuZero(b.dias) + '</td>'
+        + '<td class="ferias-col-acoes">'
+        + '<button type="button" class="btn-icon" data-acao="editar-bloco" data-id="' + id + '" title="Editar"><i class="ph ph-pencil-simple"></i></button>'
+        + '<button type="button" class="btn-icon" data-acao="excluir-bloco" data-id="' + id + '" title="Excluir"><i class="ph ph-trash"></i></button>'
+        + '</td>'
+        + '</tr>';
+    }
+
+    html += '</tbody></table></div>';
+    cont.innerHTML = html;
+  }
+
+  function mostrarFormBloco(visivel) {
+    var form = document.getElementById('blocoForm');
+    if (form) form.style.display = visivel ? '' : 'none';
+  }
+
+  function limparFormBloco() {
+    var inicio = document.getElementById('blocoInicio');
+    var fim = document.getElementById('blocoFim');
+    var idEl = document.getElementById('blocoId');
+    var dias = document.getElementById('blocoDias');
+    if (inicio) inicio.value = '';
+    if (fim) fim.value = '';
+    if (idEl) idEl.value = '';
+    if (dias) dias.textContent = '';
+  }
+
+  function abrirFormNovoBloco() {
+    if (!ferPeriodoAtual) return;
+    limparFormBloco();
+    editandoBlocoId = null;
+    document.getElementById('blocoFormTitulo').textContent = 'Novo bloco';
+    mostrarFormBloco(true);
+    document.getElementById('blocoInicio').focus();
+  }
+
+  function abrirFormEditarBloco(id) {
+    var b = encontrarBloco(id);
+    if (!b) return;
+    limparFormBloco();
+    editandoBlocoId = id;
+    document.getElementById('blocoInicio').value = b.inicio || '';
+    document.getElementById('blocoFim').value = b.fim || '';
+    document.getElementById('blocoId').value = String(id);
+    document.getElementById('blocoFormTitulo').textContent = 'Editar bloco';
+    atualizarBlocoDias();
+    mostrarFormBloco(true);
+    document.getElementById('blocoInicio').focus();
+  }
+
+  function fecharFormBloco() {
+    mostrarFormBloco(false);
+    limparFormBloco();
+    editandoBlocoId = null;
+  }
+
+  /* Duracao ao vivo do bloco ("1 dia" / "N dias"); vazio se incompleto ou
+     com fim anterior ao inicio. */
+  function atualizarBlocoDias() {
+    var out = document.getElementById('blocoDias');
+    if (!out) return;
+    var inicio = document.getElementById('blocoInicio').value;
+    var fim = document.getElementById('blocoFim').value;
+    if (!inicio || !fim || fim < inicio) {
+      out.textContent = '';
+      return;
+    }
+    var n = diasEntreIso(inicio, fim);
+    out.textContent = isNaN(n) ? '' : pluralDias(n);
+  }
+
+  function salvarBloco() {
+    var p = ferPeriodoAtual;
+    if (!p) return;
+    var inicioInput = document.getElementById('blocoInicio');
+    var fimInput = document.getElementById('blocoFim');
+    var inicio = inicioInput.value;
+    var fim = fimInput.value;
+
+    if (!inicio) {
+      mostrarToast('Informe a data inicial.', 'error');
+      inicioInput.focus();
+      return;
+    }
+    if (!fim) {
+      mostrarToast('Informe a data final.', 'error');
+      fimInput.focus();
+      return;
+    }
+    if (fim < inicio) {
+      mostrarToast('A data final deve ser igual ou posterior à inicial.', 'error');
+      fimInput.focus();
+      return;
+    }
+
+    var editando = editandoBlocoId !== null;
+    var body = editando
+      ? { inicio: inicio, fim: fim }
+      : { periodo_id: p.id, inicio: inicio, fim: fim };
+    var metodo = editando ? 'PATCH' : 'POST';
+    var url = API + '/blocos' + (editando ? '/' + editandoBlocoId : '');
+    var btn = document.getElementById('btnSalvarBloco');
+
+    btn.disabled = true;
+    mostrarOverlay(true);
+    requisitar(metodo, url, body).then(function(json) {
+      btn.disabled = false;
+      mostrarOverlay(false);
+      ferPeriodoAtual = json.periodo || ferPeriodoAtual;
+      fecharFormBloco();
+      renderizarPainel(true);
+      mostrarToast(editando ? 'Bloco atualizado.' : 'Bloco registrado.', 'success');
+      carregarPeriodosFerias(true);
+    }, function(e) {
+      btn.disabled = false;
+      mostrarOverlay(false);
+      mostrarToast(e.message, 'error');
+    });
+  }
+
+  function excluirBloco(id) {
+    var b = encontrarBloco(id);
+    if (!b) return;
+    var mensagem = 'Excluir o bloco de ' + formatarDataBR(b.inicio) + ' a ' + formatarDataBR(b.fim) + '?';
+    if (!window.confirm(mensagem)) return;
+
+    mostrarOverlay(true);
+    requisitar('POST', API + '/blocos/' + id + '/excluir').then(function(json) {
+      mostrarOverlay(false);
+      ferPeriodoAtual = json.periodo || ferPeriodoAtual;
+      if (editandoBlocoId === id) fecharFormBloco();
+      renderizarPainel(true);
+      mostrarToast('Bloco excluído.', 'success');
+      carregarPeriodosFerias(true);
+    }, function(e) {
+      mostrarOverlay(false);
+      mostrarToast(e.message, 'error');
+    });
+  }
+
+  function aoClicarTabelaBlocos(ev) {
+    var alvo = ev.target;
+    while (alvo && alvo !== this) {
+      if (alvo.getAttribute && alvo.getAttribute('data-acao')) break;
+      alvo = alvo.parentNode;
+    }
+    if (!alvo || alvo === this) return;
+    if (alvo.disabled) return;
+
+    var acao = alvo.getAttribute('data-acao');
+    var id = parseInt(alvo.getAttribute('data-id'), 10);
+    if (!id) return;
+
+    if (acao === 'editar-bloco') {
+      abrirFormEditarBloco(id);
+    } else if (acao === 'excluir-bloco') {
+      excluirBloco(id);
+    }
+  }
+
   /* ---------- Inicializacao ---------- */
 
   function init() {
@@ -694,8 +1219,71 @@
     var perTabela = document.getElementById('perTabela');
     if (perTabela) perTabela.addEventListener('click', aoClicarTabelaPeriodos);
 
+    /* Aba Ferias */
+    var ferSelFunc = document.getElementById('ferFuncionario');
+    if (ferSelFunc) ferSelFunc.addEventListener('change', aoTrocarFuncionarioFerias);
+
+    var ferSelPer = document.getElementById('ferPeriodo');
+    if (ferSelPer) ferSelPer.addEventListener('change', aoTrocarPeriodoFerias);
+
+    var chkFer = document.getElementById('chkFerMostrarConcluidos');
+    if (chkFer) {
+      chkFer.addEventListener('change', function() {
+        ferMostrarConcluidos = !!this.checked;
+        carregarPeriodosFerias(false);
+      });
+    }
+
+    var ferAbono = document.getElementById('ferAbono');
+    if (ferAbono) ferAbono.addEventListener('input', atualizarSaldoPreview);
+
+    var btnSalvarDados = document.getElementById('btnSalvarPeriodoDados');
+    if (btnSalvarDados) btnSalvarDados.addEventListener('click', salvarDadosPeriodo);
+
+    var btnNovoBl = document.getElementById('btnNovoBloco');
+    if (btnNovoBl) btnNovoBl.addEventListener('click', abrirFormNovoBloco);
+
+    var btnSalvarBl = document.getElementById('btnSalvarBloco');
+    if (btnSalvarBl) btnSalvarBl.addEventListener('click', salvarBloco);
+
+    var btnCancelarBl = document.getElementById('btnCancelarBloco');
+    if (btnCancelarBl) btnCancelarBl.addEventListener('click', fecharFormBloco);
+
+    var blocoInicio = document.getElementById('blocoInicio');
+    var blocoFim = document.getElementById('blocoFim');
+    if (blocoInicio) {
+      blocoInicio.addEventListener('change', atualizarBlocoDias);
+      blocoInicio.addEventListener('input', atualizarBlocoDias);
+    }
+    if (blocoFim) {
+      blocoFim.addEventListener('change', atualizarBlocoDias);
+      blocoFim.addEventListener('input', atualizarBlocoDias);
+      blocoFim.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Enter' || ev.keyCode === 13) {
+          ev.preventDefault();
+          salvarBloco();
+        }
+      });
+    }
+
+    var blocoTabela = document.getElementById('blocoTabela');
+    if (blocoTabela) blocoTabela.addEventListener('click', aoClicarTabelaBlocos);
+
     renderizarPeriodos();
     carregarFuncionarios();
+
+    /* Deep link ?funcionario=<id>: abre a aba Ferias com ele selecionado.
+       A URL fica como veio. */
+    var params = lerQueryString();
+    if (params.funcionario !== undefined) {
+      var funcParam = parseInt(params.funcionario, 10);
+      if (funcParam > 0 && String(funcParam) === String(params.funcionario).trim()) {
+        ferPreSelecionarId = funcParam;
+      } else {
+        mostrarToast('Funcionário não encontrado ou inativo.', 'warning');
+      }
+      ativarAba('ferias');
+    }
   }
 
   document.addEventListener('DOMContentLoaded', init);

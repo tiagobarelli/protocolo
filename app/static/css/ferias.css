@@ -113,6 +113,74 @@
   cursor: help;
 }
 
+/* Aba Ferias: painel do periodo (abono, observacoes, blocos) */
+.main-content .ferias-painel-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.main-content .ferias-painel-titulo {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+.main-content .ferias-avisos {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.main-content .ferias-avisos li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--warning);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.main-content .ferias-avisos li i { font-size: 1rem; line-height: 1; }
+.main-content .ferias-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.main-content .ferias-tile {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  background: var(--surface);
+}
+.main-content .ferias-tile-rotulo {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.main-content .ferias-tile-valor {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+.main-content .ferias-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.main-content .ferias-dias {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  margin-top: 0;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
 /* Estados vazios e abas ainda sem conteudo */
 .main-content .ferias-vazio,
 .main-content .ferias-placeholder {
@@ -148,5 +216,6 @@
   .main-content .ferias-form .form-row { flex-direction: column; gap: 12px; }
   .main-content .ferias-form .form-group.small,
   .main-content .ferias-form .form-group.ferias-campo-cor { flex: 1 1 auto; }
+  .main-content .ferias-resumo { grid-template-columns: repeat(2, 1fr); }
   .tabs-header { overflow-x: auto; }
 }

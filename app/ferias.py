@@ -12,6 +12,12 @@
 # cálculo, mas só ganham endpoints na Leva 3. Períodos e blocos têm exclusão
 # lógica (excluido_em IS NULL = vigente); um período excluído é tratado como
 # inexistente em toda a API.
+# Leva 3: GET /periodos/<id> e os endpoints de blocos (POST, PATCH,
+# POST /excluir), todos respondendo com o período recalculado por
+# _responder_periodo; aviso 7 (bloco sobreposto a outro bloco do mesmo
+# funcionário, em qualquer período vigente). Não se valida que o bloco caia
+# dentro do período aquisitivo (as férias são gozadas depois dele) nem a
+# sobreposição de blocos (é aviso, nunca bloqueio).
 #
 # Convenções: datas sem hora trafegam como string 'YYYY-MM-DD', validadas
 # mas nunca convertidas; timestamps de auditoria (CURRENT_TIMESTAMP, UTC) só
@@ -59,6 +65,7 @@ ERRO_ABONO = "Dias de abono inválidos (0 a {}).".format(DIAS_MAX)
 ERRO_OBSERVACOES_LONGAS = "Observações devem ter no máximo {} caracteres.".format(OBSERVACOES_MAX_CHARS)
 ERRO_OBSERVACOES = "Observações inválidas."
 ERRO_EXCLUIR_COM_BLOCOS = "Não é possível excluir: há blocos de férias registrados neste período."
+ERRO_BLOCO_NAO_ENCONTRADO = "Bloco não encontrado."
 
 AVISO_ABONO = "Abono acima de um terço do direito (máximo {} dias)."
 AVISO_MUITOS_BLOCOS = "Mais de 3 blocos de férias."
@@ -66,6 +73,7 @@ AVISO_SEM_BLOCO_14 = "Nenhum bloco com 14 dias ou mais."
 AVISO_BLOCO_CURTO = "Há bloco com menos de 5 dias."
 AVISO_SALDO_NEGATIVO = "Saldo negativo: {} dias além do direito."
 AVISO_SOBREPOSICAO = "Sobrepõe outro período aquisitivo."
+AVISO_BLOCO_SOBREPOSTO = "Há bloco sobreposto a outro bloco de férias."
 
 
 # ---------------------------------------------------------------------------
@@ -350,11 +358,46 @@ def _periodos_ativos_do_funcionario(db, funcionario_id):
     ).fetchall()
 
 
-def _calcular_periodo(db, row, outros=None):
+def _blocos_ativos_do_funcionario(db, funcionario_id):
+    """Blocos vigentes do funcionário em qualquer período vigente (para o
+    aviso de bloco sobreposto, que cruza períodos)."""
+    return db.execute(
+        "SELECT b.id, b.inicio, b.fim, b.periodo_id "
+        "FROM ferias_blocos b "
+        "JOIN ferias_periodos p ON p.id = b.periodo_id "
+        "WHERE p.funcionario_id = ? AND b.excluido_em IS NULL AND p.excluido_em IS NULL",
+        (funcionario_id,),
+    ).fetchall()
+
+
+def _buscar_bloco(db, bloco_id):
+    """Linha do bloco vigente (não excluído) por id, ou None."""
+    return db.execute(
+        "SELECT * FROM ferias_blocos WHERE id = ? AND excluido_em IS NULL",
+        (bloco_id,),
+    ).fetchone()
+
+
+def _responder_periodo(db, periodo_id, status=200):
+    """Relê o período e devolve o painel completo recalculado (blocos, saldo,
+    avisos). Usado pelo GET de um período e por todos os endpoints de blocos."""
+    row = _buscar_periodo(db, periodo_id)
+    if row is None:
+        return jsonify(ok=False, erro=ERRO_PERIODO_NAO_ENCONTRADO), 404
+    outros = [
+        p for p in _periodos_ativos_do_funcionario(db, row["funcionario_id"])
+        if p["id"] != periodo_id
+    ]
+    return jsonify(ok=True, periodo=_calcular_periodo(db, row, outros)), status
+
+
+def _calcular_periodo(db, row, outros=None, blocos_funcionario=None):
     """Serializa o período com saldo, blocos vigentes e avisos.
 
     outros: lista dos demais períodos vigentes do mesmo funcionário, para a
-    checagem de sobreposição sem repetir a consulta; None = consultar aqui.
+    checagem de sobreposição de períodos sem repetir a consulta; None =
+    consultar aqui. blocos_funcionario: blocos vigentes do funcionário em
+    todos os períodos vigentes, para o aviso de bloco sobreposto; idem.
     Os avisos são informativos e nunca bloqueiam operação alguma.
     """
     blocos = []
@@ -390,6 +433,21 @@ def _calcular_periodo(db, row, outros=None):
         if row["inicio"] <= outro["fim"] and row["fim"] >= outro["inicio"]:
             avisos.append(AVISO_SOBREPOSICAO)
             break
+
+    if blocos and blocos_funcionario is None:
+        blocos_funcionario = _blocos_ativos_do_funcionario(db, row["funcionario_id"])
+    bloco_sobreposto = False
+    for b in blocos:
+        for outro in blocos_funcionario or []:
+            if outro["id"] == b["id"]:
+                continue
+            if b["inicio"] <= outro["fim"] and b["fim"] >= outro["inicio"]:
+                bloco_sobreposto = True
+                break
+        if bloco_sobreposto:
+            break
+    if bloco_sobreposto:
+        avisos.append(AVISO_BLOCO_SOBREPOSTO)
 
     return {
         "id": row["id"],
@@ -432,10 +490,11 @@ def listar_periodos():
 
     incluir_concluidos = request.args.get("incluir_concluidos") == "1"
     rows = _periodos_ativos_do_funcionario(db, funcionario_id)
+    blocos_funcionario = _blocos_ativos_do_funcionario(db, funcionario_id)
     periodos = []
     for row in rows:
         outros = [p for p in rows if p["id"] != row["id"]]
-        calculado = _calcular_periodo(db, row, outros)
+        calculado = _calcular_periodo(db, row, outros, blocos_funcionario)
         if calculado["concluido"] and not incluir_concluidos:
             continue
         periodos.append(calculado)
@@ -595,3 +654,136 @@ def excluir_periodo(periodo_id):
     )
     db.commit()
     return jsonify(ok=True)
+
+
+@ferias_bp.route("/periodos/<int:periodo_id>", methods=["GET"])
+@login_required
+def obter_periodo(periodo_id):
+    """Painel completo de um período (blocos, saldo, avisos). Só master.
+    Convive com o PATCH do mesmo caminho e com o GET /periodos da listagem."""
+    erro = _exigir_master()
+    if erro:
+        return erro
+
+    db = get_db()
+    if _buscar_periodo(db, periodo_id) is None:
+        return jsonify(ok=False, erro=ERRO_PERIODO_NAO_ENCONTRADO), 404
+    return _responder_periodo(db, periodo_id)
+
+
+# ---------------------------------------------------------------------------
+# Rotas: blocos de férias
+# ---------------------------------------------------------------------------
+
+@ferias_bp.route("/blocos", methods=["POST"])
+@login_required
+def criar_bloco():
+    """Cria um bloco de gozo. Body: periodo_id, inicio, fim. Só master.
+    Responde com o período recalculado (201)."""
+    erro = _exigir_master()
+    if erro:
+        return erro
+
+    dados = request.get_json(silent=True) or {}
+    db = get_db()
+
+    periodo_id = _validar_inteiro(dados.get("periodo_id"), 1, ID_MAX)
+    periodo = _buscar_periodo(db, periodo_id) if periodo_id is not None else None
+    if periodo is None:
+        return jsonify(ok=False, erro=ERRO_PERIODO_NAO_ENCONTRADO), 404
+
+    funcionario = _buscar_funcionario(db, periodo["funcionario_id"])
+    if funcionario is None or not funcionario["ativo"]:
+        return jsonify(ok=False, erro=ERRO_FUNCIONARIO_INATIVO), 400
+
+    inicio = _validar_data(dados.get("inicio"))
+    if not inicio:
+        return jsonify(ok=False, erro=ERRO_DATA_INICIAL), 400
+    fim = _validar_data(dados.get("fim"))
+    if not fim:
+        return jsonify(ok=False, erro=ERRO_DATA_FINAL), 400
+    if fim < inicio:
+        return jsonify(ok=False, erro=ERRO_ORDEM_DATAS), 400
+
+    db.execute(
+        "INSERT INTO ferias_blocos "
+        "(periodo_id, inicio, fim, criado_por_id, criado_por_nome) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (periodo_id, inicio, fim, current_user.id, current_user.nome),
+    )
+    db.commit()
+    return _responder_periodo(db, periodo_id, 201)
+
+
+@ferias_bp.route("/blocos/<int:bloco_id>", methods=["PATCH"])
+@login_required
+def atualizar_bloco(bloco_id):
+    """Atualização parcial de inicio e fim do bloco (a tabela não tem
+    atualizado_em). Só master. Responde com o período recalculado."""
+    erro = _exigir_master()
+    if erro:
+        return erro
+
+    db = get_db()
+    bloco = _buscar_bloco(db, bloco_id)
+    if bloco is None:
+        return jsonify(ok=False, erro=ERRO_BLOCO_NAO_ENCONTRADO), 404
+
+    dados = request.get_json(silent=True) or {}
+    colunas = []
+    valores = []
+    inicio_final = bloco["inicio"]
+    fim_final = bloco["fim"]
+
+    if "inicio" in dados:
+        inicio = _validar_data(dados.get("inicio"))
+        if not inicio:
+            return jsonify(ok=False, erro=ERRO_DATA_INICIAL), 400
+        colunas.append("inicio = ?")
+        valores.append(inicio)
+        inicio_final = inicio
+
+    if "fim" in dados:
+        fim = _validar_data(dados.get("fim"))
+        if not fim:
+            return jsonify(ok=False, erro=ERRO_DATA_FINAL), 400
+        colunas.append("fim = ?")
+        valores.append(fim)
+        fim_final = fim
+
+    if not colunas:
+        return jsonify(ok=False, erro=ERRO_SEM_CAMPOS), 400
+    if fim_final < inicio_final:
+        return jsonify(ok=False, erro=ERRO_ORDEM_DATAS), 400
+
+    valores.append(bloco_id)
+    db.execute(
+        "UPDATE ferias_blocos SET " + ", ".join(colunas)
+        + " WHERE id = ? AND excluido_em IS NULL",
+        valores,
+    )
+    db.commit()
+    return _responder_periodo(db, bloco["periodo_id"])
+
+
+@ferias_bp.route("/blocos/<int:bloco_id>/excluir", methods=["POST"])
+@login_required
+def excluir_bloco(bloco_id):
+    """Exclusão lógica do bloco. Só master. Responde com o período recalculado."""
+    erro = _exigir_master()
+    if erro:
+        return erro
+
+    db = get_db()
+    bloco = _buscar_bloco(db, bloco_id)
+    if bloco is None:
+        return jsonify(ok=False, erro=ERRO_BLOCO_NAO_ENCONTRADO), 404
+
+    db.execute(
+        "UPDATE ferias_blocos "
+        "SET excluido_por_id = ?, excluido_por_nome = ?, excluido_em = CURRENT_TIMESTAMP "
+        "WHERE id = ? AND excluido_em IS NULL",
+        (current_user.id, current_user.nome, bloco_id),
+    )
+    db.commit()
+    return _responder_periodo(db, bloco["periodo_id"])

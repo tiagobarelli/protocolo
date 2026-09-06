@@ -131,10 +131,115 @@
         </div>
       </div>
 
-      <!-- Aba Ferias (esqueleto) -->
+      <!-- Aba Ferias -->
       <div class="tab-content" id="tab-ferias">
+        <!-- Card de selecao -->
         <div class="card">
-          <p class="ferias-placeholder">Disponível na próxima etapa.</p>
+          <div class="ferias-topo">
+            <div class="section-title"><i class="ph ph-island"></i> Férias</div>
+            <div class="ferias-controles">
+              <div class="form-group">
+                <label for="ferFuncionario">Funcionário</label>
+                <select id="ferFuncionario">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="ferPeriodo">Período aquisitivo</label>
+                <select id="ferPeriodo" disabled>
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+              <label class="ferias-check" for="chkFerMostrarConcluidos">
+                <input type="checkbox" id="chkFerMostrarConcluidos"> Mostrar concluídos
+              </label>
+            </div>
+          </div>
+          <p id="ferVazio" class="ferias-placeholder">Selecione um funcionário e um período aquisitivo.</p>
+        </div>
+
+        <!-- Painel do periodo selecionado -->
+        <div id="ferPainel" style="display:none;">
+
+          <!-- Card A: resumo e dados do periodo -->
+          <div class="card">
+            <div class="ferias-painel-topo">
+              <div class="ferias-painel-titulo" id="ferPainelTitulo"></div>
+              <span class="badge badge-success" id="ferStatus">Aberto</span>
+            </div>
+            <ul id="ferAvisos" class="ferias-avisos" style="display:none;"></ul>
+
+            <div class="ferias-resumo">
+              <div class="ferias-tile">
+                <div class="ferias-tile-rotulo">Direito</div>
+                <div class="ferias-tile-valor" id="ferDireito">0</div>
+              </div>
+              <div class="ferias-tile">
+                <div class="ferias-tile-rotulo">Abono</div>
+                <div class="ferias-tile-valor" id="ferAbonoValor">0</div>
+              </div>
+              <div class="ferias-tile">
+                <div class="ferias-tile-rotulo">Gozados</div>
+                <div class="ferias-tile-valor" id="ferGozados">0</div>
+              </div>
+              <div class="ferias-tile">
+                <div class="ferias-tile-rotulo">Saldo</div>
+                <div class="ferias-tile-valor" id="ferSaldo">0</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group small">
+                <label for="ferAbono">Dias de abono</label>
+                <input type="number" id="ferAbono" min="0" max="60" value="0">
+                <small id="ferSaldoPreview" class="ferias-hint"></small>
+              </div>
+              <div class="form-group">
+                <label for="ferObs">Observações</label>
+                <textarea id="ferObs" rows="4" maxlength="2000" placeholder="Ex.: abonar 10 dias e gozar 20 em dois blocos; faltas em emendas de feriado já concedidas..."></textarea>
+              </div>
+            </div>
+            <div class="ferias-form-acoes">
+              <button type="button" class="btn btn-primary" id="btnSalvarPeriodoDados"><i class="ph ph-check"></i> Salvar abono e observações</button>
+            </div>
+          </div>
+
+          <!-- Card B: blocos de gozo -->
+          <div class="card">
+            <div class="ferias-topo">
+              <div class="section-title"><i class="ph ph-calendar-check"></i> Blocos de férias</div>
+              <div class="ferias-controles">
+                <button type="button" class="btn btn-primary" id="btnNovoBloco"><i class="ph ph-plus"></i> Novo bloco</button>
+              </div>
+            </div>
+
+            <!-- Formulario inline do bloco (sem tag form; Enter no fim salva via JS) -->
+            <div id="blocoForm" class="ferias-form" style="display:none;">
+              <div class="ferias-form-titulo" id="blocoFormTitulo">Novo bloco</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="blocoInicio">Início</label>
+                  <input type="date" id="blocoInicio">
+                </div>
+                <div class="form-group">
+                  <label for="blocoFim">Fim</label>
+                  <input type="date" id="blocoFim">
+                </div>
+                <div class="form-group small">
+                  <label>Duração</label>
+                  <span id="blocoDias" class="ferias-hint ferias-dias"></span>
+                </div>
+              </div>
+              <input type="hidden" id="blocoId">
+              <div class="ferias-form-acoes">
+                <button type="button" class="btn btn-secondary" id="btnCancelarBloco">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSalvarBloco"><i class="ph ph-check"></i> Salvar</button>
+              </div>
+            </div>
+
+            <!-- Tabela renderizada pelo JS -->
+            <div id="blocoTabela"></div>
+          </div>
         </div>
       </div>
 
