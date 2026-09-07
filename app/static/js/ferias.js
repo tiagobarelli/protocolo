@@ -12,6 +12,19 @@
    em segundo plano) lista os proximos/vencidos de funcionarios ativos e o
    clique num item abre o painel da aba Ferias via os ids pendentes do deep
    link; a aba Periodos ganha um badge extra e o painel uma linha de prazo.
+   Leva 8a: aba Outros Eventos (eventos funcionais: faltas, atestados, bonus)
+   via /api/ferias/eventos (GET, POST, PATCH, POST /excluir) e as categorias
+   ativas de /api/ferias/categorias (geridas em Configuracoes); filtro por
+   ano em memoria; Ctrl+Enter na ocorrencia salva. Aba Visao Geral so com
+   placeholder (proxima leva).
+   Leva 8b: seletor "Notificar usuarios" nos formularios de bloco e evento
+   (so na criacao; usuarios ativos de /api/users/active menos o proprio, em
+   cache); o body ganha notificar_ids e o toast informa quantos foram
+   notificados (a resposta traz "notificados").
+   Leva 9: aba Visao Geral (so leitura) via GET /api/ferias/visao-geral:
+   select com inativos (3o parametro de preencherSelectFuncionarios),
+   cabecalho, tiles de resumo, chips por categoria e linha do tempo por ano
+   (admissao, periodos, blocos e eventos) renderizada a partir do JSON.
    Convencoes: datas sem hora sao strings 'YYYY-MM-DD' comparadas por string;
    a aritmetica de data (sugestao de fim do periodo, duracao de um bloco) e
    sempre construida a partir das partes (ano, mes, dia), nunca da string ISO.
@@ -53,6 +66,23 @@
 
   var vencimentos = [];
   var vencJanelaDias = 0;
+
+  /* ---------- Estado: outros eventos ---------- */
+
+  var evFuncionarioId = null;
+  var eventos = [];
+  var evCategorias = [];
+  var evAnoFiltro = '';
+  var editandoEventoId = null;
+
+  /* ---------- Estado: notificar usuarios ---------- */
+
+  var usuariosNotificaveis = null;
+
+  /* ---------- Estado: visao geral ---------- */
+
+  var vgFuncionarioId = null;
+  var vgDados = null;
 
   /* ---------- Helpers ---------- */
 
@@ -185,6 +215,94 @@
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
 
+  /* ---------- Notificar usuarios (formularios de criacao) ---------- */
+
+  /* Usuarios ativos que podem receber a notificacao (todos menos o proprio),
+     em cache apos a primeira carga (null = ainda nao carregado). O endpoint
+     /api/users/active responde {users: [...]} sem o envelope ok/erro, por
+     isso fetch direto em vez de requisitar(). Em erro, lista vazia com
+     console.warn e sem cache: o formulario segue utilizavel sem notificar. */
+  function carregarUsuariosNotificaveis(aoTerminar) {
+    if (usuariosNotificaveis !== null) {
+      aoTerminar();
+      return;
+    }
+    var meuId = window.CURRENT_USER ? parseInt(window.CURRENT_USER.id, 10) : NaN;
+    fetch('/api/users/active').then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function(json) {
+      var lista = json.users || [];
+      var out = [];
+      for (var i = 0; i < lista.length; i++) {
+        var id = parseInt(lista[i].id, 10);
+        if (id > 0 && id !== meuId) out.push({ id: id, nome: String(lista[i].nome || '') });
+      }
+      usuariosNotificaveis = out;
+      aoTerminar();
+    }, function(e) {
+      if (window.console && window.console.warn) {
+        window.console.warn('Usuários para notificação indisponíveis: ' + (e && e.message ? e.message : e));
+      }
+      aoTerminar();
+    });
+  }
+
+  /* Um checkbox por usuario (desmarcado) no container indicado. */
+  function renderizarNotificar(containerId) {
+    var cont = document.getElementById(containerId);
+    if (!cont) return;
+    var lista = usuariosNotificaveis || [];
+    if (!lista.length) {
+      cont.innerHTML = '<span class="ferias-hint">Nenhum outro usuário ativo.</span>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < lista.length; i++) {
+      html += '<label class="ferias-notificar-item">'
+        + '<input type="checkbox" value="' + parseInt(lista[i].id, 10) + '"> '
+        + escapeHtml(lista[i].nome)
+        + '</label>';
+    }
+    cont.innerHTML = html;
+  }
+
+  /* Ids marcados no container indicado. */
+  function lerNotificar(containerId) {
+    var ids = [];
+    var cont = document.getElementById(containerId);
+    if (!cont) return ids;
+    var caixas = cont.querySelectorAll('input[type="checkbox"]');
+    for (var i = 0; i < caixas.length; i++) {
+      if (caixas[i].checked) {
+        var id = parseInt(caixas[i].value, 10);
+        if (id > 0) ids.push(id);
+      }
+    }
+    return ids;
+  }
+
+  /* Formulario de criacao: mostra o seletor e o preenche; edicao: esconde e
+     limpa (editar nunca notifica). */
+  function prepararNotificar(wrapId, containerId, visivel) {
+    var wrap = document.getElementById(wrapId);
+    var cont = document.getElementById(containerId);
+    if (wrap) wrap.style.display = visivel ? '' : 'none';
+    if (cont) cont.innerHTML = '';
+    if (visivel) {
+      carregarUsuariosNotificaveis(function() {
+        renderizarNotificar(containerId);
+      });
+    }
+  }
+
+  /* Sufixo do toast de sucesso conforme o "notificados" da resposta. */
+  function textoNotificados(n) {
+    n = inteiroOuZero(n);
+    if (n <= 0) return '';
+    return n === 1 ? ' 1 usuário notificado.' : ' ' + n + ' usuários notificados.';
+  }
+
   /* ---------- Abas ---------- */
 
   function ativarAba(nome) {
@@ -209,24 +327,32 @@
       carregarSelectFuncionarios();
     } else if (nome === 'ferias') {
       carregarSelectFuncionariosFerias();
+    } else if (nome === 'eventos') {
+      carregarAbaEventos();
+    } else if (nome === 'visao') {
+      carregarAbaVisao();
     }
   }
 
   /* Preenche um select com os funcionarios ativos, preservando a selecao
      atual se ela ainda existir; chama aoTerminar(lista) so em sucesso.
-     Compartilhado pelas abas Periodos e Ferias. */
-  function preencherSelectFuncionarios(selectId, aoTerminar) {
+     Compartilhado pelas abas Periodos, Ferias e Outros Eventos. Com
+     incluirInativos (aba Visao Geral) lista todos, e os inativos ganham o
+     sufixo " (inativo)". */
+  function preencherSelectFuncionarios(selectId, aoTerminar, incluirInativos) {
     var sel = document.getElementById(selectId);
     if (!sel) return;
     var selecionadoAntes = sel.value;
+    var url = API + '/funcionarios' + (incluirInativos ? '?incluir_inativos=1' : '');
 
-    requisitar('GET', API + '/funcionarios').then(function(json) {
+    requisitar('GET', url).then(function(json) {
       var lista = json.funcionarios || [];
       var html = '<option value="">Selecione...</option>';
       var aindaExiste = false;
       for (var i = 0; i < lista.length; i++) {
         var id = parseInt(lista[i].id, 10);
-        html += '<option value="' + id + '">' + escapeHtml(lista[i].nome) + '</option>';
+        var sufixo = (incluirInativos && !lista[i].ativo) ? ' (inativo)' : '';
+        html += '<option value="' + id + '">' + escapeHtml(lista[i].nome) + sufixo + '</option>';
         if (String(id) === selecionadoAntes) aindaExiste = true;
       }
       sel.innerHTML = html;
@@ -1052,6 +1178,7 @@
     limparFormBloco();
     editandoBlocoId = null;
     document.getElementById('blocoFormTitulo').textContent = 'Novo bloco';
+    prepararNotificar('blocoNotificarWrap', 'blocoNotificar', true);
     mostrarFormBloco(true);
     document.getElementById('blocoInicio').focus();
   }
@@ -1066,6 +1193,7 @@
     document.getElementById('blocoId').value = String(id);
     document.getElementById('blocoFormTitulo').textContent = 'Editar bloco';
     atualizarBlocoDias();
+    prepararNotificar('blocoNotificarWrap', 'blocoNotificar', false);
     mostrarFormBloco(true);
     document.getElementById('blocoInicio').focus();
   }
@@ -1119,6 +1247,10 @@
     var body = editando
       ? { inicio: inicio, fim: fim }
       : { periodo_id: p.id, inicio: inicio, fim: fim };
+    if (!editando) {
+      var destinatarios = lerNotificar('blocoNotificar');
+      if (destinatarios.length) body.notificar_ids = destinatarios;
+    }
     var metodo = editando ? 'PATCH' : 'POST';
     var url = API + '/blocos' + (editando ? '/' + editandoBlocoId : '');
     var btn = document.getElementById('btnSalvarBloco');
@@ -1131,7 +1263,7 @@
       ferPeriodoAtual = json.periodo || ferPeriodoAtual;
       fecharFormBloco();
       renderizarPainel(true);
-      mostrarToast(editando ? 'Bloco atualizado.' : 'Bloco registrado.', 'success');
+      mostrarToast(editando ? 'Bloco atualizado.' : ('Bloco registrado.' + textoNotificados(json.notificados)), 'success');
       carregarPeriodosFerias(true);
       carregarVencimentos();
     }, function(e) {
@@ -1295,6 +1427,554 @@
     irParaPainel(funcionarioId, periodoId);
   }
 
+  /* ---------- Outros eventos: helpers ---------- */
+
+  /* Hoje como 'YYYY-MM-DD' pelas partes locais (getFullYear/getMonth/getDate).
+     Unico ponto do arquivo que le o relogio: default da data do evento novo. */
+  function hojeIso() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+
+  function encontrarEvento(id) {
+    for (var i = 0; i < eventos.length; i++) {
+      if (eventos[i].id === id) return eventos[i];
+    }
+    return null;
+  }
+
+  function lerFuncionarioEventos() {
+    var sel = document.getElementById('evFuncionario');
+    var valor = sel ? parseInt(sel.value, 10) : NaN;
+    return valor > 0 ? valor : null;
+  }
+
+  function selectTemValor(sel, valor) {
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === valor) return true;
+    }
+    return false;
+  }
+
+  /* "Novo evento" exige funcionario selecionado e ao menos uma categoria
+     ativa (sem categoria nao ha o que registrar). */
+  function atualizarBotaoNovoEvento() {
+    var btn = document.getElementById('btnNovoEvento');
+    if (btn) btn.disabled = !evFuncionarioId || !evCategorias.length;
+  }
+
+  /* ---------- Outros eventos: carga da aba ---------- */
+
+  /* Chamada a cada ativacao da aba: recarrega os funcionarios ativos
+     (preservando a selecao, como nas outras abas) e as categorias ativas,
+     para refletir cadastros feitos em Configuracoes sem recarregar a pagina.
+     Se a selecao sobreviveu, recarrega os eventos; senao, estado inicial. */
+  function carregarAbaEventos() {
+    carregarCategoriasEventos();
+    preencherSelectFuncionarios('evFuncionario', function() {
+      evFuncionarioId = lerFuncionarioEventos();
+      atualizarBotaoNovoEvento();
+      if (evFuncionarioId) {
+        carregarEventos();
+      } else {
+        fecharFormEvento();
+        eventos = [];
+        preencherAnos();
+        renderizarEventos();
+      }
+    });
+  }
+
+  function carregarCategoriasEventos() {
+    requisitar('GET', API + '/categorias').then(function(json) {
+      evCategorias = json.categorias || [];
+      preencherSelectCategorias();
+      var aviso = document.getElementById('evSemCategorias');
+      if (aviso) aviso.style.display = evCategorias.length ? 'none' : '';
+      atualizarBotaoNovoEvento();
+    }, function(e) {
+      mostrarToast(e.message, 'error');
+    });
+  }
+
+  /* Preenche #evCategoria com as categorias ativas, preservando a selecao
+     atual se ela ainda existir. Em edicao, a categoria do evento e garantida
+     na lista mesmo se tiver sido inativada. */
+  function preencherSelectCategorias() {
+    var sel = document.getElementById('evCategoria');
+    if (!sel) return;
+    var selecionadoAntes = sel.value;
+    var html = '<option value="">Selecione...</option>';
+    for (var i = 0; i < evCategorias.length; i++) {
+      var id = parseInt(evCategorias[i].id, 10);
+      html += '<option value="' + id + '">' + escapeHtml(evCategorias[i].nome) + '</option>';
+    }
+    sel.innerHTML = html;
+    if (editandoEventoId !== null) garantirOpcaoCategoriaDoEvento(encontrarEvento(editandoEventoId));
+    sel.value = selectTemValor(sel, selecionadoAntes) ? selecionadoAntes : '';
+  }
+
+  /* Em edicao, a categoria do evento pode estar inativa (fora da lista de
+     ativas): acrescenta uma option temporaria "Nome (inativa)" para o PATCH
+     sem troca de categoria continuar valido. Removida ao limpar o form. */
+  function garantirOpcaoCategoriaDoEvento(ev) {
+    var sel = document.getElementById('evCategoria');
+    if (!sel || !ev) return;
+    var valor = String(parseInt(ev.categoria_id, 10));
+    if (selectTemValor(sel, valor)) return;
+    var opt = document.createElement('option');
+    opt.value = valor;
+    opt.textContent = String(ev.categoria_nome || '') + (ev.categoria_ativa ? '' : ' (inativa)');
+    opt.setAttribute('data-temporaria', '1');
+    sel.appendChild(opt);
+  }
+
+  function removerOpcoesTemporarias() {
+    var sel = document.getElementById('evCategoria');
+    if (!sel) return;
+    for (var i = sel.options.length - 1; i >= 0; i--) {
+      if (sel.options[i].getAttribute('data-temporaria')) sel.removeChild(sel.options[i]);
+    }
+  }
+
+  function aoTrocarFuncionarioEventos() {
+    evFuncionarioId = lerFuncionarioEventos();
+    atualizarBotaoNovoEvento();
+    fecharFormEvento();
+    carregarEventos();
+  }
+
+  /* ---------- Outros eventos: carga e tabela ---------- */
+
+  function carregarEventos() {
+    if (!evFuncionarioId) {
+      eventos = [];
+      preencherAnos();
+      renderizarEventos();
+      return;
+    }
+    mostrarOverlay(true);
+    requisitar('GET', API + '/eventos?funcionario_id=' + evFuncionarioId).then(function(json) {
+      eventos = json.eventos || [];
+      preencherAnos();
+      renderizarEventos();
+      mostrarOverlay(false);
+    }, function(e) {
+      eventos = [];
+      preencherAnos();
+      renderizarEventosErro(e.message);
+      mostrarOverlay(false);
+      mostrarToast(e.message, 'error');
+    });
+  }
+
+  function renderizarEventosErro(mensagem) {
+    var cont = document.getElementById('evTabela');
+    if (!cont) return;
+    cont.innerHTML = '<p class="ferias-vazio">Não foi possível carregar os eventos. ' + escapeHtml(mensagem || '') + '</p>';
+  }
+
+  /* Anos distintos dos eventos carregados (4 primeiros chars da data),
+     decrescentes; preserva o filtro atual se o ano ainda existir, senao
+     volta a "Todos". */
+  function preencherAnos() {
+    var sel = document.getElementById('evAno');
+    if (!sel) return;
+    var anos = [];
+    var vistos = {};
+    var i;
+    for (i = 0; i < eventos.length; i++) {
+      var ano = String(eventos[i].data || '').substring(0, 4);
+      if (ano.length === 4 && !vistos[ano]) {
+        vistos[ano] = true;
+        anos.push(ano);
+      }
+    }
+    anos.sort();
+    anos.reverse();
+    var html = '<option value="">Todos</option>';
+    var aindaExiste = false;
+    for (i = 0; i < anos.length; i++) {
+      html += '<option value="' + escapeHtml(anos[i]) + '">' + escapeHtml(anos[i]) + '</option>';
+      if (anos[i] === evAnoFiltro) aindaExiste = true;
+    }
+    if (!aindaExiste) evAnoFiltro = '';
+    sel.innerHTML = html;
+    sel.value = evAnoFiltro;
+  }
+
+  function renderizarEventos() {
+    var cont = document.getElementById('evTabela');
+    if (!cont) return;
+
+    if (!evFuncionarioId) {
+      cont.innerHTML = '<p class="ferias-vazio">Selecione um funcionário.</p>';
+      return;
+    }
+    if (!eventos.length) {
+      cont.innerHTML = '<p class="ferias-vazio">Nenhum evento registrado.</p>';
+      return;
+    }
+    var lista = [];
+    var i;
+    for (i = 0; i < eventos.length; i++) {
+      if (!evAnoFiltro || String(eventos[i].data || '').substring(0, 4) === evAnoFiltro) {
+        lista.push(eventos[i]);
+      }
+    }
+    if (!lista.length) {
+      cont.innerHTML = '<p class="ferias-vazio">Nenhum evento em ' + escapeHtml(evAnoFiltro) + '.</p>';
+      return;
+    }
+
+    var html = '<div class="table-wrapper"><table class="report-table ferias-tabela"><thead><tr>'
+      + '<th>Data</th>'
+      + '<th>Categoria</th>'
+      + '<th>Ocorrência</th>'
+      + '<th>Registrado por</th>'
+      + '<th class="ferias-col-acoes">Ações</th>'
+      + '</tr></thead><tbody>';
+
+    for (i = 0; i < lista.length; i++) {
+      var ev = lista[i];
+      var id = parseInt(ev.id, 10);
+      var categoria = escapeHtml(ev.categoria_nome || '')
+        + (ev.categoria_ativa ? '' : ' <small class="ferias-hint">(inativa)</small>');
+      html += '<tr>'
+        + '<td>' + escapeHtml(formatarDataBR(ev.data)) + '</td>'
+        + '<td>' + categoria + '</td>'
+        + '<td class="ferias-ocorrencia">' + escapeHtml(ev.ocorrencia || '') + '</td>'
+        + '<td>' + escapeHtml(ev.criado_por_nome || '') + '</td>'
+        + '<td class="ferias-col-acoes">'
+        + '<button type="button" class="btn-icon" data-acao="editar-evento" data-id="' + id + '" title="Editar"><i class="ph ph-pencil-simple"></i></button>'
+        + '<button type="button" class="btn-icon" data-acao="excluir-evento" data-id="' + id + '" title="Excluir"><i class="ph ph-trash"></i></button>'
+        + '</td>'
+        + '</tr>';
+    }
+
+    html += '</tbody></table></div>';
+    cont.innerHTML = html;
+  }
+
+  /* ---------- Outros eventos: formulario ---------- */
+
+  function mostrarFormEvento(visivel) {
+    var form = document.getElementById('evForm');
+    if (form) form.style.display = visivel ? '' : 'none';
+  }
+
+  function limparFormEvento() {
+    var data = document.getElementById('evData');
+    var cat = document.getElementById('evCategoria');
+    var oc = document.getElementById('evOcorrencia');
+    var idEl = document.getElementById('evId');
+    if (data) data.value = '';
+    removerOpcoesTemporarias();
+    if (cat) cat.value = '';
+    if (oc) oc.value = '';
+    if (idEl) idEl.value = '';
+  }
+
+  function abrirFormNovoEvento() {
+    if (!evFuncionarioId || !evCategorias.length) return;
+    limparFormEvento();
+    editandoEventoId = null;
+    document.getElementById('evData').value = hojeIso();
+    document.getElementById('evFormTitulo').textContent = 'Novo evento';
+    prepararNotificar('evNotificarWrap', 'evNotificar', true);
+    mostrarFormEvento(true);
+    document.getElementById('evCategoria').focus();
+  }
+
+  function abrirFormEditarEvento(id) {
+    var ev = encontrarEvento(id);
+    if (!ev) return;
+    limparFormEvento();
+    editandoEventoId = id;
+    garantirOpcaoCategoriaDoEvento(ev);
+    document.getElementById('evData').value = ev.data || '';
+    document.getElementById('evCategoria').value = String(parseInt(ev.categoria_id, 10));
+    document.getElementById('evOcorrencia').value = ev.ocorrencia || '';
+    document.getElementById('evId').value = String(id);
+    document.getElementById('evFormTitulo').textContent = 'Editar evento';
+    prepararNotificar('evNotificarWrap', 'evNotificar', false);
+    mostrarFormEvento(true);
+    document.getElementById('evCategoria').focus();
+  }
+
+  function fecharFormEvento() {
+    mostrarFormEvento(false);
+    limparFormEvento();
+    editandoEventoId = null;
+  }
+
+  function salvarEvento() {
+    var dataInput = document.getElementById('evData');
+    var catInput = document.getElementById('evCategoria');
+    var ocInput = document.getElementById('evOcorrencia');
+    var data = dataInput.value;
+    var categoriaId = parseInt(catInput.value, 10);
+    var ocorrencia = (ocInput.value || '').trim();
+
+    if (!data) {
+      mostrarToast('Informe a data do evento.', 'error');
+      dataInput.focus();
+      return;
+    }
+    if (!(categoriaId > 0)) {
+      mostrarToast('Selecione a categoria.', 'error');
+      catInput.focus();
+      return;
+    }
+    if (!ocorrencia) {
+      mostrarToast('Descreva a ocorrência.', 'error');
+      ocInput.focus();
+      return;
+    }
+
+    var editando = editandoEventoId !== null;
+    var body = { categoria_id: categoriaId, data: data, ocorrencia: ocorrencia };
+    if (!editando) {
+      if (!evFuncionarioId) {
+        mostrarToast('Selecione um funcionário.', 'error');
+        return;
+      }
+      body.funcionario_id = evFuncionarioId;
+      var destinatariosEv = lerNotificar('evNotificar');
+      if (destinatariosEv.length) body.notificar_ids = destinatariosEv;
+    }
+    var metodo = editando ? 'PATCH' : 'POST';
+    var url = API + '/eventos' + (editando ? '/' + editandoEventoId : '');
+    var btn = document.getElementById('btnSalvarEvento');
+
+    btn.disabled = true;
+    requisitar(metodo, url, body).then(function(json) {
+      btn.disabled = false;
+      mostrarToast(editando ? 'Evento atualizado.' : ('Evento registrado.' + textoNotificados(json.notificados)), 'success');
+      fecharFormEvento();
+      carregarEventos();
+    }, function(e) {
+      btn.disabled = false;
+      mostrarToast(e.message, 'error');
+    });
+  }
+
+  function excluirEvento(id) {
+    var ev = encontrarEvento(id);
+    if (!ev) return;
+    var mensagem = 'Excluir o evento de ' + formatarDataBR(ev.data) + ' (' + String(ev.categoria_nome || '') + ')?';
+    if (!window.confirm(mensagem)) return;
+
+    requisitar('POST', API + '/eventos/' + id + '/excluir').then(function() {
+      mostrarToast('Evento excluído.', 'success');
+      if (editandoEventoId === id) fecharFormEvento();
+      carregarEventos();
+    }, function(e) {
+      mostrarToast(e.message, 'error');
+    });
+  }
+
+  function aoClicarTabelaEventos(ev) {
+    var alvo = ev.target;
+    while (alvo && alvo !== this) {
+      if (alvo.getAttribute && alvo.getAttribute('data-acao')) break;
+      alvo = alvo.parentNode;
+    }
+    if (!alvo || alvo === this) return;
+    if (alvo.disabled) return;
+
+    var acao = alvo.getAttribute('data-acao');
+    var id = parseInt(alvo.getAttribute('data-id'), 10);
+    if (!id) return;
+
+    if (acao === 'editar-evento') {
+      abrirFormEditarEvento(id);
+    } else if (acao === 'excluir-evento') {
+      excluirEvento(id);
+    }
+  }
+
+  /* ---------- Visao geral: carga ---------- */
+
+  function lerFuncionarioVisao() {
+    var sel = document.getElementById('vgFuncionario');
+    var valor = sel ? parseInt(sel.value, 10) : NaN;
+    return valor > 0 ? valor : null;
+  }
+
+  /* Chamada a cada ativacao da aba: recarrega o select (ativos e inativos,
+     preservando a selecao) e, se a selecao sobreviveu, os dados. */
+  function carregarAbaVisao() {
+    preencherSelectFuncionarios('vgFuncionario', function() {
+      vgFuncionarioId = lerFuncionarioVisao();
+      if (vgFuncionarioId) {
+        carregarVisao();
+      } else {
+        resetarVisao();
+      }
+    }, true);
+  }
+
+  function aoTrocarFuncionarioVisao() {
+    vgFuncionarioId = lerFuncionarioVisao();
+    if (vgFuncionarioId) {
+      carregarVisao();
+    } else {
+      resetarVisao();
+    }
+  }
+
+  function carregarVisao() {
+    if (!vgFuncionarioId) {
+      resetarVisao();
+      return;
+    }
+    mostrarOverlay(true);
+    requisitar('GET', API + '/visao-geral?funcionario_id=' + vgFuncionarioId).then(function(json) {
+      vgDados = json;
+      renderizarVisao();
+      mostrarOverlay(false);
+    }, function(e) {
+      mostrarOverlay(false);
+      resetarVisao();
+      mostrarToast(e.message, 'error');
+    });
+  }
+
+  function resetarVisao() {
+    vgDados = null;
+    var conteudo = document.getElementById('vgConteudo');
+    var vazio = document.getElementById('vgVazio');
+    var timeline = document.getElementById('vgTimeline');
+    if (conteudo) conteudo.style.display = 'none';
+    if (vazio) vazio.style.display = '';
+    if (timeline) timeline.innerHTML = '';
+  }
+
+  /* ---------- Visao geral: render ---------- */
+
+  function definirTexto(id, texto) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = String(texto);
+  }
+
+  function renderizarVisao() {
+    var d = vgDados;
+    if (!d) {
+      resetarVisao();
+      return;
+    }
+    var f = d.funcionario || {};
+    var r = d.resumo || {};
+
+    document.getElementById('vgVazio').style.display = 'none';
+    document.getElementById('vgConteudo').style.display = '';
+
+    /* Cabecalho */
+    var swatch = document.getElementById('vgSwatch');
+    var cor = COR_RE.test(String(f.cor || '')) ? String(f.cor) : '';
+    if (swatch) {
+      swatch.style.background = cor;
+      swatch.title = cor;
+    }
+    definirTexto('vgNome', f.nome || '');
+    var status = document.getElementById('vgStatus');
+    if (status) {
+      status.textContent = f.ativo ? 'Ativo' : 'Inativo';
+      status.className = 'badge ' + (f.ativo ? 'badge-success' : 'badge-neutral');
+    }
+    definirTexto('vgAdmissao', f.data_admissao ? 'Admitido em ' + formatarDataBR(f.data_admissao) : '');
+
+    /* Resumo */
+    definirTexto('vgPeriodos', inteiroOuZero(r.periodos));
+    definirTexto('vgPeriodosDetalhe', inteiroOuZero(r.periodos_abertos) + ' abertos · ' + inteiroOuZero(r.periodos_concluidos) + ' concluídos');
+    definirTexto('vgDireito', inteiroOuZero(r.dias_direito_total));
+    definirTexto('vgAbonados', inteiroOuZero(r.dias_abonados_total));
+    definirTexto('vgGozados', inteiroOuZero(r.dias_gozados_total));
+    definirTexto('vgSaldo', inteiroOuZero(r.saldo_total));
+    definirTexto('vgEventos', inteiroOuZero(r.eventos));
+    var cats = document.getElementById('vgEventosCat');
+    if (cats) {
+      var lista = r.eventos_por_categoria || [];
+      var htmlCats = '';
+      for (var i = 0; i < lista.length; i++) {
+        htmlCats += '<span class="ferias-vg-cat">' + escapeHtml(lista[i].categoria) + ' · ' + inteiroOuZero(lista[i].total) + '</span>';
+      }
+      cats.innerHTML = htmlCats;
+    }
+
+    renderizarTimeline(d.anos || []);
+  }
+
+  function iconeItemVisao(tipo) {
+    if (tipo === 'admissao') return 'ph-user-plus';
+    if (tipo === 'periodo') return 'ph-calendar-blank';
+    if (tipo === 'bloco') return 'ph-island';
+    return 'ph-note-pencil';
+  }
+
+  function renderizarTimeline(anos) {
+    var cont = document.getElementById('vgTimeline');
+    if (!cont) return;
+    if (!anos.length) {
+      cont.innerHTML = '<p class="ferias-placeholder">Nenhum registro.</p>';
+      return;
+    }
+    var html = '';
+    for (var a = 0; a < anos.length; a++) {
+      var ano = anos[a];
+      var itens = ano.itens || [];
+      var n = inteiroOuZero(ano.total);
+      html += '<div class="ferias-vg-ano"><h3>' + escapeHtml(ano.ano) + '<small>'
+        + (n === 1 ? '1 registro' : n + ' registros') + '</small></h3>'
+        + '<ul class="ferias-vg-lista">';
+      for (var i = 0; i < itens.length; i++) {
+        html += renderizarItemVisao(itens[i]);
+      }
+      html += '</ul></div>';
+    }
+    cont.innerHTML = html;
+  }
+
+  /* Um <li> da linha do tempo. Tudo escapado; sem acoes. */
+  function renderizarItemVisao(item) {
+    var tipo = String(item.tipo || 'evento');
+    var classeTipo = /^(admissao|periodo|bloco|evento)$/.test(tipo) ? tipo : 'evento';
+    var corpo = '<strong>' + escapeHtml(item.titulo || '') + '</strong>';
+
+    if (tipo === 'periodo') {
+      var concluido = item.status === 'Concluído';
+      corpo += ' <span class="badge ' + (concluido ? 'badge-neutral' : 'badge-success') + '">' + escapeHtml(item.status || '') + '</span>';
+      var venc = item.vencimento || null;
+      if (venc && venc.situacao !== 'ok') {
+        corpo += ' <span class="badge ' + classeBadgeVenc(venc.situacao) + '" title="' + escapeHtml(venc.mensagem || '') + '">'
+          + escapeHtml(textoBadgeVenc(venc, true)) + '</span>';
+      }
+    }
+    if (item.detalhe) {
+      corpo += '<div class="ferias-vg-detalhe' + (tipo === 'evento' ? ' ferias-ocorrencia' : '') + '">' + escapeHtml(item.detalhe) + '</div>';
+    }
+    if (tipo === 'periodo' && item.observacoes) {
+      corpo += '<div class="ferias-vg-obs"><i class="ph ph-note"></i><span>' + escapeHtml(item.observacoes) + '</span></div>';
+    }
+    if (tipo === 'periodo' && item.avisos && item.avisos.length) {
+      corpo += '<div class="ferias-vg-avisos">';
+      for (var i = 0; i < item.avisos.length; i++) {
+        corpo += '<div><i class="ph ph-warning"></i><span>' + escapeHtml(item.avisos[i]) + '</span></div>';
+      }
+      corpo += '</div>';
+    }
+    if (tipo === 'evento' && item.criado_por_nome) {
+      corpo += '<small class="ferias-hint">registrado por ' + escapeHtml(item.criado_por_nome) + '</small>';
+    }
+
+    return '<li class="ferias-vg-item ferias-vg-' + classeTipo + '">'
+      + '<span class="ferias-vg-data">' + escapeHtml(formatarDataBR(item.data)) + '</span>'
+      + '<span class="ferias-vg-icone"><i class="ph ' + iconeItemVisao(tipo) + '"></i></span>'
+      + '<div class="ferias-vg-corpo">' + corpo + '</div>'
+      + '</li>';
+  }
+
   /* ---------- Inicializacao ---------- */
 
   function init() {
@@ -1422,6 +2102,45 @@
 
     var blocoTabela = document.getElementById('blocoTabela');
     if (blocoTabela) blocoTabela.addEventListener('click', aoClicarTabelaBlocos);
+
+    /* Aba Outros Eventos */
+    var evSelFunc = document.getElementById('evFuncionario');
+    if (evSelFunc) evSelFunc.addEventListener('change', aoTrocarFuncionarioEventos);
+
+    var evSelAno = document.getElementById('evAno');
+    if (evSelAno) {
+      evSelAno.addEventListener('change', function() {
+        evAnoFiltro = this.value || '';
+        renderizarEventos();
+      });
+    }
+
+    var btnNovoEv = document.getElementById('btnNovoEvento');
+    if (btnNovoEv) btnNovoEv.addEventListener('click', abrirFormNovoEvento);
+
+    var btnSalvarEv = document.getElementById('btnSalvarEvento');
+    if (btnSalvarEv) btnSalvarEv.addEventListener('click', salvarEvento);
+
+    var btnCancelarEv = document.getElementById('btnCancelarEvento');
+    if (btnCancelarEv) btnCancelarEv.addEventListener('click', fecharFormEvento);
+
+    var evOcorrencia = document.getElementById('evOcorrencia');
+    if (evOcorrencia) {
+      /* Ctrl+Enter (ou Cmd+Enter) salva; Enter simples so quebra linha. */
+      evOcorrencia.addEventListener('keydown', function(ev) {
+        if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'Enter' || ev.keyCode === 13)) {
+          ev.preventDefault();
+          salvarEvento();
+        }
+      });
+    }
+
+    var evTabela = document.getElementById('evTabela');
+    if (evTabela) evTabela.addEventListener('click', aoClicarTabelaEventos);
+
+    /* Aba Visao Geral */
+    var vgSelFunc = document.getElementById('vgFuncionario');
+    if (vgSelFunc) vgSelFunc.addEventListener('change', aoTrocarFuncionarioVisao);
 
     /* Card de vencimentos */
     var vencLista = document.getElementById('vencLista');

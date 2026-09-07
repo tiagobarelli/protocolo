@@ -39,6 +39,9 @@
     <button type="button" class="tab-btn" data-tab="remdest" onclick="ativarAba('remdest')">
       <i class="ph ph-address-book"></i> Remetentes / Destinatários
     </button>
+    <button type="button" class="tab-btn" data-tab="categorias" onclick="ativarAba('categorias')">
+      <i class="ph ph-tag"></i> Categorias de Eventos
+    </button>
     {% endif %}
   </div>
 
@@ -174,6 +177,36 @@
       </div>
 
       <div id="remdestLista" class="remdest-lista"></div>
+    </div>
+  </div>
+
+  <!-- Aba Categorias de Eventos (Controle de Férias) -->
+  <div class="tab-content" id="tab-categorias">
+    <div class="card">
+      <div class="section-title"><i class="ph ph-tag"></i> Categorias de Eventos</div>
+      <p class="section-desc">Categorias usadas nos eventos funcionais do Controle de Férias (ex.: falta, atestado, bônus). Categorias inativas deixam de aparecer em novos eventos, mas continuam no histórico.</p>
+
+      <div id="catMsg" class="msg-box" style="display:none;"></div>
+
+      <div class="remdest-form">
+        <div class="remdest-campos">
+          <div class="remdest-campo">
+            <label for="catNome">Nome</label>
+            <input type="text" id="catNome" maxlength="60" placeholder="Ex.: Atestado médico" autocomplete="off">
+          </div>
+          <div class="remdest-campo">
+            <label for="catOrdem">Ordem</label>
+            <input type="number" id="catOrdem" min="0" max="999" placeholder="auto">
+          </div>
+        </div>
+        <input type="hidden" id="catId">
+        <div class="remdest-form-acoes">
+          <button type="button" class="btn btn-secondary" id="catBtnCancelar" style="display:none;">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="catBtnSalvar"><i class="ph ph-plus"></i> Adicionar</button>
+        </div>
+      </div>
+
+      <div id="catLista" class="remdest-lista"></div>
     </div>
   </div>
   {% endif %}

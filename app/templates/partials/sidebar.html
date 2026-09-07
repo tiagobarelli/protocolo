@@ -156,7 +156,7 @@
       <span class="sidebar-avatar">{{ _partes[0][0] if _partes else '' }}{{ _partes[-1][0] if _partes|length > 1 else '' }}</span>
       <div class="sidebar-user-texto">
         <span class="sidebar-user-nome" title="{{ current_user.nome }}">{{ current_user.nome }}</span>
-        <a href="{{ url_for('main.changelog') }}" class="version-link">v. 2.7</a>
+        <a href="{{ url_for('main.changelog') }}" class="version-link">v. 2.7.1</a>
       </div>
       <a href="{{ url_for('auth.logout') }}" class="sidebar-sair" title="Sair"><i class="ph ph-sign-out"></i></a>
     </div>

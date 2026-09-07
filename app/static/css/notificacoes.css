@@ -211,3 +211,8 @@
 }
 
 /* Botões consolidados em components.css */
+
+/* Notificacoes de ferias na aba Enviadas: sem destino, sem cursor de clique
+   (as recebidas continuam clicaveis para marcar como lida) */
+.notification-item.sent.ferias { cursor: default; }
+.notification-item.sent.ferias:hover { background: transparent; }

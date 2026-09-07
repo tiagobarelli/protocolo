@@ -184,6 +184,7 @@ main {
   color: var(--text-muted); border-color: var(--border); background: var(--surface);
 }
 .remdest-vazio { font-size: 0.85rem; color: var(--text-muted); font-style: italic; padding: 8px 0; }
+.remdest-item.categoria-inativa { opacity: 0.6; }
 
 /* ── Responsivo ───────────────────────────────────────── */
 @media (max-width: 768px) {

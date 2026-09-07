@@ -46,6 +46,8 @@ function ativarAba(nomeAba) {
     carregarMensagensInternas();
   } else if (nomeAba === 'remdest') {
     carregarRemDest();
+  } else if (nomeAba === 'categorias') {
+    carregarCategorias();
   }
 }
 
@@ -587,6 +589,197 @@ function excluirRemDest(id) {
 }
 
 // ═══════════════════════════════════════════════════════
+// CATEGORIAS DE EVENTOS (Controle de Ferias; /api/ferias/categorias)
+// Funcoes prefixadas com "cat" para nao colidir com as globais da pagina.
+// ═══════════════════════════════════════════════════════
+
+var catLista = [];
+var catEditandoId = null;
+
+function catRequisitar(metodo, url, body) {
+  var opcoes = { method: metodo, headers: { 'Content-Type': 'application/json' } };
+  if (body !== undefined) opcoes.body = JSON.stringify(body);
+  return fetch(url, opcoes).then(function(r) {
+    return r.json().then(function(json) {
+      if (!r.ok || !json.ok) {
+        throw new Error(json.erro || 'Erro na requisição.');
+      }
+      return json;
+    }, function() {
+      throw new Error('Resposta inválida do servidor.');
+    });
+  });
+}
+
+function catEncontrar(id) {
+  var i;
+  for (i = 0; i < catLista.length; i++) {
+    if (catLista[i].id === id) return catLista[i];
+  }
+  return null;
+}
+
+function carregarCategorias() {
+  var lista = document.getElementById('catLista');
+  if (!lista) return;
+  lista.innerHTML = '<div class="remdest-vazio">Carregando...</div>';
+  catRequisitar('GET', '/api/ferias/categorias?incluir_inativas=1').then(function(json) {
+    catLista = json.categorias || [];
+    renderCategorias();
+  }, function(e) {
+    lista.innerHTML = '';
+    mostrarMsg('catMsg', 'error', e.message || 'Erro ao carregar.');
+  });
+}
+
+function renderCategorias() {
+  var lista = document.getElementById('catLista');
+  if (!lista) return;
+  if (!catLista.length) {
+    lista.innerHTML = '<div class="remdest-vazio">Nenhuma categoria cadastrada.</div>';
+    return;
+  }
+  var html = '';
+  var i;
+  for (i = 0; i < catLista.length; i++) {
+    var c = catLista[i];
+    var id = parseInt(c.id, 10);
+    var badge = c.ativo ? '' : '<span class="im-badge inativa"><i class="ph ph-prohibit"></i> Inativa</span>';
+    var btnAlternar = c.ativo
+      ? '<button type="button" class="btn-icon" data-acao="alternar" data-id="' + id + '" title="Inativar" aria-label="Inativar">' +
+          '<i class="ph ph-prohibit"></i></button>'
+      : '<button type="button" class="btn-icon" data-acao="alternar" data-id="' + id + '" title="Reativar" aria-label="Reativar">' +
+          '<i class="ph ph-arrow-counter-clockwise"></i></button>';
+
+    html += '<div class="remdest-item' + (c.ativo ? '' : ' categoria-inativa') + '">' +
+      '<span class="remdest-item-nome">' + escapeHtmlIM(c.nome) +
+        ' <small>ordem ' + parseInt(c.ordem, 10) + '</small></span>' +
+      badge +
+      '<div class="remdest-acoes">' +
+        '<button type="button" class="btn-icon" data-acao="editar" data-id="' + id + '" title="Editar" aria-label="Editar">' +
+          '<i class="ph ph-pencil-simple"></i></button>' +
+        btnAlternar +
+      '</div>' +
+    '</div>';
+  }
+  lista.innerHTML = html;
+}
+
+function salvarCategoria() {
+  var inputNome = document.getElementById('catNome');
+  var inputOrdem = document.getElementById('catOrdem');
+  if (!inputNome || !inputOrdem) return;
+  var nome = inputNome.value.replace(/\s+/g, ' ').trim();
+
+  if (!nome) {
+    mostrarMsg('catMsg', 'error', 'Informe o nome da categoria.');
+    inputNome.focus();
+    return;
+  }
+
+  var body = { nome: nome };
+  var ordemTxt = inputOrdem.value.trim();
+  if (ordemTxt !== '') {
+    var ordem = parseInt(ordemTxt, 10);
+    if (isNaN(ordem) || ordem < 0 || ordem > 999) {
+      mostrarMsg('catMsg', 'error', 'Ordem inválida (0 a 999).');
+      inputOrdem.focus();
+      return;
+    }
+    body.ordem = ordem;
+  }
+
+  var editando = catEditandoId !== null;
+  var url = '/api/ferias/categorias' + (editando ? '/' + catEditandoId : '');
+  var btn = document.getElementById('catBtnSalvar');
+  if (btn) btn.disabled = true;
+  esconderMsg('catMsg');
+
+  catRequisitar(editando ? 'PATCH' : 'POST', url, body).then(function() {
+    if (btn) btn.disabled = false;
+    mostrarToast('Categoria salva.', 'success');
+    esconderMsg('catMsg');
+    catCancelarEdicao();
+    carregarCategorias();
+  }, function(e) {
+    if (btn) btn.disabled = false;
+    mostrarMsg('catMsg', 'error', e.message || 'Erro ao salvar.');
+  });
+}
+
+function catEditar(id) {
+  var c = catEncontrar(id);
+  if (!c) return;
+  document.getElementById('catNome').value = c.nome || '';
+  document.getElementById('catOrdem').value = String(parseInt(c.ordem, 10));
+  document.getElementById('catId').value = String(id);
+  catEditandoId = id;
+  var btn = document.getElementById('catBtnSalvar');
+  if (btn) btn.innerHTML = '<i class="ph ph-check"></i> Salvar';
+  var btnCancel = document.getElementById('catBtnCancelar');
+  if (btnCancel) btnCancel.style.display = '';
+  esconderMsg('catMsg');
+  document.getElementById('catNome').focus();
+}
+
+function catCancelarEdicao() {
+  catEditandoId = null;
+  var inputNome = document.getElementById('catNome');
+  var inputOrdem = document.getElementById('catOrdem');
+  var inputId = document.getElementById('catId');
+  if (inputNome) inputNome.value = '';
+  if (inputOrdem) inputOrdem.value = '';
+  if (inputId) inputId.value = '';
+  var btn = document.getElementById('catBtnSalvar');
+  if (btn) btn.innerHTML = '<i class="ph ph-plus"></i> Adicionar';
+  var btnCancel = document.getElementById('catBtnCancelar');
+  if (btnCancel) btnCancel.style.display = 'none';
+}
+
+function catAlternar(id) {
+  var c = catEncontrar(id);
+  if (!c) return;
+  var mensagem = c.ativo
+    ? 'Inativar a categoria "' + c.nome + '"? Ela deixará de aparecer em novos eventos.'
+    : 'Reativar a categoria "' + c.nome + '"?';
+  if (!window.confirm(mensagem)) return;
+
+  var novoAtivo = !c.ativo;
+  catRequisitar('PATCH', '/api/ferias/categorias/' + id, { ativo: novoAtivo }).then(function() {
+    mostrarToast(novoAtivo ? 'Categoria reativada.' : 'Categoria inativada.', 'success');
+    if (catEditandoId === id) catCancelarEdicao();
+    carregarCategorias();
+  }, function(e) {
+    mostrarMsg('catMsg', 'error', e.message || 'Erro ao salvar.');
+  });
+}
+
+// Delegacao de clique na lista: um unico listener, le data-acao/data-id
+function catAoClicarLista(ev) {
+  var alvo = ev.target;
+  while (alvo && alvo !== this) {
+    if (alvo.getAttribute && alvo.getAttribute('data-acao')) break;
+    alvo = alvo.parentNode;
+  }
+  if (!alvo || alvo === this) return;
+  var acao = alvo.getAttribute('data-acao');
+  var id = parseInt(alvo.getAttribute('data-id'), 10);
+  if (!id) return;
+  if (acao === 'editar') {
+    catEditar(id);
+  } else if (acao === 'alternar') {
+    catAlternar(id);
+  }
+}
+
+function catAoTeclar(ev) {
+  if (ev.key === 'Enter' || ev.keyCode === 13) {
+    ev.preventDefault();
+    salvarCategoria();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
 
@@ -615,5 +808,19 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnSalvarRD) btnSalvarRD.addEventListener('click', salvarRemDest);
     var btnCancelarRD = document.getElementById('remdestBtnCancelar');
     if (btnCancelarRD) btnCancelarRD.addEventListener('click', cancelarEdicaoRemDest);
+  }
+
+  // Categorias de eventos (só existe para master; carrega ao ativar a aba)
+  if (document.getElementById('tab-categorias')) {
+    var btnSalvarCat = document.getElementById('catBtnSalvar');
+    if (btnSalvarCat) btnSalvarCat.addEventListener('click', salvarCategoria);
+    var btnCancelarCat = document.getElementById('catBtnCancelar');
+    if (btnCancelarCat) btnCancelarCat.addEventListener('click', catCancelarEdicao);
+    var catNomeEl = document.getElementById('catNome');
+    if (catNomeEl) catNomeEl.addEventListener('keydown', catAoTeclar);
+    var catOrdemEl = document.getElementById('catOrdem');
+    if (catOrdemEl) catOrdemEl.addEventListener('keydown', catAoTeclar);
+    var catListaEl = document.getElementById('catLista');
+    if (catListaEl) catListaEl.addEventListener('click', catAoClicarLista);
   }
 });

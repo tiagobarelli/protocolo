@@ -32,6 +32,15 @@ def close_db(e=None):
         db.close()
 
 
+def _garantir_coluna(conn, tabela, coluna, ddl):
+    """Migração guardada: adiciona a coluna se ela ainda não existir.
+    Idempotente. tabela/coluna/ddl são identificadores fixos do código,
+    nunca entrada externa."""
+    existentes = [r[1] for r in conn.execute("PRAGMA table_info(%s)" % tabela)]
+    if coluna not in existentes:
+        conn.execute("ALTER TABLE %s ADD COLUMN %s %s" % (tabela, coluna, ddl))
+
+
 def init_db(app):
     """Cria a tabela users se não existir."""
     with app.app_context():
@@ -184,6 +193,35 @@ def init_db(app):
                 ON ferias_blocos(periodo_id);
             CREATE INDEX IF NOT EXISTS idx_ferias_blocos_datas
                 ON ferias_blocos(inicio, fim);
+
+            CREATE TABLE IF NOT EXISTS ferias_categorias (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                ordem INTEGER NOT NULL DEFAULT 0,
+                ativo INTEGER NOT NULL DEFAULT 1,
+                criado_por_id INTEGER NOT NULL,
+                criado_por_nome TEXT NOT NULL,
+                criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+                atualizado_em DATETIME
+            );
+            CREATE TABLE IF NOT EXISTS ferias_eventos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                funcionario_id INTEGER NOT NULL REFERENCES ferias_funcionarios(id),
+                categoria_id INTEGER NOT NULL REFERENCES ferias_categorias(id),
+                data TEXT NOT NULL,
+                ocorrencia TEXT NOT NULL,
+                criado_por_id INTEGER NOT NULL,
+                criado_por_nome TEXT NOT NULL,
+                criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+                atualizado_em DATETIME,
+                excluido_por_id INTEGER,
+                excluido_por_nome TEXT,
+                excluido_em DATETIME
+            );
+            CREATE INDEX IF NOT EXISTS idx_ferias_eventos_funcionario
+                ON ferias_eventos(funcionario_id, data);
         """)
+        _garantir_coluna(conn, "notifications", "tipo", "TEXT NOT NULL DEFAULT 'comentario'")
+        _garantir_coluna(conn, "notifications", "ref_id", "INTEGER")
         conn.commit()
         conn.close()

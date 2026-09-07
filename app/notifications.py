@@ -9,6 +9,15 @@ from app.db import get_db
 notifications_bp = Blueprint("notifications", __name__, url_prefix="/api/notifications")
 
 
+def _iso_utc(timestamp):
+    """Converte 'YYYY-MM-DD HH:MM:SS' (CURRENT_TIMESTAMP do SQLite, UTC) em
+    ISO 8601 com sufixo Z explícito, para o frontend converter com new Date()
+    ao horário local. Sem o Z, o horário exibido ficaria 3h errado (UTC-3)."""
+    if not timestamp:
+        return timestamp
+    return timestamp.replace(" ", "T") + "Z"
+
+
 @notifications_bp.route("", methods=["GET"])
 @login_required
 def listar_notificacoes():
@@ -30,7 +39,7 @@ def listar_notificacoes():
     offset = (page - 1) * per_page
 
     rows = db.execute(
-        "SELECT id, remetente_nome, protocolo_id, previa, lida, criado_em "
+        "SELECT id, remetente_nome, protocolo_id, previa, lida, criado_em, tipo, ref_id "
         "FROM notifications WHERE destinatario_id = ? "
         "ORDER BY criado_em DESC LIMIT ? OFFSET ?",
         (current_user.id, per_page, offset),
@@ -44,7 +53,9 @@ def listar_notificacoes():
             "protocolo_id": r["protocolo_id"],
             "previa": r["previa"],
             "lida": bool(r["lida"]),
-            "criado_em": r["criado_em"],
+            "criado_em": _iso_utc(r["criado_em"]),
+            "tipo": r["tipo"],
+            "ref_id": r["ref_id"],
         })
 
     return jsonify({
@@ -70,9 +81,9 @@ def listar_enviadas():
 
     total = db.execute(
         "SELECT COUNT(*) FROM ("
-        "    SELECT comment_id FROM notifications"
+        "    SELECT tipo, comment_id, ref_id FROM notifications"
         "    WHERE remetente_id = ?"
-        "    GROUP BY comment_id"
+        "    GROUP BY tipo, comment_id, ref_id"
         ")",
         (current_user.id,),
     ).fetchone()[0]
@@ -83,7 +94,9 @@ def listar_enviadas():
     rows = db.execute(
         "SELECT "
         "    MIN(n.id) AS id, "
+        "    n.tipo, "
         "    n.comment_id, "
+        "    n.ref_id, "
         "    n.protocolo_id, "
         "    n.previa, "
         "    MAX(n.criado_em) AS criado_em, "
@@ -92,7 +105,7 @@ def listar_enviadas():
         "FROM notifications n "
         "JOIN users u ON u.id = n.destinatario_id "
         "WHERE n.remetente_id = ? "
-        "GROUP BY n.comment_id "
+        "GROUP BY n.tipo, n.comment_id, n.ref_id "
         "ORDER BY criado_em DESC "
         "LIMIT ? OFFSET ?",
         (current_user.id, per_page, offset),
@@ -102,10 +115,12 @@ def listar_enviadas():
     for r in rows:
         notifications.append({
             "id": r["id"],
+            "tipo": r["tipo"],
             "comment_id": r["comment_id"],
+            "ref_id": r["ref_id"],
             "protocolo_id": r["protocolo_id"],
             "previa": r["previa"],
-            "criado_em": r["criado_em"],
+            "criado_em": _iso_utc(r["criado_em"]),
             "total_destinatarios": r["total_destinatarios"],
             "destinatarios_nomes": r["destinatarios_nomes"],
         })

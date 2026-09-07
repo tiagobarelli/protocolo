@@ -46,6 +46,8 @@
         <button type="button" class="tab-btn active" data-tab="funcionarios"><i class="ph ph-users"></i> Funcionários</button>
         <button type="button" class="tab-btn" data-tab="periodos"><i class="ph ph-calendar-blank"></i> Períodos Aquisitivos</button>
         <button type="button" class="tab-btn" data-tab="ferias"><i class="ph ph-island"></i> Férias</button>
+        <button type="button" class="tab-btn" data-tab="eventos"><i class="ph ph-note-pencil"></i> Outros Eventos</button>
+        <button type="button" class="tab-btn" data-tab="visao"><i class="ph ph-list-magnifying-glass"></i> Visão Geral</button>
       </div>
 
       <!-- Aba Funcionarios -->
@@ -238,6 +240,10 @@
                   <span id="blocoDias" class="ferias-hint ferias-dias"></span>
                 </div>
               </div>
+              <div class="ferias-notificar" id="blocoNotificarWrap">
+                <div class="ferias-notificar-titulo"><i class="ph ph-bell"></i> Notificar usu&aacute;rios (opcional)</div>
+                <div class="ferias-notificar-lista" id="blocoNotificar"></div>
+              </div>
               <input type="hidden" id="blocoId">
               <div class="ferias-form-acoes">
                 <button type="button" class="btn btn-secondary" id="btnCancelarBloco">Cancelar</button>
@@ -247,6 +253,134 @@
 
             <!-- Tabela renderizada pelo JS -->
             <div id="blocoTabela"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aba Outros Eventos (eventos funcionais: faltas, atestados, bonus...) -->
+      <div class="tab-content" id="tab-eventos">
+        <div class="card">
+          <div class="ferias-topo">
+            <div class="section-title"><i class="ph ph-note-pencil"></i> Outros Eventos</div>
+            <div class="ferias-controles">
+              <div class="form-group">
+                <label for="evFuncionario">Funcionário</label>
+                <select id="evFuncionario">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="evAno">Ano</label>
+                <select id="evAno">
+                  <option value="">Todos</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-primary" id="btnNovoEvento" disabled><i class="ph ph-plus"></i> Novo evento</button>
+            </div>
+          </div>
+
+          <p id="evSemCategorias" class="ferias-hint" style="display:none;">Nenhuma categoria ativa. Cadastre categorias em <a href="/admin/configuracoes">Configurações</a>.</p>
+
+          <!-- Formulario inline do evento (sem tag form; Ctrl+Enter na ocorrencia salva via JS) -->
+          <div id="evForm" class="ferias-form" style="display:none;">
+            <div class="ferias-form-titulo" id="evFormTitulo">Novo evento</div>
+            <div class="form-row">
+              <div class="form-group small">
+                <label for="evData">Data</label>
+                <input type="date" id="evData">
+              </div>
+              <div class="form-group">
+                <label for="evCategoria">Categoria</label>
+                <select id="evCategoria">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="evOcorrencia">Ocorrência</label>
+              <textarea id="evOcorrencia" rows="3" maxlength="2000" placeholder="Ex.: saiu no período da tarde para exames médicos"></textarea>
+            </div>
+            <div class="ferias-notificar" id="evNotificarWrap">
+              <div class="ferias-notificar-titulo"><i class="ph ph-bell"></i> Notificar usu&aacute;rios (opcional)</div>
+              <div class="ferias-notificar-lista" id="evNotificar"></div>
+            </div>
+            <input type="hidden" id="evId">
+            <div class="ferias-form-acoes">
+              <button type="button" class="btn btn-secondary" id="btnCancelarEvento">Cancelar</button>
+              <button type="button" class="btn btn-primary" id="btnSalvarEvento"><i class="ph ph-check"></i> Salvar</button>
+            </div>
+          </div>
+
+          <!-- Tabela renderizada pelo JS -->
+          <div id="evTabela"></div>
+        </div>
+      </div>
+
+      <!-- Aba Visao Geral: resumo e linha do tempo por ano (so leitura) -->
+      <div class="tab-content" id="tab-visao">
+        <!-- Card de selecao (inclui funcionarios inativos) -->
+        <div class="card">
+          <div class="ferias-topo">
+            <div class="section-title"><i class="ph ph-list-magnifying-glass"></i> Visão Geral</div>
+            <div class="ferias-controles">
+              <div class="form-group">
+                <label for="vgFuncionario">Funcionário</label>
+                <select id="vgFuncionario">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <p id="vgVazio" class="ferias-placeholder">Selecione um funcionário.</p>
+        </div>
+
+        <div id="vgConteudo" style="display:none;">
+          <!-- Cabecalho do funcionario -->
+          <div class="card">
+            <div class="ferias-vg-cabecalho">
+              <span class="ferias-swatch" id="vgSwatch"></span>
+              <h2 id="vgNome"></h2>
+              <span class="badge badge-success" id="vgStatus">Ativo</span>
+              <span id="vgAdmissao" class="ferias-hint"></span>
+            </div>
+          </div>
+
+          <!-- Resumo numerico (mesmos tiles da aba Ferias) -->
+          <div class="card">
+            <div class="ferias-resumo">
+              <div class="ferias-tile">
+                <div class="ferias-tile-rotulo">Períodos</div>
+                <div class="ferias-tile-valor" id="vgPeriodos">0</div>
+                <small class="ferias-hint" id="vgPeriodosDetalhe"></small>
+              </div>
+              <div class="ferias-tile">
+                <div class="ferias-tile-rotulo">Dias de direito</div>
+                <div class="ferias-tile-valor" id="vgDireito">0</div>
+              </div>
+              <div class="ferias-tile">
+                <div class="ferias-tile-rotulo">Abonados</div>
+                <div class="ferias-tile-valor" id="vgAbonados">0</div>
+              </div>
+              <div class="ferias-tile">
+                <div class="ferias-tile-rotulo">Gozados</div>
+                <div class="ferias-tile-valor" id="vgGozados">0</div>
+              </div>
+              <div class="ferias-tile">
+                <div class="ferias-tile-rotulo">Saldo em aberto</div>
+                <div class="ferias-tile-valor" id="vgSaldo">0</div>
+              </div>
+              <div class="ferias-tile">
+                <div class="ferias-tile-rotulo">Eventos</div>
+                <div class="ferias-tile-valor" id="vgEventos">0</div>
+              </div>
+            </div>
+            <div id="vgEventosCat" class="ferias-vg-cats"></div>
+          </div>
+
+          <!-- Linha do tempo (renderizada pelo JS) -->
+          <div class="card">
+            <div class="section-title"><i class="ph ph-clock-counter-clockwise"></i> Linha do tempo</div>
+            <div id="vgTimeline"></div>
           </div>
         </div>
       </div>

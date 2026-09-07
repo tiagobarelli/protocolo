@@ -29,9 +29,11 @@ function carregarNotificacoes(page) {
         return;
       }
 
-      // Coletar protocolo_ids únicos para resolver números
+      // Coletar protocolo_ids únicos para resolver números (só notificações de
+      // comentário: as de férias têm protocolo_id 0, que não é um protocolo)
       var ids = [];
       for (var i = 0; i < data.notifications.length; i++) {
+        if (notifEhFerias(data.notifications[i])) continue;
         var pid = data.notifications[i].protocolo_id;
         if (ids.indexOf(pid) === -1 && !protocoloCache[pid]) {
           ids.push(pid);
@@ -80,9 +82,10 @@ function carregarEnviadas(page) {
         return;
       }
 
-      // Coletar protocolo_ids únicos para resolver números
+      // Coletar protocolo_ids únicos para resolver números (só as de comentário)
       var ids = [];
       for (var i = 0; i < data.notifications.length; i++) {
+        if (notifEhFerias(data.notifications[i])) continue;
         var pid = data.notifications[i].protocolo_id;
         if (ids.indexOf(pid) === -1 && !protocoloCache[pid]) {
           ids.push(pid);
@@ -120,6 +123,40 @@ function buscarNumeroProtocolo(protocoloId) {
     });
 }
 
+/* Tipo da notificação (coluna tipo; ausente = comentário, por segurança).
+   Prefixo notif: o arquivo não é IIFE. */
+function notifEhFerias(n) {
+  return !!n && (n.tipo === 'ferias_bloco' || n.tipo === 'ferias_evento');
+}
+
+function notifIcone(n) {
+  if (n && n.tipo === 'ferias_bloco') return 'ph-island';
+  if (n && n.tipo === 'ferias_evento') return 'ph-note-pencil';
+  return 'ph-chat-dots';
+}
+
+function notifVerbo(n) {
+  return (n && n.tipo === 'ferias_bloco') ? 'registrou férias' : 'registrou um evento';
+}
+
+/* Marca como lida sem navegar (notificações de férias, que não têm destino):
+   troca unread por read, remove o ponto e atualiza o sino. */
+function notifMarcarLidaSemNavegar(item, id) {
+  fetch('/api/notifications/' + id + '/read', { method: 'PATCH', headers: { 'Content-Type': 'application/json' } })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error('Erro');
+      item.classList.remove('unread');
+      item.classList.add('read');
+      item.setAttribute('data-lida', '1');
+      var dot = item.querySelector('.notification-dot');
+      if (dot && dot.parentNode) dot.parentNode.removeChild(dot);
+      if (typeof atualizarBadgeNotificacoes === 'function') {
+        atualizarBadgeNotificacoes();
+      }
+    })
+    .catch(function() {});
+}
+
 function renderizarRecebidas(notifications, container) {
   var html = '';
   for (var i = 0; i < notifications.length; i++) {
@@ -127,14 +164,23 @@ function renderizarRecebidas(notifications, container) {
     var statusClass = n.lida ? 'read' : 'unread';
     var numero = protocoloCache[n.protocolo_id] || ('ID ' + n.protocolo_id);
     var dataFormatada = formatarDataNotif(n.criado_em);
+    var ehFerias = notifEhFerias(n);
+    var tipo = n.tipo || 'comentario';
+    var metaTexto;
 
-    html += '<div class="notification-item ' + statusClass + '" data-id="' + n.id + '" data-protocolo="' + n.protocolo_id + '" data-lida="' + (n.lida ? '1' : '0') + '">' +
-      '<div class="notification-icon"><i class="ph ph-chat-dots"></i></div>' +
+    if (ehFerias) {
+      metaTexto = '<span class="notification-sender">' + escapeHtmlNotif(n.remetente_nome) + '</span> ' + notifVerbo(n);
+    } else {
+      metaTexto = '<span class="notification-sender">' + escapeHtmlNotif(n.remetente_nome) + '</span>' +
+          ' comentou no protocolo ' +
+          '<span class="notification-protocol">' + escapeHtmlNotif(numero) + '</span>';
+    }
+
+    html += '<div class="notification-item ' + statusClass + (ehFerias ? ' ferias' : '') + '" data-id="' + n.id + '" data-tipo="' + escapeHtmlNotif(tipo) + '" data-protocolo="' + n.protocolo_id + '" data-lida="' + (n.lida ? '1' : '0') + '">' +
+      '<div class="notification-icon"><i class="ph ' + notifIcone(n) + '"></i></div>' +
       '<div class="notification-body">' +
         '<div class="notification-meta">' +
-          '<span class="notification-sender">' + escapeHtmlNotif(n.remetente_nome) + '</span>' +
-          ' comentou no protocolo ' +
-          '<span class="notification-protocol">' + escapeHtmlNotif(numero) + '</span>' +
+          metaTexto +
           '<span class="notification-date">' + dataFormatada + '</span>' +
         '</div>' +
         '<div class="notification-preview">' + escapeHtmlNotif(n.previa) + '</div>' +
@@ -159,10 +205,20 @@ function renderizarEnviadas(notifications, container) {
     var dataFormatada = formatarDataNotif(n.criado_em);
     var total = n.total_destinatarios || 0;
     var nomes = n.destinatarios_nomes || '';
+    var ehFerias = notifEhFerias(n);
+    var tipo = n.tipo || 'comentario';
     var metaTexto;
     var previaTexto;
 
-    if (total === 1) {
+    if (ehFerias) {
+      if (total === 1) {
+        metaTexto = 'Você notificou <span class="notification-sender">' + escapeHtmlNotif(nomes) + '</span>';
+        previaTexto = escapeHtmlNotif(n.previa);
+      } else {
+        metaTexto = 'Você notificou <span class="notification-sender">' + total + ' pessoas</span>';
+        previaTexto = escapeHtmlNotif(nomes);
+      }
+    } else if (total === 1) {
       metaTexto = 'Você mencionou <span class="notification-sender">' + escapeHtmlNotif(nomes) + '</span>' +
                   ' no protocolo <span class="notification-protocol">' + escapeHtmlNotif(numero) + '</span>';
       previaTexto = escapeHtmlNotif(n.previa);
@@ -172,8 +228,8 @@ function renderizarEnviadas(notifications, container) {
       previaTexto = escapeHtmlNotif(nomes);
     }
 
-    html += '<div class="notification-item sent" data-protocolo="' + n.protocolo_id + '">' +
-      '<div class="notification-icon"><i class="ph ph-paper-plane-tilt"></i></div>' +
+    html += '<div class="notification-item sent' + (ehFerias ? ' ferias' : '') + '" data-tipo="' + escapeHtmlNotif(tipo) + '" data-protocolo="' + n.protocolo_id + '">' +
+      '<div class="notification-icon"><i class="ph ' + (ehFerias ? notifIcone(n) : 'ph-paper-plane-tilt') + '"></i></div>' +
       '<div class="notification-body">' +
         '<div class="notification-meta">' +
           metaTexto +
@@ -188,6 +244,8 @@ function renderizarEnviadas(notifications, container) {
   // Registrar cliques — redirecionamento direto, sem marcar como lida
   var items = container.querySelectorAll('.notification-item.sent');
   for (var j = 0; j < items.length; j++) {
+    // Enviadas de férias não têm destino: sem handler de clique
+    if (notifEhFerias({ tipo: items[j].getAttribute('data-tipo') })) continue;
     items[j].addEventListener('click', onSentNotificationClick);
   }
 }
@@ -196,6 +254,13 @@ function onNotificationClick() {
   var id = parseInt(this.getAttribute('data-id'));
   var protocoloId = this.getAttribute('data-protocolo');
   var lida = this.getAttribute('data-lida') === '1';
+  var tipo = this.getAttribute('data-tipo') || 'comentario';
+
+  // Férias: o clique só marca como lida; nunca navega
+  if (notifEhFerias({ tipo: tipo })) {
+    if (!lida) notifMarcarLidaSemNavegar(this, id);
+    return;
+  }
 
   if (!lida) {
     fetch('/api/notifications/' + id + '/read', { method: 'PATCH', headers: { 'Content-Type': 'application/json' } })
